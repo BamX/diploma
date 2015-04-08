@@ -11,7 +11,7 @@ inline double& Field::at(size_t row, size_t col) {
 
 void Field::randomFill() {
     for (size_t index = 0, len = width * height; index < len; ++index) {
-        data[index] = rand() % 100;
+        buff[index] = data[index] = rand() % 100;
     }
 }
 
@@ -27,7 +27,7 @@ void Field::print() {
 
 void Field::fill(double val) {
     for (size_t index = 0, len = width * height; index < len; ++index) {
-        data[index] = val;
+        buff[index] = data[index] = val;
     }
 }
 
@@ -40,6 +40,13 @@ void Field::transpose() {
         data[index] = buff[index];
     }
     std::swap(width, height);
+    transposed = transposed == false;
+}
+
+void Field::flushBuffer() {
+    for (size_t index = 0, len = width * height; index < len; ++index) {
+        data[index] = buff[index];
+    }
 }
 
 void Field::fillFactors(size_t line, bool first) {
@@ -79,6 +86,7 @@ void Field::solveRows() {
             delta = solve(row, false);
         }
     }
+    flushBuffer();
 }
 
 void Field::solve() {

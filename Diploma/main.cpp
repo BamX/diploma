@@ -7,11 +7,10 @@
 #include "field.h"
 
 int main(int argc, const char * argv[]) {
-    Field *field = new Field(6, 3);
-    //field->fill(75000.0);
-    field->randomFill();
-    field->print();
-    field->transpose();
+    Field *field = new Field(6, 6);
+    field->fill(75000.0);
+
+    field->solve();
     field->print();
 
     return 0;

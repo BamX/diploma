@@ -13,18 +13,21 @@ class Field {
 
     size_t width;
     size_t height;
+    bool transposed;
     double epsilon;
 
     void fillFactors(size_t line, bool first);
     double solve(size_t row, bool first);
     void solveRows();
     void transpose();
+    void flushBuffer();
 
 public:
     Field(size_t _width, size_t _height, double _epsilon = 0.0001) {
         width = _width;
         height = _height;
         epsilon = _epsilon;
+        transposed = false;
 
         data = new double[height * width];
         buff = new double[height * width];
