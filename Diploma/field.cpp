@@ -47,7 +47,7 @@ void Field::randomFill() {
 }
 
 void Field::print() {
-    printf("Field [%zux%zu](itrs %zu):\n", width, height, lastIterrationsCount);
+    printf("Field [%zux%zu](itrs: %zu, time: %.1f):\n", width, height, lastIterrationsCount, t);
     for (size_t index = 0, len = width * height; index < len; ++index) {
         printf("%.2f\t", data[index]);
         if ((index + 1) % width == 0) {
