@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2015 BX23. All rights reserved.
+//  Copyright (c) 2015 Nikolay Volosatov. All rights reserved.
 //
 
 #ifndef __Diploma__field__
@@ -14,6 +14,9 @@ class Field {
     size_t width;
     size_t height;
     bool transposed;
+
+    double t;
+    double hX, hY, dT;
     double epsilon;
 
     void fillFactors(size_t line, bool first);
@@ -23,39 +26,18 @@ class Field {
     void flushBuffer();
 
 public:
-    Field(size_t _width, size_t _height, double _epsilon = 0.0001) {
-        width = _width;
-        height = _height;
-        epsilon = _epsilon;
-        transposed = false;
-
-        data = new double[height * width];
-        buff = new double[height * width];
-
-        size_t maxDim = std::max(width, height);
-        aF = new double[maxDim];
-        bF = new double[maxDim];
-        cF = new double[maxDim];
-        fF = new double[maxDim];
-    }
-
-    ~Field() {
-        delete[] data;
-        delete[] buff;
-
-        delete[] aF;
-        delete[] bF;
-        delete[] cF;
-        delete[] fF;
-    }
+    Field(size_t _width, size_t _height, size_t _tStep, double _epsilon = 0.0001);
+    ~Field();
 
     inline double& at(size_t row, size_t col);
 
     void print();
     void randomFill();
 
-    void fill(double val);
+    void fillInitial();
     void solve();
+    double time();
+    bool done();
 
 };
 

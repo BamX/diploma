@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2015 BX23. All rights reserved.
+//  Copyright (c) 2015 Nikolay Volosatov. All rights reserved.
 //
 
 #include <stdio.h>
@@ -7,11 +7,13 @@
 #include "field.h"
 
 int main(int argc, const char * argv[]) {
-    Field *field = new Field(6, 6);
-    field->fill(75000.0);
+    Field *field = new Field(6, 6, 100);
+    field->fillInitial();
 
-    field->solve();
-    field->print();
+    while (field->done() == false) {
+        field->solve();
+        field->print();
+    }
 
     return 0;
 }

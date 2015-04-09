@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		41359F7A1AD68008009C2DD0 /* factors.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41359F781AD68008009C2DD0 /* factors.cpp */; };
 		41D42E191ACAC9E100989E03 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41D42E181ACAC9E100989E03 /* main.cpp */; };
 		41D42E1C1ACAC9EE00989E03 /* field.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41D42E1A1ACAC9EE00989E03 /* field.cpp */; };
 /* End PBXBuildFile section */
@@ -24,6 +25,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		41359F781AD68008009C2DD0 /* factors.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = factors.cpp; sourceTree = "<group>"; };
+		41359F791AD68008009C2DD0 /* factors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = factors.h; sourceTree = "<group>"; };
 		41CE5CDD1AAF6DF000C5918F /* Diploma */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Diploma; sourceTree = BUILT_PRODUCTS_DIR; };
 		41D42E181ACAC9E100989E03 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		41D42E1A1ACAC9EE00989E03 /* field.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = field.cpp; sourceTree = "<group>"; };
@@ -60,6 +63,8 @@
 		41CE5CDF1AAF6DF000C5918F /* Diploma */ = {
 			isa = PBXGroup;
 			children = (
+				41359F791AD68008009C2DD0 /* factors.h */,
+				41359F781AD68008009C2DD0 /* factors.cpp */,
 				41D42E1B1ACAC9EE00989E03 /* field.h */,
 				41D42E1A1ACAC9EE00989E03 /* field.cpp */,
 				41D42E181ACAC9E100989E03 /* main.cpp */,
@@ -94,7 +99,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0620;
-				ORGANIZATIONNAME = BX23;
+				ORGANIZATIONNAME = "Nikolay Volosatov";
 				TargetAttributes = {
 					41CE5CDC1AAF6DF000C5918F = {
 						CreatedOnToolsVersion = 6.2;
@@ -124,6 +129,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				41D42E1C1ACAC9EE00989E03 /* field.cpp in Sources */,
+				41359F7A1AD68008009C2DD0 /* factors.cpp in Sources */,
 				41D42E191ACAC9E100989E03 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -238,6 +244,7 @@
 				41CE5CE61AAF6DF000C5918F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
