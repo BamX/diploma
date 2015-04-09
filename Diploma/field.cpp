@@ -47,7 +47,7 @@ void Field::randomFill() {
 }
 
 void Field::print() {
-    printf("Field [%zux%zu]:\n", width, height);
+    printf("Field [%zux%zu](itrs %zu):\n", width, height, lastIterrationsCount);
     for (size_t index = 0, len = width * height; index < len; ++index) {
         printf("%.2f\t", data[index]);
         if ((index + 1) % width == 0) {
@@ -58,6 +58,11 @@ void Field::print() {
 
 void Field::fillInitial() {
     t = 0;
+    lastIterrationsCount = 0;
+    if (transposed) {
+        transpose();
+    }
+
     for (size_t index = 0, len = width * height; index < len; ++index) {
         buff[index] = data[index] = ftr::TStart;
     }
@@ -135,15 +140,22 @@ double Field::solve(size_t row, bool first)
     return maxDelta;
 }
 
-void Field::solveRows() {
+size_t Field::solveRows() {
+    size_t maxIterationsCount = 0;
+
     for (size_t row = 0; row < height; ++row) {
         double delta = solve(row, true);
+        size_t iterationsCount = 1;
 
         while (delta > epsilon) {
             delta = solve(row, false);
+            ++iterationsCount;
         }
+        maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
     }
+
     flushBuffer();
+    return maxIterationsCount;
 }
 
 void Field::solve() {
@@ -151,9 +163,12 @@ void Field::solve() {
         return;
     }
 
-    solveRows();
+    lastIterrationsCount = 0;
+
+    lastIterrationsCount += solveRows();
     transpose();
-    solveRows();
+
+    lastIterrationsCount += solveRows();
     transpose();
 
     t += dT;

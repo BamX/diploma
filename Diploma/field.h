@@ -18,10 +18,11 @@ class Field {
     double t;
     double hX, hY, dT;
     double epsilon;
+    size_t lastIterrationsCount;
 
     void fillFactors(size_t row, bool first);
     double solve(size_t row, bool first);
-    void solveRows();
+    size_t solveRows();
     void transpose();
     void flushBuffer();
 
