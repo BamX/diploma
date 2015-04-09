@@ -81,8 +81,33 @@ void Field::flushBuffer() {
     }
 }
 
-void Field::fillFactors(size_t line, bool first) {
-    // TODO: fill factors
+void Field::fillFactors(size_t row, bool first) {
+    size_t indexPrefix = row * width;
+    double h = transposed ? hY : hX;
+    double thF = dT / (h * h);
+
+    double aXPH = 1, aXMH = 1, aX = 1, aH = 1, aXXMH = 1; // TODO: What is lambda?
+
+    aF[0] = 0;
+    cF[0] = 1;
+    bF[0] = -(dT * aH / (dT * aH + h * h / 2));
+    fF[0] = h * h / 2 * data[indexPrefix] / (dT * aH + h * h / 2);
+
+    double TPrev = data[indexPrefix + width - 1];
+    double TPrev4 = TPrev * TPrev * TPrev * TPrev;
+    aF[width - 1] = dT * aXXMH / (dT * ftr::alpha(t) * h + dT * aXXMH - h * h / 2);
+    cF[width - 1] = 1;
+    bF[width - 1] = 0;
+    fF[width - 1] =
+        dT * h * (ftr::alpha(t) * ftr::TEnv4 + h / (2 * dT) * data[indexPrefix + width - 1] - ftr::sigma(t) * TPrev4) /
+        (dT * ftr::alpha(t) * h + dT * aXXMH - h * h / 2);
+
+    for (size_t index = 1; index < width - 1; ++index) {
+        fF[index] = data[indexPrefix + index];
+        aF[index] = thF * aXPH;
+        bF[index] = thF * aXMH;
+        cF[index] = -(1 + thF * (aXPH - aX));
+    }
 }
 
 double Field::solve(size_t row, bool first)
@@ -98,13 +123,13 @@ double Field::solve(size_t row, bool first)
 
     size_t indexPrefix = row * width;
     double newValue = fF[width - 1] / cF[width - 1];
-    double maxDelta = fabs(newValue - data[indexPrefix + width - 1]);
-    data[indexPrefix + width - 1] = newValue;
+    double maxDelta = fabs(newValue - buff[indexPrefix + width - 1]);
+    buff[indexPrefix + width - 1] = newValue;
 
     for (ssize_t i = width - 2; i >= 0; --i) {
         newValue = (fF[i] - bF[i] * data[indexPrefix + i + 1]) / cF[i];
-        maxDelta = std::max(maxDelta, fabs(newValue - data[indexPrefix + i]));
-        data[indexPrefix + i] = newValue;
+        maxDelta = std::max(maxDelta, fabs(newValue - buff[indexPrefix + i]));
+        buff[indexPrefix + i] = newValue;
     }
 
     return maxDelta;

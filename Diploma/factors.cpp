@@ -20,6 +20,7 @@ namespace ftr {
 
     double const TStart = 1768; // К
     double const TEnv = 303; // К
+    double const TEnv4 = TEnv * TEnv * TEnv * TEnv; // К
 
     inline double Li(unsigned short i, double x) {
         switch (i) {
@@ -78,7 +79,7 @@ namespace ftr {
         return (cLikS - 0.7) / (cLikS - cSolS);
     }
 
-    inline double cEf(double T, double dT) {
+    double cEf(double T, double dT) {
         if (T >= ftr::TLik) {
             return ftr::cLik;
         }
@@ -90,7 +91,7 @@ namespace ftr {
         }
     }
 
-    inline double alpha(double t) {
+    double alpha(double t) {
         double x = t * moveVelocity;
 
         if (x <= 0.4) {
@@ -113,7 +114,7 @@ namespace ftr {
         }
     }
 
-    inline double sigma(double t) {
+    double sigma(double t) {
         double x = t * moveVelocity;
 
         if (x <= 0.4 + 0.4 + 0.47 + 0.95 + 1.51) {

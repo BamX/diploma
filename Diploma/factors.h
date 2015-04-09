@@ -9,10 +9,10 @@
 
 namespace ftr {
 
-    inline double cEf(double T, double dT);
+    double cEf(double T, double dT);
     
-    inline double alpha(double t);
-    inline double sigma(double t);
+    double alpha(double t);
+    double sigma(double t);
 
     extern double const X1;
     extern double const X2;
@@ -20,6 +20,7 @@ namespace ftr {
 
     extern double const TStart;
     extern double const TEnv;
+    extern double const TEnv4;
 
 };
 

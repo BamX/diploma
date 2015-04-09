@@ -19,7 +19,7 @@ class Field {
     double hX, hY, dT;
     double epsilon;
 
-    void fillFactors(size_t line, bool first);
+    void fillFactors(size_t row, bool first);
     double solve(size_t row, bool first);
     void solveRows();
     void transpose();
