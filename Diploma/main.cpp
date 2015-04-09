@@ -7,12 +7,12 @@
 #include "field.h"
 
 int main(int argc, const char * argv[]) {
-    Field *field = new Field(6, 6, 100);
-    field->fillInitial();
+    Field field(6, 6, 100);
+    field.fillInitial();
 
-    while (field->done() == false) {
-        field->solve();
-        field->print();
+    while (field.done() == false) {
+        field.solve();
+        field.print();
     }
 
     return 0;
