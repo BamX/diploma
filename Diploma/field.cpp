@@ -4,14 +4,15 @@
 
 #include "field.h"
 #include "factors.h"
+#include <iostream>
 #include <cmath>
 
 Field::Field(size_t _width, size_t _height, size_t _tStep, double _epsilon) {
     width = _width;
     height = _height;
 
-    hX = ftr::X1 / _width;
-    hY = ftr::X2 / _height;
+    hX = ftr.X1() / _width;
+    hY = ftr.X2() / _height;
     dT = _tStep;
     epsilon = _epsilon;
     transposed = false;
@@ -64,7 +65,7 @@ void Field::fillInitial() {
     }
 
     for (size_t index = 0, len = width * height; index < len; ++index) {
-        buff[index] = data[index] = ftr::TStart;
+        buff[index] = data[index] = ftr.TStart();
     }
 }
 
@@ -100,12 +101,12 @@ void Field::fillFactors(size_t row, bool first) {
 
     double TPrev = data[indexPrefix + width - 1];
     double TPrev4 = TPrev * TPrev * TPrev * TPrev;
-    aF[width - 1] = dT * aXXMH / (dT * ftr::alpha(t) * h + dT * aXXMH - h * h / 2);
+    aF[width - 1] = dT * aXXMH / (dT * ftr.alpha(t) * h + dT * aXXMH - h * h / 2);
     cF[width - 1] = 1;
     bF[width - 1] = 0;
     fF[width - 1] =
-        dT * h * (ftr::alpha(t) * ftr::TEnv4 + h / (2 * dT) * data[indexPrefix + width - 1] - ftr::sigma(t) * TPrev4) /
-        (dT * ftr::alpha(t) * h + dT * aXXMH - h * h / 2);
+        dT * h * (ftr.alpha(t) * ftr.TEnv4() + h / (2 * dT) * data[indexPrefix + width - 1] - ftr.sigma(t) * TPrev4) /
+        (dT * ftr.alpha(t) * h + dT * aXXMH - h * h / 2);
 
     for (size_t index = 1; index < width - 1; ++index) {
         fF[index] = data[indexPrefix + index];
@@ -179,5 +180,5 @@ double Field::time() {
 }
 
 bool Field::done() {
-    return t >= ftr::totalTime;
+    return t >= ftr.totalTime();
 }

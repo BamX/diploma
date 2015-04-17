@@ -16,11 +16,7 @@ namespace ftr {
 
     double const X1 = 0.15;  // м
     double const X2 = 0.125; // м
-    double const totalTime = (0.4 + 0.4 + 0.47 + 0.95 + 1.51 + 18.97) / moveVelocity; // с
-
-    double const TStart = 1768; // К
-    double const TEnv = 303; // К
-    double const TEnv4 = TEnv * TEnv * TEnv * TEnv; // К
+    double const totalLength = (0.4 + 0.4 + 0.47 + 0.95 + 1.51 + 18.97); // с
 
     inline double Li(unsigned short i, double x) {
         switch (i) {
@@ -78,50 +74,77 @@ namespace ftr {
         double cSolS = -11.0388 + 0.278656e-1 * T - 0.120163e-4 * T * T;
         return (cLikS - 0.7) / (cLikS - cSolS);
     }
+}
 
-    double cEf(double T, double dT) {
-        if (T >= ftr::TLik) {
-            return ftr::cLik;
-        }
-        else if (T > ftr::TSol) {
-            return ftr::cSol(T) - ftr::L * (ftr::sigm(T + dT) - ftr::sigm(T)) / dT;
-        }
-        else {
-            return ftr::cSol(T);
-        }
+double Factors::cEf(double T, double dT) const {
+    if (T >= ftr::TLik) {
+        return ftr::cLik;
     }
-
-    double alpha(double t) {
-        double x = t * moveVelocity;
-
-        if (x <= 0.4) {
-            return 2100;
-        }
-        else if (x <= 0.4 + 0.4) {
-            return 60;
-        }
-        else if (x <= 0.4 + 0.4 + 0.47) {
-            return 850;
-        }
-        else if (x <= 0.4 + 0.4 + 0.47 + 0.95) {
-            return 120;
-        }
-        else if (x <= 0.4 + 0.4 + 0.47 + 0.95 + 1.51) {
-            return 40;
-        }
-        else {
-            return 25;
-        }
+    else if (T > ftr::TSol) {
+        return ftr::cSol(T) - ftr::L * (ftr::sigm(T + dT) - ftr::sigm(T)) / dT;
     }
-
-    double sigma(double t) {
-        double x = t * moveVelocity;
-
-        if (x <= 0.4 + 0.4 + 0.47 + 0.95 + 1.51) {
-            return 0;
-        }
-        else {
-            return 3.2e-8;
-        }
+    else {
+        return ftr::cSol(T);
     }
+}
+
+double Factors::alpha(double t) const {
+    double x = t * ftr::moveVelocity;
+
+    if (x <= 0.4) {
+        return 2100;
+    }
+    else if (x <= 0.4 + 0.4) {
+        return 60;
+    }
+    else if (x <= 0.4 + 0.4 + 0.47) {
+        return 850;
+    }
+    else if (x <= 0.4 + 0.4 + 0.47 + 0.95) {
+        return 120;
+    }
+    else if (x <= 0.4 + 0.4 + 0.47 + 0.95 + 1.51) {
+        return 40;
+    }
+    else {
+        return 25;
+    }
+}
+
+double Factors::sigma(double t) const {
+    double x = t * ftr::moveVelocity;
+
+    if (x <= 0.4 + 0.4 + 0.47 + 0.95 + 1.51) {
+        return 0;
+    }
+    else {
+        return 3.2e-8;
+    }
+}
+
+double Factors::X1() const {
+    return config.value("X1");
+}
+
+double Factors::X2() const {
+    return config.value("X2");
+}
+
+double Factors::totalTime() const {
+    return ftr::totalLength / config.value("Speed");
+}
+
+double Factors::TStart() const {
+    return config.value("InitT");
+}
+
+double Factors::TEnv() const {
+    return config.value("EnvT");
+}
+
+double Factors::TEnv4() const {
+    double value = TEnv();
+    value *= value;
+    value *= value;
+    return value;
 }

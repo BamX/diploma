@@ -5,9 +5,11 @@
 #ifndef __Diploma__field__
 #define __Diploma__field__
 
-#include <iostream>
+#include "factors.h"
 
 class Field {
+    Factors ftr;
+
     double *data, *buff;
     double *aF, *bF, *cF, *fF;
 

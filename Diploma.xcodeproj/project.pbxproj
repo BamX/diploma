@@ -7,24 +7,30 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		412688681AE113E600E54667 /* config.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 412688661AE113E600E54667 /* config.cpp */; };
 		41359F7A1AD68008009C2DD0 /* factors.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41359F781AD68008009C2DD0 /* factors.cpp */; };
 		41D42E191ACAC9E100989E03 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41D42E181ACAC9E100989E03 /* main.cpp */; };
 		41D42E1C1ACAC9EE00989E03 /* field.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41D42E1A1ACAC9EE00989E03 /* field.cpp */; };
+		41DF05551AE11B4700F3955B /* config.ini in CopyFiles */ = {isa = PBXBuildFile; fileRef = 412688691AE1183A00E54667 /* config.ini */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		41CE5CDB1AAF6DF000C5918F /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
+			buildActionMask = 12;
+			dstPath = "";
+			dstSubfolderSpec = 6;
 			files = (
+				41DF05551AE11B4700F3955B /* config.ini in CopyFiles */,
 			);
-			runOnlyForDeploymentPostprocessing = 1;
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		412688661AE113E600E54667 /* config.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = config.cpp; sourceTree = "<group>"; };
+		412688671AE113E600E54667 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
+		412688691AE1183A00E54667 /* config.ini */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; path = config.ini; sourceTree = "<group>"; };
 		41359F781AD68008009C2DD0 /* factors.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = factors.cpp; sourceTree = "<group>"; };
 		41359F791AD68008009C2DD0 /* factors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = factors.h; sourceTree = "<group>"; };
 		41CE5CDD1AAF6DF000C5918F /* Diploma */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Diploma; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -63,6 +69,9 @@
 		41CE5CDF1AAF6DF000C5918F /* Diploma */ = {
 			isa = PBXGroup;
 			children = (
+				412688691AE1183A00E54667 /* config.ini */,
+				412688671AE113E600E54667 /* config.h */,
+				412688661AE113E600E54667 /* config.cpp */,
 				41359F791AD68008009C2DD0 /* factors.h */,
 				41359F781AD68008009C2DD0 /* factors.cpp */,
 				41D42E1B1ACAC9EE00989E03 /* field.h */,
@@ -129,6 +138,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				41D42E1C1ACAC9EE00989E03 /* field.cpp in Sources */,
+				412688681AE113E600E54667 /* config.cpp in Sources */,
 				41359F7A1AD68008009C2DD0 /* factors.cpp in Sources */,
 				41D42E191ACAC9E100989E03 /* main.cpp in Sources */,
 			);

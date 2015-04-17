@@ -5,22 +5,24 @@
 #ifndef __Diploma__factors__
 #define __Diploma__factors__
 
-#include <iostream>
+#include "config.h"
 
-namespace ftr {
+class Factors {
+    Config config;
+public:
 
-    double cEf(double T, double dT);
+    double cEf(double T, double dT) const;
     
-    double alpha(double t);
-    double sigma(double t);
+    double alpha(double t) const;
+    double sigma(double t) const;
 
-    extern double const X1;
-    extern double const X2;
-    extern double const totalTime;
+    double X1() const;
+    double X2() const;
+    double totalTime() const;
 
-    extern double const TStart;
-    extern double const TEnv;
-    extern double const TEnv4;
+    double TStart() const;
+    double TEnv() const;
+    double TEnv4() const;
 
 };
 
