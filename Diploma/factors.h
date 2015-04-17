@@ -16,6 +16,9 @@ public:
     double alpha(double t) const;
     double sigma(double t) const;
 
+    double lambda(double T) const;
+    double ro(double T) const;
+
     double X1() const;
     double X2() const;
     double totalTime() const;

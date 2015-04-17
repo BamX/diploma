@@ -14,9 +14,34 @@ namespace ftr {
     static double const L = 272; // кДж/кг
     static double const cLik = 710; // Дж/(кг * К)
 
-    double const X1 = 0.15;  // м
-    double const X2 = 0.125; // м
-    double const totalLength = (0.4 + 0.4 + 0.47 + 0.95 + 1.51 + 18.97); // с
+    static double const totalLength = (0.4 + 0.4 + 0.47 + 0.95 + 1.51 + 18.97); // с
+
+    static double Temps[] = { 273, 373, 473, 573, 673, 773, 873,
+        973, 1073, 1173, 1273, 1373, 1473, 1679, 1682, 1800
+    };
+    static double Lambds[] = {
+        52.56057, 51.35258, 49.16971, 46.22939, 42.74907, 38.94618, 35.03819,
+        31.24254, 24.06517, 25.37233, 26.95363, 28.32515, 29.40302, 31.62343,
+        28.0, 28.0
+    };
+    static double Ros[] = {
+        7885.884, 7845.138, 7804.392, 7763.646, 7722.9, 7682.901, 7647.512, 7621.141,
+        7631.934, 7572.359, 7512.151, 7453.459, 7398.322, 7190.562, 7000.0, 7000.0,
+    };
+
+    inline double Lambda(double T) {
+        size_t index = 0;
+        while (Temps[index] < T) ++index;
+        double alpha = (T - Temps[index - 1]) / (Temps[index] - Temps[index - 1]);
+        return Lambds[index - 1] + alpha * (Lambds[index] - Lambds[index - 1]);
+    }
+
+    inline double Ro(double T) {
+        size_t index = 0;
+        while (Temps[index] > T) ++index;
+        double alpha = (T - Temps[index - 1]) / (Temps[index] - Temps[index - 1]);
+        return Ros[index - 1] + alpha * (Ros[index] - Ros[index - 1]);
+    }
 
     inline double Li(unsigned short i, double x) {
         switch (i) {
@@ -120,6 +145,14 @@ double Factors::sigma(double t) const {
     else {
         return 3.2e-8;
     }
+}
+
+double Factors::lambda(double T) const {
+    return ftr::Lambda(T);
+}
+
+double Factors::ro(double T) const {
+    return ftr::Ro(T);
 }
 
 double Factors::X1() const {
