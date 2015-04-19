@@ -48,13 +48,15 @@ void Field::randomFill() {
 }
 
 void Field::print() {
-    printf("Field [%zux%zu](itrs: %zu, time: %.1f):\n", width, height, lastIterrationsCount, t);
-    for (size_t index = 0, len = width * height; index < len; ++index) {
-        printf("%.2f\t", data[index]);
-        if ((index + 1) % width == 0) {
-            printf("\n");
-        }
-    }
+    size_t x1index = ftr.X1View() / hX;
+    size_t x2index = ftr.X2View() / hY;
+    double x1factor = ftr.X1View() - x1index * hX;
+    double x2factor = ftr.X2View() - x2index * hY;
+
+    double value = data[x1index * width + x2index] + x1factor * data[x1index * width + x2index + 1];
+    value += x2factor * (data[(x1index + 1) * width + x2index] + x1factor * data[(x1index + 1) * width + x2index + 1]);
+
+    printf("Field [%zux%zu](itrs: %zu, time: %.1f)\tview: %.2f\n", width, height, lastIterrationsCount, t, value);
 }
 
 void Field::fillInitial() {
@@ -87,32 +89,43 @@ void Field::flushBuffer() {
     }
 }
 
+double Field::lambda(size_t row, size_t x) {
+    return ftr.lambda(at(row, x));
+}
+
+double Field::a(size_t row, size_t x) {
+    return 0.5 * (lambda(row, x) + lambda(row, x + 1));
+}
+
+double Field::roc(size_t row, size_t x) {
+    return ftr.ro(at(row, x)) * ftr.cEf(at(row, x));
+}
+
 void Field::fillFactors(size_t row, bool first) {
     size_t indexPrefix = row * width;
     double h = transposed ? hY : hX;
     double thF = dT / (h * h);
 
-    double aXPH = 1, aXMH = 1, aX = 1, aH = 1, aXXMH = 1; // TODO: What is lambda?
-
     aF[0] = 0;
     cF[0] = 1;
-    bF[0] = -(dT * aH / (dT * aH + h * h / 2));
-    fF[0] = h * h / 2 * data[indexPrefix] / (dT * aH + h * h / 2);
+    bF[0] = -(dT * lambda(row, 1) / (dT * lambda(row, 1) + h * h / 2));
+    fF[0] = h * h / 2 * data[indexPrefix] / (dT * lambda(row, 1) + h * h / 2);
 
     double TPrev = data[indexPrefix + width - 1];
     double TPrev4 = TPrev * TPrev * TPrev * TPrev;
-    aF[width - 1] = dT * aXXMH / (dT * ftr.alpha(t) * h + dT * aXXMH - h * h / 2);
+    aF[width - 1] = dT * lambda(row, width - 2) / (dT * ftr.alpha(t) * h + dT * lambda(row, width - 2) - h * h / 2);
     cF[width - 1] = 1;
     bF[width - 1] = 0;
     fF[width - 1] =
         dT * h * (ftr.alpha(t) * ftr.TEnv4() + h / (2 * dT) * data[indexPrefix + width - 1] - ftr.sigma(t) * TPrev4) /
-        (dT * ftr.alpha(t) * h + dT * aXXMH - h * h / 2);
+        (dT * ftr.alpha(t) * h + dT * lambda(row, width - 2) - h * h / 2);
 
     for (size_t index = 1; index < width - 1; ++index) {
-        fF[index] = data[indexPrefix + index];
-        aF[index] = thF * aXPH;
-        bF[index] = thF * aXMH;
-        cF[index] = -(1 + thF * (aXPH - aX));
+        double thFROC = thF / roc(row, index);
+        fF[index] = -data[indexPrefix + index];
+        aF[index] = thFROC * a(row, index + 1);
+        bF[index] = thFROC * a(row, index - 1);
+        cF[index] = -(1 + thFROC * (a(row, index + 1) - a(row, index)));
     }
 }
 

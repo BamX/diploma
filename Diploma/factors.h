@@ -11,7 +11,7 @@ class Factors {
     Config config;
 public:
 
-    double cEf(double T, double dT) const;
+    double cEf(double T) const;
     
     double alpha(double t) const;
     double sigma(double t) const;
@@ -26,6 +26,9 @@ public:
     double TStart() const;
     double TEnv() const;
     double TEnv4() const;
+
+    double X1View() const;
+    double X2View() const;
 
 };
 

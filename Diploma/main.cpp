@@ -7,10 +7,12 @@
 #include "field.h"
 
 int main(int argc, const char * argv[]) {
-    Field field(6, 6, 100);
+    Field field(60, 60, 1.2);
     field.fillInitial();
+    field.print();
 
-    while (field.done() == false) {
+    size_t limit = 50;
+    while (field.done() == false && limit --> 0) {
         field.solve();
         field.print();
     }

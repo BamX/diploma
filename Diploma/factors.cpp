@@ -10,6 +10,7 @@ namespace ftr {
 
     static double const TLik = 1738; // К
     static double const TSol = 1679; // К
+    static double const dT = 1; // K ???
 
     static double const L = 272; // кДж/кг
     static double const cLik = 710; // Дж/(кг * К)
@@ -101,12 +102,12 @@ namespace ftr {
     }
 }
 
-double Factors::cEf(double T, double dT) const {
+double Factors::cEf(double T) const {
     if (T >= ftr::TLik) {
         return ftr::cLik;
     }
     else if (T > ftr::TSol) {
-        return ftr::cSol(T) - ftr::L * (ftr::sigm(T + dT) - ftr::sigm(T)) / dT;
+        return ftr::cSol(T) - ftr::L * (ftr::sigm(T + ftr::dT) - ftr::sigm(T)) / ftr::dT;
     }
     else {
         return ftr::cSol(T);
@@ -180,4 +181,12 @@ double Factors::TEnv4() const {
     value *= value;
     value *= value;
     return value;
+}
+
+double Factors::X1View() const {
+    return config.value("X1View");
+}
+
+double Factors::X2View() const {
+    return config.value("X2View");
 }

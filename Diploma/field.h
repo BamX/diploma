@@ -28,6 +28,10 @@ class Field {
     void transpose();
     void flushBuffer();
 
+    double lambda(size_t row, size_t x);
+    double a(size_t row, size_t x);
+    double roc(size_t row, size_t x);
+
 public:
     Field(size_t _width, size_t _height, size_t _tStep, double _epsilon = 0.0001);
     ~Field();
