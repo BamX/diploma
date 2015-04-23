@@ -7,13 +7,13 @@
 #include <iostream>
 #include <cmath>
 
-Field::Field(size_t _width, size_t _height, size_t _tStep, double _epsilon) {
+Field::Field(size_t _width, size_t _height, size_t _tLength, double _epsilon) {
     width = _width;
     height = _height;
 
     hX = ftr.X1() / _width;
     hY = ftr.X2() / _height;
-    dT = _tStep;
+    dT = ftr.totalTime() / _tLength;
     epsilon = _epsilon;
     transposed = false;
 
@@ -56,7 +56,7 @@ void Field::print() {
     double value = data[x1index * width + x2index] + x1factor * data[x1index * width + x2index + 1];
     value += x2factor * (data[(x1index + 1) * width + x2index] + x1factor * data[(x1index + 1) * width + x2index + 1]);
 
-    printf("Field [%zux%zu](itrs: %zu, time: %.1f)\tview: %.2f\n", width, height, lastIterrationsCount, t, value);
+    printf("Field [%zux%zu](itrs: %zu, time: %.5f)\tview: %.4f\n", width, height, lastIterrationsCount, t, value);
 }
 
 void Field::fillInitial() {
@@ -94,7 +94,9 @@ double Field::lambda(size_t row, size_t x) {
 }
 
 double Field::a(size_t row, size_t x) {
-    return 0.5 * (lambda(row, x) + lambda(row, x + 1));
+    if (x == 0) return lambda(row, 0);
+    if (x == width) return lambda(row, width - 1);
+    return 0.5 * (lambda(row, x) + lambda(row, x - 1));
 }
 
 double Field::roc(size_t row, size_t x) {
@@ -108,17 +110,17 @@ void Field::fillFactors(size_t row, bool first) {
 
     aF[0] = 0;
     cF[0] = 1;
-    bF[0] = -(dT * lambda(row, 1) / (dT * lambda(row, 1) + h * h / 2));
-    fF[0] = h * h / 2 * data[indexPrefix] / (dT * lambda(row, 1) + h * h / 2);
+    bF[0] = -(dT * a(row, 1) / (dT * a(row, 1) + h * h / 2));
+    fF[0] = h * h / 2 * data[indexPrefix] / (dT * a(row, 1) + h * h / 2);
 
     double TPrev = data[indexPrefix + width - 1];
     double TPrev4 = TPrev * TPrev * TPrev * TPrev;
-    aF[width - 1] = dT * lambda(row, width - 2) / (dT * ftr.alpha(t) * h + dT * lambda(row, width - 2) - h * h / 2);
+    aF[width - 1] = -(dT * a(row, width - 2) / (dT * ftr.alpha(t) * h + dT * a(row, width - 2) - h * h / 2));
     cF[width - 1] = 1;
     bF[width - 1] = 0;
     fF[width - 1] =
-        dT * h * (ftr.alpha(t) * ftr.TEnv4() + h / (2 * dT) * data[indexPrefix + width - 1] - ftr.sigma(t) * TPrev4) /
-        (dT * ftr.alpha(t) * h + dT * lambda(row, width - 2) - h * h / 2);
+        dT * h * (ftr.alpha(t) + ftr.sigma(t) * ftr.TEnv4() + h / (2 * dT) * TPrev - ftr.sigma(t) * TPrev4) /
+        (dT * ftr.alpha(t) * h + dT * a(row, width - 2) - h * h / 2);
 
     for (size_t index = 1; index < width - 1; ++index) {
         double thFROC = thF / roc(row, index);
@@ -129,10 +131,8 @@ void Field::fillFactors(size_t row, bool first) {
     }
 }
 
-double Field::solve(size_t row, bool first)
+double Field::solve(size_t row)
 {
-    fillFactors(row, first);
-
     double m = 0;
     for (size_t i = 1; i < width; ++i) {
         m = aF[i] / cF[i - 1];
@@ -140,29 +140,54 @@ double Field::solve(size_t row, bool first)
         fF[i] -= m * fF[i - 1];
     }
 
-    size_t indexPrefix = row * width;
+    double *y = buff + row * width;
+
     double newValue = fF[width - 1] / cF[width - 1];
-    double maxDelta = fabs(newValue - buff[indexPrefix + width - 1]);
-    buff[indexPrefix + width - 1] = newValue;
+    double maxDelta = fabs(newValue - y[width - 1]);
+    y[width - 1] = newValue;
 
     for (ssize_t i = width - 2; i >= 0; --i) {
-        newValue = (fF[i] - bF[i] * data[indexPrefix + i + 1]) / cF[i];
-        maxDelta = std::max(maxDelta, fabs(newValue - buff[indexPrefix + i]));
-        buff[indexPrefix + i] = newValue;
+        newValue = (fF[i] - bF[i] * y[i + 1]) / cF[i];
+
+        maxDelta = std::max(maxDelta, fabs(newValue - y[i]));
+        y[i] = newValue;
     }
 
     return maxDelta;
+}
+
+void Field::test() {
+    size_t w = width;
+    aF[0] = 0; aF[1] = 1; aF[2] = 1; aF[3] = 1; aF[4] = 1;
+    bF[0] = 3; bF[1] = -1; bF[2] = 1; bF[3] = -1; bF[4] = 0;
+    cF[0] = 4; cF[1] = 2; cF[2] = 4; cF[3] = 2; cF[4] = 2;
+    fF[0] = 4; fF[1] = 2; fF[2] = 7.5; fF[3] = 1; fF[4] = -3;
+    data[0] = -0.540909; data[1] = 2.05455; data[2] = 1.56818; data[3] = -0.827273; data[4] = -1.08636;
+
+    width = 5;
+
+    solve(0);
+
+    for (size_t i = 0; i < 5; ++i) {
+        if (fabs(data[i] - buff[i]) > 0.00001) {
+            printf("Error: %lu\n", i);
+        }
+    }
+
+    width = w;
 }
 
 size_t Field::solveRows() {
     size_t maxIterationsCount = 0;
 
     for (size_t row = 0; row < height; ++row) {
-        double delta = solve(row, true);
+        fillFactors(row, true);
+        double delta = solve(row);
         size_t iterationsCount = 1;
 
         while (delta > epsilon) {
-            delta = solve(row, false);
+            fillFactors(row, false);
+            delta = solve(row);
             ++iterationsCount;
         }
         maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
