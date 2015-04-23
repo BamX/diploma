@@ -30,6 +30,9 @@ namespace ftr {
         7631.934, 7572.359, 7512.151, 7453.459, 7398.322, 7190.562, 7000.0, 7000.0,
     };
 
+    static double Ti[] = { 1000, 1033, 923, 1033 };
+    static double dTi[] = { 70, 350, 1100, 170 };
+
     inline double Lambda(double T) {
         size_t index = 0;
         while (Temps[index] < T) ++index;
@@ -46,51 +49,23 @@ namespace ftr {
 
     inline double Li(unsigned short i, double x) {
         switch (i) {
-            case 1:
+            case 0:
                 return 44076 - 85622 * x * x + 50357 * x;
-            case 2:
+            case 1:
                 return 5163.2 - 74009 * x * x + 70232 * x;
-            case 3:
+            case 2:
                 return 2622.3 - 92590 * x * x + 80523 * x;
-            case 4:
+            case 3:
                 return 14775 - 154544 * x * x + 142489 * x;
-        }
-        return 0.0;
-    }
-
-    inline double Ti(unsigned short i) {
-        switch (i) {
-            case 1:
-                return 1000;
-            case 2:
-                return 1033;
-            case 3:
-                return 923;
-            case 4:
-                return 1033;
-        }
-        return 0.0;
-    }
-
-    inline double dTi(unsigned short i) {
-        switch (i) {
-            case 1:
-                return 70;
-            case 2:
-                return 350;
-            case 3:
-                return 1100;
-            case 4:
-                return 170;
         }
         return 0.0;
     }
 
     inline double cSol(double T) {
         double result = 469 + 0.16 * (T - 323);
-        for (unsigned short i = 1; i <= 4; ++i) {
-            double tC = (Ti(i) - T) / dTi(i);
-            result += 4.5141 * Li(i, T) / dTi(i) * exp(-16 * tC * tC);
+        for (unsigned short i = 0; i < 4; ++i) {
+            double tC = (Ti[i] - T) / dTi[i];
+            result += 4.5141 * Li(i, T) / dTi[i] * exp(-16 * tC * tC);
         }
         return result;
     }
