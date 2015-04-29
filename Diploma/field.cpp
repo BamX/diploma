@@ -125,8 +125,8 @@ void Field::fillFactors(size_t row, bool first) {
 
     aF[0] = 0;
     cF[0] = 1;
-    bF[0] = -(dT * a(row, 1) / (dT * a(row, 1) + h * h / 2));
-    fF[0] = h * h / 2 * data[indexPrefix] / (dT * a(row, 1) + h * h / 2);
+    bF[0] = -(dT * a(row, 1) / (dT * a(row, 1) + h * h / 2 - h * dT));
+    fF[0] = h * h / 2 * data[indexPrefix] / (dT * a(row, 1) + h * h / 2 - h * dT);
 
     double TPrev = data[indexPrefix + width - 1];
     double TPrev4 = TPrev * TPrev * TPrev * TPrev;

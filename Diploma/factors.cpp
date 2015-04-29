@@ -130,7 +130,7 @@ double Factors::sigma(double t) const {
 }
 
 double Factors::lambda(double T) const {
-    return 1;
+    return -1;
 
     return ftr::Lambda(T);
 }
@@ -154,7 +154,7 @@ double Factors::totalTime() const {
 }
 
 double Factors::TStart() const {
-    return 2;
+    return 0;
     return config.value("InitT");
 }
 
