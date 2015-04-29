@@ -78,6 +78,8 @@ namespace ftr {
 }
 
 double Factors::cEf(double T) const {
+    return 1;
+
     if (T >= ftr::TLik) {
         return ftr::cLik;
     }
@@ -90,6 +92,8 @@ double Factors::cEf(double T) const {
 }
 
 double Factors::alpha(double t) const {
+    return 1;
+
     double x = t * ftr::moveVelocity;
 
     if (x <= 0.4) {
@@ -113,6 +117,8 @@ double Factors::alpha(double t) const {
 }
 
 double Factors::sigma(double t) const {
+    return 0;
+
     double x = t * ftr::moveVelocity;
 
     if (x <= 0.4 + 0.4 + 0.47 + 0.95 + 1.51) {
@@ -124,10 +130,14 @@ double Factors::sigma(double t) const {
 }
 
 double Factors::lambda(double T) const {
+    return 1;
+
     return ftr::Lambda(T);
 }
 
 double Factors::ro(double T) const {
+    return -2;
+
     return ftr::Ro(T);
 }
 
@@ -144,10 +154,12 @@ double Factors::totalTime() const {
 }
 
 double Factors::TStart() const {
+    return 2;
     return config.value("InitT");
 }
 
 double Factors::TEnv() const {
+    return 0;
     return config.value("EnvT");
 }
 

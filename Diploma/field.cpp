@@ -71,7 +71,7 @@ void Field::enableFileOutput() {
 }
 
 void Field::print() {
-    printf("Field [%zux%zu](itrs: %zu, time: %.5f)\tview: %.4f\n", width, height, lastIterrationsCount, t, view());
+    printf("Field [%zux%zu](itrs: %zu, time: %.5f)\tview: %.7f\n", width, height, lastIterrationsCount, t, view());
 }
 
 void Field::fillInitial() {
@@ -138,7 +138,7 @@ void Field::fillFactors(size_t row, bool first) {
         (dT * ftr.alpha(t) * h + dT * a(row, width - 2) - h * h / 2);
 
     for (size_t index = 1; index < width - 1; ++index) {
-        double thFROC = -thF / roc(row, index);
+        double thFROC = thF / roc(row, index);
         fF[index] = -data[indexPrefix + index];
         aF[index] = thFROC * a(row, index + 1);
         bF[index] = thFROC * a(row, index - 1);
