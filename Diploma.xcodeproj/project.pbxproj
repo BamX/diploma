@@ -11,7 +11,6 @@
 		41359F7A1AD68008009C2DD0 /* factors.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41359F781AD68008009C2DD0 /* factors.cpp */; };
 		41D42E191ACAC9E100989E03 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41D42E181ACAC9E100989E03 /* main.cpp */; };
 		41D42E1C1ACAC9EE00989E03 /* field.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41D42E1A1ACAC9EE00989E03 /* field.cpp */; };
-		41DF05551AE11B4700F3955B /* config.ini in CopyFiles */ = {isa = PBXBuildFile; fileRef = 412688691AE1183A00E54667 /* config.ini */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -21,7 +20,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 6;
 			files = (
-				41DF05551AE11B4700F3955B /* config.ini in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -30,10 +28,10 @@
 /* Begin PBXFileReference section */
 		412688661AE113E600E54667 /* config.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = config.cpp; sourceTree = "<group>"; };
 		412688671AE113E600E54667 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
-		412688691AE1183A00E54667 /* config.ini */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; path = config.ini; sourceTree = "<group>"; };
 		41359F781AD68008009C2DD0 /* factors.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = factors.cpp; sourceTree = "<group>"; };
 		41359F791AD68008009C2DD0 /* factors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = factors.h; sourceTree = "<group>"; };
 		41CE5CDD1AAF6DF000C5918F /* Diploma */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Diploma; sourceTree = BUILT_PRODUCTS_DIR; };
+		41CED2761AF1623C002334A4 /* output */ = {isa = PBXFileReference; lastKnownFileType = folder; path = output; sourceTree = "<group>"; };
 		41D42E181ACAC9E100989E03 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		41D42E1A1ACAC9EE00989E03 /* field.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = field.cpp; sourceTree = "<group>"; };
 		41D42E1B1ACAC9EE00989E03 /* field.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = field.h; sourceTree = "<group>"; };
@@ -53,6 +51,7 @@
 		41CE5CD41AAF6DF000C5918F = {
 			isa = PBXGroup;
 			children = (
+				41CED2761AF1623C002334A4 /* output */,
 				41CE5CDF1AAF6DF000C5918F /* Diploma */,
 				41CE5CDE1AAF6DF000C5918F /* Products */,
 			);
@@ -69,7 +68,6 @@
 		41CE5CDF1AAF6DF000C5918F /* Diploma */ = {
 			isa = PBXGroup;
 			children = (
-				412688691AE1183A00E54667 /* config.ini */,
 				412688671AE113E600E54667 /* config.h */,
 				412688661AE113E600E54667 /* config.cpp */,
 				41359F791AD68008009C2DD0 /* factors.h */,

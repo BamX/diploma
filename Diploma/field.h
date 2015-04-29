@@ -6,9 +6,11 @@
 #define __Diploma__field__
 
 #include "factors.h"
+#include <fstream>
 
 class Field {
     Factors ftr;
+    std::ofstream *fout;
 
     double *data, *buff;
     double *aF, *bF, *cF, *fF;
@@ -38,6 +40,7 @@ public:
 
     inline double& at(size_t row, size_t col);
 
+    void enableFileOutput();
     void print();
     void randomFill();
     void test();
@@ -46,6 +49,8 @@ public:
     void solve();
     double time();
     bool done();
+
+    double view();
 
 };
 

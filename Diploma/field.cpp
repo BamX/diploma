@@ -28,6 +28,11 @@ Field::Field(size_t _width, size_t _height, size_t _tLength, double _epsilon) {
 }
 
 Field::~Field() {
+    if (fout != NULL) {
+        fout->close();
+        delete fout;
+    }
+    
     delete[] data;
     delete[] buff;
 
@@ -47,7 +52,7 @@ void Field::randomFill() {
     }
 }
 
-void Field::print() {
+double Field::view() {
     size_t x1index = ftr.X1View() / hX;
     size_t x2index = ftr.X2View() / hY;
     double x1factor = ftr.X1View() - x1index * hX;
@@ -56,7 +61,17 @@ void Field::print() {
     double value = data[x1index * width + x2index] + x1factor * data[x1index * width + x2index + 1];
     value += x2factor * (data[(x1index + 1) * width + x2index] + x1factor * data[(x1index + 1) * width + x2index + 1]);
 
-    printf("Field [%zux%zu](itrs: %zu, time: %.5f)\tview: %.4f\n", width, height, lastIterrationsCount, t, value);
+    return value;
+}
+
+void Field::enableFileOutput() {
+    if (fout != NULL) {
+        fout = new std::ofstream("view.csv");
+    }
+}
+
+void Field::print() {
+    printf("Field [%zux%zu](itrs: %zu, time: %.5f)\tview: %.4f\n", width, height, lastIterrationsCount, t, view());
 }
 
 void Field::fillInitial() {
@@ -123,7 +138,7 @@ void Field::fillFactors(size_t row, bool first) {
         (dT * ftr.alpha(t) * h + dT * a(row, width - 2) - h * h / 2);
 
     for (size_t index = 1; index < width - 1; ++index) {
-        double thFROC = thF / roc(row, index);
+        double thFROC = -thF / roc(row, index);
         fF[index] = -data[indexPrefix + index];
         aF[index] = thFROC * a(row, index + 1);
         bF[index] = thFROC * a(row, index - 1);
@@ -211,6 +226,8 @@ void Field::solve() {
     transpose();
 
     t += dT;
+
+    *fout << t << "," << view() << "\n";
 }
 
 double Field::time() {
