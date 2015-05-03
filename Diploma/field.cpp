@@ -105,40 +105,34 @@ void Field::flushBuffer() {
     std::swap(data, buff);
 }
 
-double Field::lambda(size_t row, size_t x) {
-    return ftr.lambda(at(row, x));
-}
-
-double Field::roc(size_t row, size_t x) {
-    return ftr.ro(at(row, x)) * ftr.cEf(at(row, x));
-}
-
 void Field::fillFactors(size_t row, bool first) {
-    size_t indexPrefix = row * width;
-    double h = hX;
-    double thF = dT / (h * h);
+    double *rw = data + row * width;
+    double *brw = first ? rw : (buff + row * width);
+
+    double TPrev = brw[width - 1];
+    double TPrev4 = TPrev * TPrev * TPrev * TPrev;
 
     aF[0] = 0;
     cF[0] = 1;
     bF[0] = -1;
     fF[0] = 0;
 
-    double TPrev = first ? data[indexPrefix + width - 1] : buff[indexPrefix + width - 1];
-    double TPrev4 = TPrev * TPrev * TPrev * TPrev;
-    double C = dT * (lambda(row, width - 1) + lambda(row, width - 2)) + h * h - 2 * h * dT * ftr.alpha(t);
-    aF[width - 1] = -(dT * (lambda(row, width - 1) + lambda(row, width - 2))) / C;
-    cF[width - 1] = 1;
+    double lmXX = ftr.lambda(brw[width - 1]), lmXXm1 = ftr.lambda(brw[width - 2]);
+    aF[width - 1] = -dT * (lmXXm1 + lmXX);
+    cF[width - 1] = dT * (lmXXm1 + lmXX) + hX * hX + 2 * hX * dT * ftr.alpha(t);
     bF[width - 1] = 0;
-    fF[width - 1] = (h * h * data[indexPrefix + width - 1]
-                     + 2 * h * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
-                     - 2 * h * dT * ftr.alpha(t) * ftr.TEnv()) / C;
+    fF[width - 1] = hX * hX * rw[width - 1]
+                     - 2 * hX * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
+                     + 2 * hX * dT * ftr.alpha(t) * ftr.TEnv();
 
     for (size_t index = 1; index < width - 1; ++index) {
-        double thFROC = thF / roc(row, index);
-        fF[index] = data[indexPrefix + index];
-        aF[index] = -thFROC * (lambda(row, index) + lambda(row, index - 1)) * 0.5;
-        bF[index] = -thFROC * (lambda(row, index + 1) + lambda(row, index)) * 0.5;
-        cF[index] = 1 + thFROC * (lambda(row, index - 1) + 2 * lambda(row, index) + lambda(row, index + 1)) * 0.5;
+        double roc = ftr.ro(brw[index]) * ftr.cEf(brw[index]);
+        double lmXm1 = ftr.lambda(brw[index - 1]), lmX = ftr.lambda(brw[index]), lmXp1 = ftr.lambda(brw[index + 1]);
+
+        aF[index] = dT * (lmX + lmXm1);
+        bF[index] = dT * (lmXp1 + lmX);
+        cF[index] = -dT * (lmXp1 + 2 * lmX + lmXm1) - 2 * hX * hX * roc;
+        fF[index] = -2 * hX * hX * roc * rw[index];
     }
 }
 
