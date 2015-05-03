@@ -154,7 +154,7 @@ double Factors::totalTime() const {
 }
 
 double Factors::TStart() const {
-    return 0;
+    return M_E;
     return config.value("InitT");
 }
 
