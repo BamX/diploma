@@ -116,27 +116,29 @@ double Field::roc(size_t row, size_t x) {
 void Field::fillFactors(size_t row, bool first) {
     size_t indexPrefix = row * width;
     double h = hX;
-    double thF = dT / (h * h);
+    const double beta = 1;
 
+    double A = -2 * dT * (lambda(row, h) - lambda(row, 0)) - 2 * dT * h * beta * lambda(row, 0) - h * h;
     aF[0] = 0;
     cF[0] = 1;
-    bF[0] = -1 / (h + 1);
-    fF[0] = 0;
+    bF[0] = dT * (lambda(row, h) - lambda(row, 0)) / A;
+    fF[0] = - h * h * data[indexPrefix] / A;
 
     double TPrev = first ? data[indexPrefix + width - 1] : buff[indexPrefix + width - 1];
     double TPrev4 = TPrev * TPrev * TPrev * TPrev;
-    double C = (1 - h * ftr.alpha(t) / lambda(row, width - 1));
-    aF[width - 1] = 1 / C;
+    double C = dT * (lambda(row, width - 1) + lambda(row, width - 2)) + h * h - 2 * h * dT * ftr.alpha(t);
+    aF[width - 1] = -(dT * (lambda(row, width - 1) + lambda(row, width - 2))) / C;
     cF[width - 1] = 1;
     bF[width - 1] = 0;
-    fF[width - 1] = h * (ftr.sigma(t) * (TPrev4 - ftr.TEnv4()) - ftr.alpha(t) * ftr.TEnv()) / C;
+    fF[width - 1] = (h * h * data[indexPrefix + width - 1]
+                     + 2 * h * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
+                     - 2 * h * dT * ftr.alpha(t) * ftr.TEnv()) / C;
 
     for (size_t index = 1; index < width - 1; ++index) {
-        double thFROC = thF / roc(row, index);
-        fF[index] = data[indexPrefix + index];
-        aF[index] = -thFROC * (lambda(row, index) + lambda(row, index - 1)) * 0.5;
-        bF[index] = -thFROC * (lambda(row, index + 1) + lambda(row, index)) * 0.5;
-        cF[index] = 1 + thFROC * (lambda(row, index - 1) + 2 * lambda(row, index) + lambda(row, index + 1)) * 0.5;
+        aF[index] = dT * (lambda(row, index) + lambda(row, index - 1));
+        bF[index] = dT * (lambda(row, index + 1) + lambda(row, index));
+        cF[index] = -(dT * (lambda(row, index + 1) + 2 * lambda(row, index) + lambda(row, index - 1)) - 2 * h * h * roc(row, index));
+        fF[index] = -2 * h * h * roc(row, index) * data[indexPrefix + index];
     }
 }
 
