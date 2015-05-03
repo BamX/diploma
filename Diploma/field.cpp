@@ -16,6 +16,7 @@ Field::Field(size_t _width, size_t _height, size_t _tLength, double _epsilon) {
     dT = ftr.totalTime() / _tLength;
     epsilon = _epsilon;
     transposed = false;
+    fout = NULL;
 
     data = new double[height * width];
     buff = new double[height * width];
@@ -66,12 +67,13 @@ double Field::view() {
 
 void Field::enableFileOutput() {
     if (fout != NULL) {
-        fout = new std::ofstream("view.csv");
+        fout->close();
     }
+    fout = new std::ofstream("view.csv");
 }
 
 void Field::print() {
-    printf("Field [%zux%zu](itrs: %zu, time: %.5f)\tview: %.4f\n", width, height, lastIterrationsCount, t, view());
+    printf("Field [%zux%zu](itrs: %zu, time: %.5f)\tview: %.7f\n", width, height, lastIterrationsCount, t, view());
 }
 
 void Field::fillInitial() {
@@ -95,23 +97,16 @@ void Field::transpose() {
         data[index] = buff[index];
     }
     std::swap(width, height);
+    std::swap(hX, hY);
     transposed = transposed == false;
 }
 
 void Field::flushBuffer() {
-    for (size_t index = 0, len = width * height; index < len; ++index) {
-        data[index] = buff[index];
-    }
+    std::swap(data, buff);
 }
 
 double Field::lambda(size_t row, size_t x) {
     return ftr.lambda(at(row, x));
-}
-
-double Field::a(size_t row, size_t x) {
-    if (x == 0) return lambda(row, 0);
-    if (x == width) return lambda(row, width - 1);
-    return 0.5 * (lambda(row, x) + lambda(row, x - 1));
 }
 
 double Field::roc(size_t row, size_t x) {
@@ -120,29 +115,30 @@ double Field::roc(size_t row, size_t x) {
 
 void Field::fillFactors(size_t row, bool first) {
     size_t indexPrefix = row * width;
-    double h = transposed ? hY : hX;
+    double h = hX;
     double thF = dT / (h * h);
 
     aF[0] = 0;
     cF[0] = 1;
-    bF[0] = -(dT * a(row, 1) / (dT * a(row, 1) + h * h / 2));
-    fF[0] = h * h / 2 * data[indexPrefix] / (dT * a(row, 1) + h * h / 2);
+    bF[0] = -1;
+    fF[0] = 0;
 
-    double TPrev = data[indexPrefix + width - 1];
+    double TPrev = first ? data[indexPrefix + width - 1] : buff[indexPrefix + width - 1];
     double TPrev4 = TPrev * TPrev * TPrev * TPrev;
-    aF[width - 1] = -(dT * a(row, width - 2) / (dT * ftr.alpha(t) * h + dT * a(row, width - 2) - h * h / 2));
+    double C = dT * (lambda(row, width - 1) + lambda(row, width - 2)) + h * h - 2 * h * dT * ftr.alpha(t);
+    aF[width - 1] = -(dT * (lambda(row, width - 1) + lambda(row, width - 2))) / C;
     cF[width - 1] = 1;
     bF[width - 1] = 0;
-    fF[width - 1] =
-        dT * h * (ftr.alpha(t) + ftr.sigma(t) * ftr.TEnv4() + h / (2 * dT) * TPrev - ftr.sigma(t) * TPrev4) /
-        (dT * ftr.alpha(t) * h + dT * a(row, width - 2) - h * h / 2);
+    fF[width - 1] = (h * h * data[indexPrefix + width - 1]
+                     + 2 * h * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
+                     - 2 * h * dT * ftr.alpha(t) * ftr.TEnv()) / C;
 
     for (size_t index = 1; index < width - 1; ++index) {
-        double thFROC = -thF / roc(row, index);
-        fF[index] = -data[indexPrefix + index];
-        aF[index] = thFROC * a(row, index + 1);
-        bF[index] = thFROC * a(row, index - 1);
-        cF[index] = -(1 + thFROC * (a(row, index + 1) - a(row, index)));
+        double thFROC = thF / roc(row, index);
+        fF[index] = data[indexPrefix + index];
+        aF[index] = -thFROC * (lambda(row, index) + lambda(row, index - 1)) * 0.5;
+        bF[index] = -thFROC * (lambda(row, index + 1) + lambda(row, index)) * 0.5;
+        cF[index] = 1 + thFROC * (lambda(row, index - 1) + 2 * lambda(row, index) + lambda(row, index + 1)) * 0.5;
     }
 }
 
@@ -227,7 +223,9 @@ void Field::solve() {
 
     t += dT;
 
-    *fout << t << "," << view() << "\n";
+    if (fout != NULL) {
+        *fout << t << "," << view() << "\n";
+    }
 }
 
 double Field::time() {
