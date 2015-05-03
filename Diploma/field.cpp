@@ -125,13 +125,11 @@ void Field::fillFactors(size_t row, bool first) {
 
     double TPrev = first ? data[indexPrefix + width - 1] : buff[indexPrefix + width - 1];
     double TPrev4 = TPrev * TPrev * TPrev * TPrev;
-    double C = dT * (lambda(row, width - 1) + lambda(row, width - 2)) + h * h - 2 * h * dT * ftr.alpha(t);
-    aF[width - 1] = -(dT * (lambda(row, width - 1) + lambda(row, width - 2))) / C;
+    double C = (1 - h * ftr.alpha(t) / lambda(row, width - 1));
+    aF[width - 1] = 1 / C;
     cF[width - 1] = 1;
     bF[width - 1] = 0;
-    fF[width - 1] = (h * h * data[indexPrefix + width - 1]
-                     + 2 * h * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
-                     - 2 * h * dT * ftr.alpha(t) * ftr.TEnv()) / C;
+    fF[width - 1] = h * (ftr.sigma(t) * (TPrev4 - ftr.TEnv4()) - ftr.alpha(t) * ftr.TEnv()) / C;
 
     for (size_t index = 1; index < width - 1; ++index) {
         double thFROC = thF / roc(row, index);
