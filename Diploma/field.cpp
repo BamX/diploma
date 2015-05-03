@@ -114,12 +114,12 @@ void Field::fillFactors(size_t row, bool first) {
 
     aF[0] = 0;
     cF[0] = 1;
-    bF[0] = -1 / (hX + 1);
+    bF[0] = 1 / (hX + 1);
     fF[0] = 0;
 
     double lmXX = ftr.lambda(brw[width - 1]), lmXXm1 = ftr.lambda(brw[width - 2]);
     aF[width - 1] = -dT * (lmXXm1 + lmXX);
-    cF[width - 1] = dT * (lmXXm1 + lmXX) + hX * hX + 2 * hX * dT * ftr.alpha(t);
+    cF[width - 1] = -dT * (lmXXm1 + lmXX) - hX * hX + 2 * hX * dT * ftr.alpha(t);
     bF[width - 1] = 0;
     fF[width - 1] = hX * hX * rw[width - 1]
                      - 2 * hX * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
@@ -131,7 +131,7 @@ void Field::fillFactors(size_t row, bool first) {
 
         aF[index] = dT * (lmX + lmXm1);
         bF[index] = dT * (lmXp1 + lmX);
-        cF[index] = -(dT * (lmXp1 + 2 * lmX + lmXm1) - 2 * hX * hX * roc);
+        cF[index] = dT * (lmXp1 + 2 * lmX + lmXm1) - 2 * hX * hX * roc;
         fF[index] = -2 * hX * hX * roc * rw[index];
     }
 }
