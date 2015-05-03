@@ -107,7 +107,7 @@ void Field::flushBuffer() {
 
 void Field::fillFactors(size_t row, bool first) {
     double *rw = data + row * width;
-    double *brw = first ? rw : buff + row * width;
+    double *brw = first ? rw : (buff + row * width);
 
     double TPrev = brw[width - 1];
     double TPrev4 = TPrev * TPrev * TPrev * TPrev;
@@ -118,13 +118,12 @@ void Field::fillFactors(size_t row, bool first) {
     fF[0] = 0;
 
     double lmXX = ftr.lambda(brw[width - 1]), lmXXm1 = ftr.lambda(brw[width - 2]);
-    double C = dT * (lmXXm1 + lmXX) + hX * hX - 2 * hX * dT * ftr.alpha(t);
-    aF[width - 1] = -dT * (lmXXm1 + lmXX) / C;
-    cF[width - 1] = 1;
+    aF[width - 1] = -dT * (lmXXm1 + lmXX);
+    cF[width - 1] = dT * (lmXXm1 + lmXX) + hX * hX + 2 * hX * dT * ftr.alpha(t);
     bF[width - 1] = 0;
-    fF[width - 1] = (hX * hX * rw[width - 1]
-                     + 2 * hX * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
-                     - 2 * hX * dT * ftr.alpha(t) * ftr.TEnv()) / C;
+    fF[width - 1] = hX * hX * rw[width - 1]
+                     - 2 * hX * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
+                     + 2 * hX * dT * ftr.alpha(t) * ftr.TEnv();
 
     for (size_t index = 1; index < width - 1; ++index) {
         double roc = ftr.ro(brw[index]) * ftr.cEf(brw[index]);
