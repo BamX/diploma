@@ -158,10 +158,22 @@ double Factors::TEnv4() const {
     return value;
 }
 
-double Factors::X1View() const {
-    return config.value("X1View");
+size_t Factors::ViewCount() const {
+    return config.value("ViewCount");
 }
 
-double Factors::X2View() const {
-    return config.value("X2View");
+double Factors::X1View(size_t index) const {
+    char buff[10];
+    snprintf(buff, 10, "View%luX1", index);
+    std::string key = buff;
+
+    return config.value(key);
+}
+
+double Factors::X2View(size_t index) const {
+    char buff[10];
+    snprintf(buff, 10, "View%luX2", index);
+    std::string key = buff;
+
+    return config.value(key);
 }
