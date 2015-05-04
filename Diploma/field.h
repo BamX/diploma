@@ -12,7 +12,7 @@ class Field {
     Factors ftr;
     std::ofstream *fout;
 
-    double *data, *buff;
+    double *prev, *curr, *buff;
     double *aF, *bF, *cF, *fF;
 
     size_t width;
@@ -25,20 +25,15 @@ class Field {
     size_t lastIterrationsCount;
 
     void fillFactors(size_t row, bool first);
-    double solve(size_t row);
+    double solve(size_t row, bool first);
     size_t solveRows();
+    void transpose(double *arr);
     void transpose();
-    void flushBuffer();
-
-    double lambda(size_t row, size_t x);
-    double a(size_t row, size_t x);
-    double roc(size_t row, size_t x);
+    void nextTimeLayer();
 
 public:
     Field(size_t _width, size_t _height, size_t _tLength, double _epsilon = 0.00001);
     ~Field();
-
-    inline double& at(size_t row, size_t col);
 
     void enableFileOutput();
     void print();

@@ -7,6 +7,8 @@
 #include <iostream>
 #include <cmath>
 
+static size_t const MAX_ITTERATIONS_COUNT = 2000;
+
 Field::Field(size_t _width, size_t _height, size_t _tLength, double _epsilon) {
     width = _width;
     height = _height;
@@ -18,7 +20,8 @@ Field::Field(size_t _width, size_t _height, size_t _tLength, double _epsilon) {
     transposed = false;
     fout = NULL;
 
-    data = new double[height * width];
+    prev = new double[height * width];
+    curr = new double[height * width];
     buff = new double[height * width];
 
     size_t maxDim = std::max(width, height);
@@ -34,7 +37,8 @@ Field::~Field() {
         delete fout;
     }
     
-    delete[] data;
+    delete[] prev;
+    delete[] curr;
     delete[] buff;
 
     delete[] aF;
@@ -43,13 +47,9 @@ Field::~Field() {
     delete[] fF;
 }
 
-inline double& Field::at(size_t row, size_t col) {
-    return data[row * width + col];
-}
-
 void Field::randomFill() {
     for (size_t index = 0, len = width * height; index < len; ++index) {
-        buff[index] = data[index] = rand() % 100;
+        curr[index] = rand() % 100;
     }
 }
 
@@ -88,30 +88,37 @@ void Field::fillInitial() {
     }
 
     for (size_t index = 0, len = width * height; index < len; ++index) {
-        buff[index] = data[index] = ftr.TStart();
+        curr[index] = ftr.TStart();
+    }
+}
+
+void Field::transpose(double *arr) {
+    for (size_t index = 0, len = width * height; index < len; ++index) {
+        size_t newIndex = (index % width) * height + index / width;
+        buff[newIndex] = arr[index];
+    }
+    for (size_t index = 0, len = width * height; index < len; ++index) {
+        arr[index] = buff[index];
     }
 }
 
 void Field::transpose() {
-    for (size_t index = 0, len = width * height; index < len; ++index) {
-        size_t newIndex = (index % width) * height + index / width;
-        buff[newIndex] = data[index];
-    }
-    for (size_t index = 0, len = width * height; index < len; ++index) {
-        data[index] = buff[index];
-    }
+    transpose(prev);
+    transpose(curr);
+    
     std::swap(width, height);
     std::swap(hX, hY);
     transposed = transposed == false;
 }
 
-void Field::flushBuffer() {
-    std::swap(data, buff);
+void Field::nextTimeLayer() {
+    std::swap(curr, prev);
+    t += dT;
 }
 
 void Field::fillFactors(size_t row, bool first) {
-    double *rw = data + row * width;
-    double *brw = first ? rw : (buff + row * width);
+    double *rw = prev + row * width;
+    double *brw = first ? rw : (curr + row * width);
 
     double TPrev = brw[width - 1];
     double TPrev4 = TPrev * TPrev * TPrev * TPrev;
@@ -140,7 +147,7 @@ void Field::fillFactors(size_t row, bool first) {
     }
 }
 
-double Field::solve(size_t row)
+double Field::solve(size_t row, bool first)
 {
     double m = 0;
     for (size_t i = 1; i < width; ++i) {
@@ -149,16 +156,17 @@ double Field::solve(size_t row)
         fF[i] -= m * fF[i - 1];
     }
 
-    double *y = buff + row * width;
+    double *y = curr + row * width;
+    double *py = first ? (prev + row * width) : curr;
 
     double newValue = fF[width - 1] / cF[width - 1];
-    double maxDelta = fabs(newValue - y[width - 1]);
+    double maxDelta = fabs(newValue - py[width - 1]);
     y[width - 1] = newValue;
 
     for (ssize_t i = width - 2; i >= 0; --i) {
         newValue = (fF[i] - bF[i] * y[i + 1]) / cF[i];
 
-        maxDelta = std::max(maxDelta, fabs(newValue - y[i]));
+        maxDelta = std::max(maxDelta, fabs(newValue - py[i]));
         y[i] = newValue;
     }
 
@@ -171,14 +179,14 @@ void Field::test() {
     bF[0] = 3; bF[1] = -1; bF[2] = 1; bF[3] = -1; bF[4] = 0;
     cF[0] = 4; cF[1] = 2; cF[2] = 4; cF[3] = 2; cF[4] = 2;
     fF[0] = 4; fF[1] = 2; fF[2] = 7.5; fF[3] = 1; fF[4] = -3;
-    data[0] = -0.540909; data[1] = 2.05455; data[2] = 1.56818; data[3] = -0.827273; data[4] = -1.08636;
+    prev[0] = -0.540909; prev[1] = 2.05455; prev[2] = 1.56818; prev[3] = -0.827273; prev[4] = -1.08636;
 
     width = 5;
 
-    solve(0);
+    solve(0, true);
 
     for (size_t i = 0; i < 5; ++i) {
-        if (fabs(data[i] - buff[i]) > 0.00001) {
+        if (fabs(prev[i] - curr[i]) > 0.00001) {
             printf("Error: %lu\n", i);
         }
     }
@@ -191,18 +199,23 @@ size_t Field::solveRows() {
 
     for (size_t row = 0; row < height; ++row) {
         fillFactors(row, true);
-        double delta = solve(row);
+        double delta = solve(row, true);
         size_t iterationsCount = 1;
 
         while (delta > epsilon) {
             fillFactors(row, false);
-            delta = solve(row);
+            delta = solve(row, false);
             ++iterationsCount;
+
+            if (iterationsCount > MAX_ITTERATIONS_COUNT) {
+                printf("Error! Iterations (%lu:%lu) on layer [t: %.3f, index: %lu, delta: %.5f] achieve maximum\n",
+                       transposed ? 0 : row, transposed ? row : 0, t, (unsigned long)(t / dT), delta);
+                exit(1);
+            }
         }
         maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
     }
 
-    flushBuffer();
     return maxIterationsCount;
 }
 
@@ -213,13 +226,13 @@ void Field::solve() {
 
     lastIterrationsCount = 0;
 
-    lastIterrationsCount += solveRows();
-    transpose();
+    nextTimeLayer();
 
     lastIterrationsCount += solveRows();
     transpose();
 
-    t += dT;
+    lastIterrationsCount += solveRows();
+    transpose();
 
     if (fout != NULL) {
         *fout << t;
