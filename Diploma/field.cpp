@@ -7,14 +7,14 @@
 #include <iostream>
 #include <cmath>
 
-static size_t const MAX_ITTERATIONS_COUNT = 2000;
+static size_t const MAX_ITTERATIONS_COUNT = 50;
 
 Field::Field(size_t _width, size_t _height, size_t _tLength, double _epsilon) {
     width = _width;
     height = _height;
 
-    hX = ftr.X1() / _width;
-    hY = ftr.X2() / _height;
+    hX = ftr.X1() / (_width - 1);
+    hY = ftr.X2() / (_height - 1);
     dT = ftr.totalTime() / _tLength;
     epsilon = _epsilon;
     transposed = false;
@@ -54,13 +54,14 @@ void Field::randomFill() {
 }
 
 double Field::view(double x1, double x2) {
-    size_t x1index = x1 / hX;
-    size_t x2index = x2 / hY;
+    size_t x1index = floor(x1 / hX);
+    size_t x2index = floor(x2 / hY);
+
     double x1factor = x1 - x1index * hX;
     double x2factor = x2 - x2index * hY;
 
-    double value = curr[x1index * width + x2index] + x1factor * curr[x1index * width + x2index + 1];
-    value += x2factor * (curr[(x1index + 1) * width + x2index] + x1factor * curr[(x1index + 1) * width + x2index + 1]);
+    double value = curr[x2index * width + x1index] + x1factor * curr[x2index * width + x1index + 1];
+    value += x2factor * (curr[(x2index + 1) * width + x1index] + x1factor * curr[(x2index + 1) * width + x1index + 1]);
 
     return value;
 }
@@ -77,7 +78,8 @@ void Field::enableFileOutput() {
 }
 
 void Field::print() {
-    printf("Field [%zux%zu](itrs: %zu, time: %.5f)\tview: %.7f\n", width, height, lastIterrationsCount, t, view(0));
+    printf("Field [%zux%zu](itrs: %zu, time: %.5f)\tview: %.7f\n",
+           width, height, lastIterrationsCount, t, view(ftr.DebugView()));
 }
 
 void Field::fillInitial() {
@@ -157,7 +159,7 @@ double Field::solve(size_t row, bool first)
     }
 
     double *y = curr + row * width;
-    double *py = first ? (prev + row * width) : curr;
+    double *py = first ? (prev + row * width) : y;
 
     double newValue = fF[width - 1] / cF[width - 1];
     double maxDelta = fabs(newValue - py[width - 1]);
@@ -166,7 +168,8 @@ double Field::solve(size_t row, bool first)
     for (ssize_t i = width - 2; i >= 0; --i) {
         newValue = (fF[i] - bF[i] * y[i + 1]) / cF[i];
 
-        maxDelta = std::max(maxDelta, fabs(newValue - py[i]));
+        double newDelta = fabs(newValue - py[i]);
+        maxDelta = std::max(maxDelta, newDelta);
         y[i] = newValue;
     }
 
@@ -207,10 +210,16 @@ size_t Field::solveRows() {
             delta = solve(row, false);
             ++iterationsCount;
 
+            /*if (iterationsCount > MAX_ITTERATIONS_COUNT / 2) {
+                printf("Warning! Iterations (%lu:%lu) on layer going to maximum\n",
+                       transposed ? 0 : row, transposed ? row : 0);
+            }*/
+
             if (iterationsCount > MAX_ITTERATIONS_COUNT) {
-                printf("Error! Iterations (%lu:%lu) on layer [t: %.3f, index: %lu, delta: %.5f] achieve maximum\n",
-                       transposed ? 0 : row, transposed ? row : 0, t, (unsigned long)(t / dT), delta);
-                exit(1);
+                /*printf("Error! Iterations (%lu:%lu) on layer [t: %.3f, index: %lu, delta: %.5f] achieve maximum\n",
+                       transposed ? 0 : row, transposed ? row : 0, t, (unsigned long)(t / dT), delta);*/
+                //exit(1);
+                break;
             }
         }
         maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
@@ -240,6 +249,7 @@ void Field::solve() {
             *fout << "," << view(index);
         }
         *fout << "\n";
+        fout->flush();
     }
 }
 

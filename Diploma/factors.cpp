@@ -10,10 +10,11 @@ namespace ftr {
 
     static double const TLik = 1738; // К
     static double const TSol = 1679; // К
-    static double const dT = 1; // K ???
+    static double const dT = 0.000001; // K ???
 
     static double const L = 272; // кДж/кг
     static double const cLik = 710; // Дж/(кг * К)
+    static double const x = 0.7;
 
     static double const totalLength = (0.4 + 0.4 + 0.47 + 0.95 + 1.51 + 18.97); // с
 
@@ -33,17 +34,21 @@ namespace ftr {
     static double Ti[] = { 1000, 1033, 923, 1033 };
     static double dTi[] = { 70, 350, 1100, 170 };
 
+    inline double alphaForT(double T, size_t &index) {
+        index = 0;
+        while (Temps[index] < T) ++index;
+        return (T - Temps[index - 1]) / (Temps[index] - Temps[index - 1]);
+    }
+
     inline double Lambda(double T) {
         size_t index = 0;
-        while (Temps[index] < T) ++index;
-        double alpha = (T - Temps[index - 1]) / (Temps[index] - Temps[index - 1]);
+        double alpha = alphaForT(T, index);
         return Lambds[index - 1] + alpha * (Lambds[index] - Lambds[index - 1]);
     }
 
     inline double Ro(double T) {
         size_t index = 0;
-        while (Temps[index] > T) ++index;
-        double alpha = (T - Temps[index - 1]) / (Temps[index] - Temps[index - 1]);
+        double alpha = alphaForT(T, index);
         return Ros[index - 1] + alpha * (Ros[index] - Ros[index - 1]);
     }
 
@@ -65,7 +70,7 @@ namespace ftr {
         double result = 469 + 0.16 * (T - 323);
         for (unsigned short i = 0; i < 4; ++i) {
             double tC = (Ti[i] - T) / dTi[i];
-            result += 4.5141 * Li(i, T) / dTi[i] * exp(-16 * tC * tC);
+            result += 4.5141 * Li(i, x) / dTi[i] * exp(-16 * tC * tC);
         }
         return result;
     }
@@ -160,6 +165,10 @@ double Factors::TEnv4() const {
 
 size_t Factors::ViewCount() const {
     return config.value("ViewCount");
+}
+
+size_t Factors::DebugView() const {
+    return config.value("DebugView");
 }
 
 double Factors::X1View(size_t index) const {

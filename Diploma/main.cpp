@@ -7,7 +7,7 @@
 #include "field.h"
 
 int main(int argc, const char * argv[]) {
-    Field field(100, 100, 200000, 1);
+    Field field(100, 100, 20000, 0.01);
     field.test();
     field.enableFileOutput();
     
@@ -19,7 +19,7 @@ int main(int argc, const char * argv[]) {
 
         field.print();
 
-        if (field.time() > 200) {
+        if (field.time() > 1200) {
             break;
         }
     }
