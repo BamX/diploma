@@ -9,6 +9,8 @@ set xlabel 'Время, с'
 set ylabel 'Температура, с'
 
 set datafile separator ','
-plot 'view.csv' using 1:2 title '5 мм от середины' with lines, \
-     'view.csv' using 1:3 title 'между центром и серединой' with lines, \
-     'view.csv' using 1:4 title '5 мм от поверхности' with lines
+plot 'view.csv' using 1:2 title 'центр, низ' with lines, \
+     'view.csv' using 1:3 title 'центр, центр' with lines, \
+     'view.csv' using 1:4 title 'лево, центр' with lines, \
+     'view.csv' using 1:5 title 'ноль' with lines, \
+     'view.csv' using 1:6 title 'граница' with lines
