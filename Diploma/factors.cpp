@@ -136,7 +136,7 @@ double Factors::lambda(double T) const {
 }
 
 double Factors::ro(double T) const {
-    return -2;
+    return -1;
 
     return ftr::Ro(T);
 }

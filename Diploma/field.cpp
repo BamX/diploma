@@ -157,7 +157,7 @@ double Field::solve(size_t row, bool first)
     }
 
     double *y = curr + row * width;
-    double *py = first ? (prev + row * width) : curr;
+    double *py = first ? (prev + row * width) : y;
 
     double newValue = fF[width - 1] / cF[width - 1];
     double maxDelta = fabs(newValue - py[width - 1]);

@@ -19,7 +19,7 @@ int main(int argc, const char * argv[]) {
 
         field.print();
 
-        if (field.time() > 5.0) {
+        if (field.time() > 10.0) {
             break;
         }
     }
