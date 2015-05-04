@@ -125,7 +125,7 @@ void Field::fillFactors(size_t row, bool first) {
 
     aF[0] = 0;
     cF[0] = 1;
-    bF[0] = -1 / (hX + 1);
+    bF[0] = -1;
     fF[0] = 0;
 
     double lmXX = ftr.lambda(brw[width - 1]), lmXXm1 = ftr.lambda(brw[width - 2]);
