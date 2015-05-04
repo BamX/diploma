@@ -50,7 +50,8 @@ public:
     double time();
     bool done();
 
-    double view();
+    double view(double x1, double x2);
+    double view(size_t index);
 
 };
 

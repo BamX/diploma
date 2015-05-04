@@ -53,16 +53,20 @@ void Field::randomFill() {
     }
 }
 
-double Field::view() {
-    size_t x1index = ftr.X1View() / hX;
-    size_t x2index = ftr.X2View() / hY;
-    double x1factor = ftr.X1View() - x1index * hX;
-    double x2factor = ftr.X2View() - x2index * hY;
+double Field::view(double x1, double x2) {
+    size_t x1index = x1 / hX;
+    size_t x2index = x2 / hY;
+    double x1factor = x1 - x1index * hX;
+    double x2factor = x2 - x2index * hY;
 
-    double value = data[x1index * width + x2index] + x1factor * data[x1index * width + x2index + 1];
-    value += x2factor * (data[(x1index + 1) * width + x2index] + x1factor * data[(x1index + 1) * width + x2index + 1]);
+    double value = curr[x1index * width + x2index] + x1factor * curr[x1index * width + x2index + 1];
+    value += x2factor * (curr[(x1index + 1) * width + x2index] + x1factor * curr[(x1index + 1) * width + x2index + 1]);
 
     return value;
+}
+
+double Field::view(size_t index) {
+    return view(ftr.X1View(index), ftr.X2View(index));
 }
 
 void Field::enableFileOutput() {
@@ -73,7 +77,7 @@ void Field::enableFileOutput() {
 }
 
 void Field::print() {
-    printf("Field [%zux%zu](itrs: %zu, time: %.5f)\tview: %.7f\n", width, height, lastIterrationsCount, t, view());
+    printf("Field [%zux%zu](itrs: %zu, time: %.5f)\tview: %.7f\n", width, height, lastIterrationsCount, t, view(0));
 }
 
 void Field::fillInitial() {
@@ -218,7 +222,11 @@ void Field::solve() {
     t += dT;
 
     if (fout != NULL) {
-        *fout << t << "," << view() << "\n";
+        *fout << t;
+        for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
+            *fout << "," << view(index);
+        }
+        *fout << "\n";
     }
 }
 

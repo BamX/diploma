@@ -27,8 +27,9 @@ public:
     double TEnv() const;
     double TEnv4() const;
 
-    double X1View() const;
-    double X2View() const;
+    size_t ViewCount() const;
+    double X1View(size_t index) const;
+    double X2View(size_t index) const;
 
 };
 
