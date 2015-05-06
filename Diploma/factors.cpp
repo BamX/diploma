@@ -171,6 +171,10 @@ size_t Factors::DebugView() const {
     return config.value("DebugView");
 }
 
+size_t Factors::MatrixFramesCount() const {
+    return config.value("MatrixFramesCount");
+}
+
 double Factors::X1View(size_t index) const {
     char buff[10];
     snprintf(buff, 10, "View%luX1", index);

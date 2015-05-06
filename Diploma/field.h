@@ -10,7 +10,8 @@
 
 class Field {
     Factors ftr;
-    std::ofstream *fout;
+    std::ofstream *fout, *mfout;
+    double nextFrameTime;
 
     double *prev, *curr, *buff;
     double *aF, *bF, *cF, *fF;
@@ -31,11 +32,15 @@ class Field {
     void transpose();
     void nextTimeLayer();
 
+    void printMatrix();
+    void printViews();
+
 public:
     Field(size_t _width, size_t _height, size_t _tLength, double _epsilon = 0.00001);
     ~Field();
 
-    void enableFileOutput();
+    void enablePlotOutput();
+    void enableMatrixOutput();
     void print();
     void randomFill();
     void test();

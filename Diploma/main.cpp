@@ -9,7 +9,9 @@
 int main(int argc, const char * argv[]) {
     Field field(100, 100, 20000, 0.01);
     field.test();
-    field.enableFileOutput();
+
+    field.enablePlotOutput();
+    field.enableMatrixOutput();
     
     field.fillInitial();
     field.print();

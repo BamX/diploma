@@ -19,6 +19,7 @@ Field::Field(size_t _width, size_t _height, size_t _tLength, double _epsilon) {
     epsilon = _epsilon;
     transposed = false;
     fout = NULL;
+    mfout = NULL;
 
     prev = new double[height * width];
     curr = new double[height * width];
@@ -70,11 +71,48 @@ double Field::view(size_t index) {
     return view(ftr.X1View(index), ftr.X2View(index));
 }
 
-void Field::enableFileOutput() {
+void Field::enablePlotOutput() {
     if (fout != NULL) {
         fout->close();
     }
     fout = new std::ofstream("view.csv");
+}
+
+void Field::enableMatrixOutput() {
+    if (mfout != NULL) {
+        mfout->close();
+    }
+    mfout = new std::ofstream("matrix.csv");
+}
+
+void Field::printMatrix() {
+    if (mfout != NULL && t > nextFrameTime) {
+        nextFrameTime += ftr.totalTime() / ftr.MatrixFramesCount();
+
+        size_t index = 0;
+        for (size_t row = 0; row < height; ++row) {
+            for (size_t col = 0; col < width; ++col, ++index) {
+                *mfout << curr[index];
+                if (col < width - 1) {
+                    *mfout << " ";
+                }
+            }
+            *mfout << "\n";
+        }
+        *mfout << "\n";
+        mfout->flush();
+    }
+}
+
+void Field::printViews() {
+    if (fout != NULL) {
+        *fout << t;
+        for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
+            *fout << "," << view(index);
+        }
+        *fout << "\n";
+        fout->flush();
+    }
 }
 
 void Field::print() {
@@ -201,8 +239,8 @@ size_t Field::solveRows() {
     size_t maxIterationsCount = 0;
 
     for (size_t row = 0; row < height; ++row) {
-        fillFactors(row, true);
-        double delta = solve(row, true);
+        fillFactors(row, transposed == false);
+        double delta = solve(row, transposed == false);
         size_t iterationsCount = 1;
 
         while (delta > epsilon) {
@@ -243,14 +281,8 @@ void Field::solve() {
     lastIterrationsCount += solveRows();
     transpose();
 
-    if (fout != NULL) {
-        *fout << t;
-        for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
-            *fout << "," << view(index);
-        }
-        *fout << "\n";
-        fout->flush();
-    }
+    printMatrix();
+    printViews();
 }
 
 double Field::time() {
