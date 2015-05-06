@@ -9,14 +9,14 @@
 
 static size_t const MAX_ITTERATIONS_COUNT = 50;
 
-Field::Field(size_t _width, size_t _height, size_t _tLength, double _epsilon) {
-    width = _width;
-    height = _height;
+Field::Field() {
+    width = ftr.X1SplitCount();
+    height = ftr.X2SplitCount();
 
-    hX = ftr.X1() / (_width - 1);
-    hY = ftr.X2() / (_height - 1);
-    dT = ftr.totalTime() / _tLength;
-    epsilon = _epsilon;
+    hX = ftr.X1() / (width - 1);
+    hY = ftr.X2() / (height - 1);
+    dT = ftr.totalTime() / ftr.TimeSplitCount();
+    epsilon = ftr.Epsilon();
     transposed = false;
     fout = NULL;
     mfout = NULL;
@@ -30,12 +30,24 @@ Field::Field(size_t _width, size_t _height, size_t _tLength, double _epsilon) {
     bF = new double[maxDim];
     cF = new double[maxDim];
     fF = new double[maxDim];
+
+    if (ftr.EnablePlot()) {
+        enablePlotOutput();
+    }
+    if (ftr.EnableMatrix()) {
+        enableMatrixOutput();
+    }
 }
 
 Field::~Field() {
     if (fout != NULL) {
         fout->close();
         delete fout;
+    }
+
+    if (mfout != NULL) {
+        mfout->close();
+        delete mfout;
     }
     
     delete[] prev;
@@ -158,21 +170,24 @@ void Field::nextTimeLayer() {
 
 void Field::fillFactors(size_t row, bool first) {
     double *rw = prev + row * width;
-    double *brw = first ? rw : (curr + row * width);
+    double *brw = first && transposed == false ? rw : (curr + row * width);
 
     double TPrev = brw[width - 1];
     double TPrev4 = TPrev * TPrev * TPrev * TPrev;
 
+    double lm0 = ftr.lambda(brw[0]), lmh = ftr.lambda(brw[1]);
     aF[0] = 0;
-    cF[0] = 1;
-    bF[0] = -1;
-    fF[0] = 0;
+    cF[0] = dT * (lm0 + lmh) + hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]);
+    bF[0] = -dT * (lm0 + lmh);
+    fF[0] = hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]) * rw[0];
 
     double lmXX = ftr.lambda(brw[width - 1]), lmXXm1 = ftr.lambda(brw[width - 2]);
     aF[width - 1] = -dT * (lmXXm1 + lmXX);
-    cF[width - 1] = dT * (lmXXm1 + lmXX) + hX * hX + 2 * hX * dT * ftr.alpha(t);
+    cF[width - 1] = dT * (lmXXm1 + lmXX)
+                     + hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1])
+                     + 2 * hX * dT * ftr.alpha(t);
     bF[width - 1] = 0;
-    fF[width - 1] = hX * hX * rw[width - 1]
+    fF[width - 1] = hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1]) * rw[width - 1]
                      - 2 * hX * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
                      + 2 * hX * dT * ftr.alpha(t) * ftr.TEnv();
 
@@ -239,8 +254,8 @@ size_t Field::solveRows() {
     size_t maxIterationsCount = 0;
 
     for (size_t row = 0; row < height; ++row) {
-        fillFactors(row, transposed == false);
-        double delta = solve(row, transposed == false);
+        fillFactors(row, true);
+        double delta = solve(row, true);
         size_t iterationsCount = 1;
 
         while (delta > epsilon) {
@@ -273,16 +288,22 @@ void Field::solve() {
 
     lastIterrationsCount = 0;
 
-    nextTimeLayer();
+    std::swap(curr, prev);
+    t += dT;
 
     lastIterrationsCount += solveRows();
-    transpose();
 
+    std::swap(curr, prev);
+    t += dT;
+    transpose();
     lastIterrationsCount += solveRows();
     transpose();
 
     printMatrix();
     printViews();
+    if (ftr.EnableConsole()) {
+        print();
+    }
 }
 
 double Field::time() {

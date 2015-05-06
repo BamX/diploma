@@ -23,9 +23,18 @@ public:
     double X2() const;
     double totalTime() const;
 
+    double X1SplitCount() const;
+    double X2SplitCount() const;
+    double TimeSplitCount() const;
+    double Epsilon() const;
+
     double TStart() const;
     double TEnv() const;
     double TEnv4() const;
+
+    bool EnableConsole() const;
+    bool EnablePlot() const;
+    bool EnableMatrix() const;
 
     size_t ViewCount() const;
     size_t DebugView() const;

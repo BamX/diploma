@@ -148,6 +148,22 @@ double Factors::totalTime() const {
     return ftr::totalLength / config.value("Speed");
 }
 
+double Factors::X1SplitCount() const {
+    return config.value("X1SplitCount");
+}
+
+double Factors::X2SplitCount() const {
+    return config.value("X2SplitCount");
+}
+
+double Factors::TimeSplitCount() const {
+    return config.value("TimeSplitCount");
+}
+
+double Factors::Epsilon() const {
+    return config.value("Epsilon");
+}
+
 double Factors::TStart() const {
     return config.value("InitT");
 }
@@ -161,6 +177,18 @@ double Factors::TEnv4() const {
     value *= value;
     value *= value;
     return value;
+}
+
+bool Factors::EnableConsole() const {
+    return config.value("EnableConsole") > 0;
+}
+
+bool Factors::EnablePlot() const {
+    return config.value("EnablePlot") > 0;
+}
+
+bool Factors::EnableMatrix() const {
+    return config.value("EnableMatrix") > 0;
 }
 
 size_t Factors::ViewCount() const {

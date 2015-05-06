@@ -9,5 +9,6 @@ set yrange [0:100]
 set cbrange [700:1800]
 
 do for [i=1:int(STATS_blank)] {
+    set title sprintf('Слиток t=%.2f', (i-1) * 1816.0 / int(STATS_blank))
     plot 'matrix.csv' index (i-1) matrix with image
 }

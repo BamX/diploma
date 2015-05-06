@@ -32,16 +32,17 @@ class Field {
     void transpose();
     void nextTimeLayer();
 
+    void enablePlotOutput();
+    void enableMatrixOutput();
+
+    void print();
     void printMatrix();
     void printViews();
 
 public:
-    Field(size_t _width, size_t _height, size_t _tLength, double _epsilon = 0.00001);
+    Field();
     ~Field();
 
-    void enablePlotOutput();
-    void enableMatrixOutput();
-    void print();
     void randomFill();
     void test();
 
