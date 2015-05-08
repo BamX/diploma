@@ -3,6 +3,7 @@
 //
 
 #include <stdio.h>
+#include <mpi.h>
 
 #include "field.h"
 

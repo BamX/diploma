@@ -52,3 +52,5 @@ view.csv
 plot.png
 matrix.csv
 matrix.gif
+output/debug
+output/release
