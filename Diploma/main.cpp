@@ -14,9 +14,13 @@ int main(int argc, char * argv[]) {
     
     field.fillInitial();
 
-    //while (field.done() == false) {
-    //    field.solve();
-    //}
+    while (field.done() == false) {
+        field.solve();
+
+        if (field.time() > 5) {
+            break;
+        }
+    }
 
     MPI_Finalize();
     return 0;

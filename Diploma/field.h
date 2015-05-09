@@ -13,7 +13,7 @@ class Field {
     std::ofstream *fout, *mfout;
     double nextFrameTime;
 
-    double *prev, *curr, *buff;
+    double *prev, *curr, *buff, *views;
     double *aF, *bF, *cF, *fF;
 
     size_t width;
@@ -25,7 +25,7 @@ class Field {
     double epsilon;
     size_t lastIterrationsCount;
 
-    int wPCount, hPCount;
+    int myId;
     size_t mySX, mySY;
     int leftN, rightN, topN, bottomN;
 
@@ -45,6 +45,16 @@ class Field {
     void print();
     void printMatrix();
     void printViews();
+    void debug(const char *name);
+
+    void sendReceivePrevRows();
+    void sendReceiveCurrRowBorders(size_t row);
+    void sendFirstPass(size_t row);
+    void receiveFirstPass(size_t row);
+    void sendSecondPass(size_t row);
+    void receiveSecondPass(size_t row);
+    void reduceMaxDelta(double &maxDelta);
+    void reduceViews();
 
 public:
     Field();

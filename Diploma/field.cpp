@@ -8,8 +8,20 @@
 #include <cmath>
 #include <mpi.h>
 
+//#define DEBUG_PRINT
+
+static int const MASTER = 0;
 static size_t const MAX_ITTERATIONS_COUNT = 50;
 static int const NOBODY = -1;
+static int const NOTHING = -1;
+
+static int const MAX_ROW_INDEX = 100000;
+static int const TAG_TOP_TO_BOTTOM_ROWS = 23;
+static int const TAG_BOTTOM_TO_TOP_ROWS = 24;
+static int const TAG_LEFT_TO_RIGHT_ROW = 1 * MAX_ROW_INDEX;
+static int const TAG_RIGHT_TO_LEFT_ROW = 2 * MAX_ROW_INDEX;
+static int const TAG_FIRST_PASS = 3 * MAX_ROW_INDEX;
+static int const TAG_SECOND_PASS = 4 * MAX_ROW_INDEX;
 
 Field::Field() {
     width = ftr.X1SplitCount();
@@ -28,6 +40,7 @@ Field::Field() {
     prev = new double[height * width];
     curr = new double[height * width];
     buff = new double[height * width];
+    views = new double[ftr.ViewCount()];
 
     size_t maxDim = std::max(width, height);
     aF = new double[maxDim];
@@ -57,6 +70,7 @@ Field::~Field() {
     delete[] prev;
     delete[] curr;
     delete[] buff;
+    delete[] views;
 
     delete[] aF;
     delete[] bF;
@@ -65,7 +79,7 @@ Field::~Field() {
 }
 
 void Field::calculateNBS() {
-    int myId, numProcs;
+    int numProcs;
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
     MPI_Comm_rank(MPI_COMM_WORLD, &myId);
 
@@ -143,17 +157,22 @@ void Field::randomFill() {
 }
 
 double Field::view(double x1, double x2) {
-    // TODO: Evaluate if we own this point and return value greater than zero
-    size_t x1index = floor(x1 / hX);
-    size_t x2index = floor(x2 / hY);
+    ssize_t x1index = floor(x1 / hX) - mySX + (leftN != NOBODY ? 1 : 0);
+    ssize_t x2index = floor(x2 / hY) - mySY + (topN != NOBODY ? 1 : 0);
 
-    double x1factor = x1 - x1index * hX;
+    bool inMyX1 = x1index < (leftN != NOBODY ? 1 : 0) || x1index >= width - (rightN != NOBODY ? 1 : 0);
+    bool inMyX2 = x2index < (topN != NOBODY ? 1 : 0) || x2index >= height - (bottomN != NOBODY ? 1 : 0);
+    if (inMyX1 == false || inMyX2 == false) {
+        return NOTHING;
+    }
+
+    /*double x1factor = x1 - x1index * hX;
     double x2factor = x2 - x2index * hY;
 
     double value = curr[x2index * width + x1index] + x1factor * curr[x2index * width + x1index + 1];
-    value += x2factor * (curr[(x2index + 1) * width + x1index] + x1factor * curr[(x2index + 1) * width + x1index + 1]);
+    value += x2factor * (curr[(x2index + 1) * width + x1index] + x1factor * curr[(x2index + 1) * width + x1index + 1]);*/
 
-    return value;
+    return curr[x2index * width + x1index];
 }
 
 double Field::view(size_t index) {
@@ -161,6 +180,10 @@ double Field::view(size_t index) {
 }
 
 void Field::enablePlotOutput() {
+    if (myId != MASTER) {
+        return;
+    }
+
     if (fout != NULL) {
         fout->close();
     }
@@ -168,6 +191,10 @@ void Field::enablePlotOutput() {
 }
 
 void Field::enableMatrixOutput() {
+    if (myId != MASTER) {
+        return;
+    }
+
     if (mfout != NULL) {
         mfout->close();
     }
@@ -195,11 +222,12 @@ void Field::printMatrix() {
 }
 
 void Field::printViews() {
-    // TODO: print only owned views
     if (fout != NULL) {
+        reduceViews();
+
         *fout << t;
         for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
-            *fout << "," << view(index);
+            *fout << "," << views[index];
         }
         *fout << "\n";
         fout->flush();
@@ -207,9 +235,18 @@ void Field::printViews() {
 }
 
 void Field::print() {
-    // TODO: print only if we have this view
-    printf("Field [%zux%zu](itrs: %zu, time: %.5f)\tview: %.7f\n",
-           width, height, lastIterrationsCount, t, view(ftr.DebugView()));
+    double viewValue = view(ftr.DebugView());
+
+    if (fabs(viewValue - NOTHING) > __DBL_EPSILON__) {
+        printf("Field (itrs: %zu, time: %.5f)\tview: %.7f\n",
+               lastIterrationsCount, t, viewValue);
+    }
+}
+
+void Field::debug(const char *name) {
+#ifdef DEBUG_PRINT
+    printf("I'm %d before %s\n", myId, name);
+#endif
 }
 
 void Field::fillInitial() {
@@ -235,12 +272,16 @@ void Field::transpose(double *arr) {
 }
 
 void Field::transpose() {
+    sendReceivePrevRows();
     transpose(prev);
     transpose(curr);
     
     std::swap(width, height);
     std::swap(hX, hY);
     transposed = transposed == false;
+
+    std::swap(leftN, topN);
+    std::swap(rightN, bottomN);
 }
 
 void Field::nextTimeLayer() {
@@ -249,28 +290,30 @@ void Field::nextTimeLayer() {
 }
 
 void Field::fillFactors(size_t row, bool first) {
-    // TODO: Evaluate only if needed.
     double *rw = prev + row * width;
     double *brw = first && transposed == false ? rw : (curr + row * width);
 
-    double TPrev = brw[width - 1];
-    double TPrev4 = TPrev * TPrev * TPrev * TPrev;
+    if (leftN == NOBODY) {
+        double lm0 = ftr.lambda(brw[0]), lmh = ftr.lambda(brw[1]);
+        aF[0] = 0;
+        cF[0] = dT * (lm0 + lmh) + hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]);
+        bF[0] = -dT * (lm0 + lmh);
+        fF[0] = hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]) * rw[0];
+    }
 
-    double lm0 = ftr.lambda(brw[0]), lmh = ftr.lambda(brw[1]);
-    aF[0] = 0;
-    cF[0] = dT * (lm0 + lmh) + hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]);
-    bF[0] = -dT * (lm0 + lmh);
-    fF[0] = hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]) * rw[0];
-
-    double lmXX = ftr.lambda(brw[width - 1]), lmXXm1 = ftr.lambda(brw[width - 2]);
-    aF[width - 1] = -dT * (lmXXm1 + lmXX);
-    cF[width - 1] = dT * (lmXXm1 + lmXX)
-                     + hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1])
-                     + 2 * hX * dT * ftr.alpha(t);
-    bF[width - 1] = 0;
-    fF[width - 1] = hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1]) * rw[width - 1]
-                     - 2 * hX * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
-                     + 2 * hX * dT * ftr.alpha(t) * ftr.TEnv();
+    if (rightN == NOBODY) {
+        double TPrev = brw[width - 1];
+        double TPrev4 = TPrev * TPrev * TPrev * TPrev;
+        double lmXX = ftr.lambda(brw[width - 1]), lmXXm1 = ftr.lambda(brw[width - 2]);
+        aF[width - 1] = -dT * (lmXXm1 + lmXX);
+        cF[width - 1] = dT * (lmXXm1 + lmXX)
+                         + hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1])
+                         + 2 * hX * dT * ftr.alpha(t);
+        bF[width - 1] = 0;
+        fF[width - 1] = hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1]) * rw[width - 1]
+                         - 2 * hX * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
+                         + 2 * hX * dT * ftr.alpha(t) * ftr.TEnv();
+    }
 
     for (size_t index = 1; index < width - 1; ++index) {
         double roc = ftr.ro(brw[index]) * ftr.cEf(brw[index]);
@@ -284,20 +327,26 @@ void Field::fillFactors(size_t row, bool first) {
 }
 
 double Field::solve(size_t row, bool first) {
-    // TODO: Send/recieve c, f, y
+    receiveFirstPass(row);
     double m = 0;
     for (size_t i = 1; i < width; ++i) {
         m = aF[i] / cF[i - 1];
         cF[i] -= m * bF[i - 1];
         fF[i] -= m * fF[i - 1];
     }
+    sendFirstPass(row);
 
     double *y = curr + row * width;
     double *py = first ? (prev + row * width) : y;
 
-    double newValue = fF[width - 1] / cF[width - 1];
-    double maxDelta = fabs(newValue - py[width - 1]);
-    y[width - 1] = newValue;
+    double newValue = 0, maxDelta = 0;
+    if (rightN == NOBODY) {
+        newValue = fF[width - 1] / cF[width - 1];
+        maxDelta = fabs(newValue - py[width - 1]);
+        y[width - 1] = newValue;
+    } else {
+        receiveSecondPass(row);
+    }
 
     for (ssize_t i = width - 2; i >= 0; --i) {
         newValue = (fF[i] - bF[i] * y[i + 1]) / cF[i];
@@ -306,6 +355,10 @@ double Field::solve(size_t row, bool first) {
         maxDelta = std::max(maxDelta, newDelta);
         y[i] = newValue;
     }
+    sendSecondPass(row);
+
+    reduceMaxDelta(maxDelta);
+    sendReceiveCurrRowBorders(row);
 
     return maxDelta;
 }
@@ -334,12 +387,15 @@ void Field::test() {
 size_t Field::solveRows() {
     size_t maxIterationsCount = 0;
 
-    for (size_t row = 0; row < height; ++row) {
+    for (size_t row = (topN != NOBODY ? 1 : 0); row < height - (bottomN != NOBODY ? 1 : 0); ++row) {
+        debug("fillFactors");
         fillFactors(row, true);
+        debug("solve first");
         double delta = solve(row, true);
         size_t iterationsCount = 1;
 
         while (delta > epsilon) {
+            debug("solve than");
             fillFactors(row, false);
             delta = solve(row, false);
             ++iterationsCount;
@@ -363,20 +419,18 @@ size_t Field::solveRows() {
 }
 
 void Field::solve() {
-    // TODO: Send/recieve rows
     if (done()) {
         return;
     }
 
     lastIterrationsCount = 0;
 
-    std::swap(curr, prev);
-    t += dT;
-
+    debug("nextTimeLayer h");
+    nextTimeLayer();
     lastIterrationsCount += solveRows();
 
-    std::swap(curr, prev);
-    t += dT;
+    debug("nextTimeLayer v");
+    nextTimeLayer();
     transpose();
     lastIterrationsCount += solveRows();
     transpose();
@@ -392,4 +446,91 @@ double Field::time() {
 
 bool Field::done() {
     return t >= ftr.totalTime();
+}
+
+void Field::sendReceivePrevRows() {
+    if (topN != NOBODY && bottomN != NOBODY) {
+        MPI_Sendrecv(prev + (height - 2) * width, (int)width, MPI_DOUBLE, bottomN, TAG_TOP_TO_BOTTOM_ROWS,
+                     prev, (int)width, MPI_DOUBLE, topN, TAG_TOP_TO_BOTTOM_ROWS,
+                     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Sendrecv(prev + width, (int)width, MPI_DOUBLE, topN, TAG_BOTTOM_TO_TOP_ROWS,
+                     prev + (height - 1) * width, (int)width, MPI_DOUBLE, bottomN, TAG_BOTTOM_TO_TOP_ROWS,
+                     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+    else if (topN != NOBODY) {
+        MPI_Recv(prev, (int)width, MPI_DOUBLE, topN, TAG_TOP_TO_BOTTOM_ROWS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Send(prev + width, (int)width, MPI_DOUBLE, topN, TAG_BOTTOM_TO_TOP_ROWS, MPI_COMM_WORLD);
+    }
+    else if (bottomN != NOBODY) {
+        MPI_Send(prev + (height - 2) * width, (int)width, MPI_DOUBLE, bottomN, TAG_TOP_TO_BOTTOM_ROWS, MPI_COMM_WORLD);
+        MPI_Recv(prev + (height - 1) * width, (int)width, MPI_DOUBLE, bottomN, TAG_BOTTOM_TO_TOP_ROWS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+}
+
+void Field::sendReceiveCurrRowBorders(size_t row) {
+    double *rw = curr + row * width;
+
+    if (leftN != NOBODY && rightN != NOBODY) {
+        MPI_Sendrecv(rw + (width - 2), 1, MPI_DOUBLE, rightN, TAG_LEFT_TO_RIGHT_ROW + (int)row,
+                     rw, 1, MPI_DOUBLE, leftN, TAG_LEFT_TO_RIGHT_ROW + (int)row,
+                     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Sendrecv(rw + 1, 1, MPI_DOUBLE, leftN, TAG_RIGHT_TO_LEFT_ROW + (int)row,
+                     rw + (width - 1), 1, MPI_DOUBLE, rightN, TAG_RIGHT_TO_LEFT_ROW + (int)row,
+                     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+    else if (leftN != NOBODY) {
+        MPI_Recv(rw, 1, MPI_DOUBLE, leftN, TAG_LEFT_TO_RIGHT_ROW + (int)row, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Send(rw + 1, 1, MPI_DOUBLE, leftN, TAG_RIGHT_TO_LEFT_ROW + (int)row, MPI_COMM_WORLD);
+    }
+    else if (rightN != NOBODY) {
+        MPI_Send(rw + (width - 2), 1, MPI_DOUBLE, rightN, TAG_LEFT_TO_RIGHT_ROW + (int)row, MPI_COMM_WORLD);
+        MPI_Recv(rw + (width - 1), 1, MPI_DOUBLE, rightN, TAG_RIGHT_TO_LEFT_ROW + (int)row, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+}
+
+void Field::sendFirstPass(size_t row) {
+    if (rightN != NOBODY) {
+        double bff[] = { bF[width - 2], cF[width - 2], fF[width - 2] };
+        MPI_Send(bff, 3, MPI_DOUBLE, rightN, TAG_FIRST_PASS + (int)row, MPI_COMM_WORLD);
+    }
+}
+
+void Field::receiveFirstPass(size_t row) {
+    if (leftN != NOBODY) {
+        double bff[3];
+        MPI_Recv(bff, 3, MPI_DOUBLE, leftN, TAG_FIRST_PASS + (int)row, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        bF[0] = bff[0];
+        cF[0] = bff[1];
+        fF[0] = bff[2];
+    }
+}
+
+void Field::sendSecondPass(size_t row) {
+    double *y = curr + row * width;
+    if (leftN != NOBODY) {
+        MPI_Send(y + 1, 1, MPI_DOUBLE, leftN, TAG_SECOND_PASS + (int)row, MPI_COMM_WORLD);
+    }
+}
+
+void Field::receiveSecondPass(size_t row) {
+    double *y = curr + row * width;
+    if (rightN != NOBODY) {
+        MPI_Recv(y + width - 1, 1, MPI_DOUBLE, rightN, TAG_SECOND_PASS + (int)row, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+}
+
+void Field::reduceMaxDelta(double &maxDelta) {
+    double result = 0; // TODO: Check if it could be the same pointer with maxDelta
+    MPI_Allreduce(&maxDelta, &result, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+    maxDelta = result;
+}
+
+void Field::reduceViews() {
+    int viewsCount = (int)ftr.ViewCount();
+    double *tmpViews = new double[viewsCount];
+    for (size_t index = 0; index < viewsCount; ++index) {
+        tmpViews[index] = view(index);
+    }
+
+    MPI_Reduce(tmpViews, views, viewsCount, MPI_DOUBLE, MPI_MAX, MASTER, MPI_COMM_WORLD);
 }
