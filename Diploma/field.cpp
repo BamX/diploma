@@ -6,8 +6,10 @@
 #include "factors.h"
 #include <iostream>
 #include <cmath>
+#include <mpi.h>
 
 static size_t const MAX_ITTERATIONS_COUNT = 50;
+static int const NOBODY = -1;
 
 Field::Field() {
     width = ftr.X1SplitCount();
@@ -20,6 +22,8 @@ Field::Field() {
     transposed = false;
     fout = NULL;
     mfout = NULL;
+
+    calculateNBS();
 
     prev = new double[height * width];
     curr = new double[height * width];
@@ -60,6 +64,78 @@ Field::~Field() {
     delete[] fF;
 }
 
+void Field::calculateNBS() {
+    int myId, numProcs;
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &myId);
+
+    mySX = 0; mySY = 0;
+    leftN = NOBODY; rightN = NOBODY; topN = NOBODY; bottomN = NOBODY;
+
+    int stX = 1, stY = numProcs;
+    calculateGrid(numProcs, (double)width / height, stX, stY);
+
+    int i = myId / stX;
+    int j = myId % stX;
+
+    size_t newHeight = height / stY;
+    mySY = newHeight * i;
+    if (i == stY - 1) {
+        newHeight = height - newHeight * (stY - 1);
+    }
+    newHeight += (i > 0 && i < stY - 1) ? 2 : (stY == 1 ? 0 : 1);
+
+    size_t newWidth = width / stX;
+    mySX = newWidth * j;
+    if (j == stX - 1) {
+        newWidth = width - newWidth * (stX - 1);
+    }
+    newWidth += (i > 0 && i < stX - 1) ? 2 : (stX == 1 ? 0 : 1);
+
+    if (i > 0) {
+        topN = myId - stX;
+    }
+    if (i < stY - 1) {
+        bottomN = myId + stX;
+    }
+
+    if (j > 0) {
+        leftN = myId - 1;
+    }
+    if (j < stX - 1) {
+        rightN = myId + 1;
+    }
+
+    width = newWidth;
+    height = newHeight;
+
+    //printf("I'm %d\twith w:%zu\th:%zu.\tTop:%d\tbottom:%d\tleft:%d\tright:%d\n", myId, width, height, topN, bottomN, leftN, rightN);
+}
+
+void Field::calculateGrid(int numProcs, double stExpected, int &stX, int &stY) {
+    stX = 1; stY = numProcs;
+
+    bool withSwap = false;
+    if (stExpected > 1) {
+        stExpected = 1.0 / stExpected;
+        withSwap = true;
+    }
+
+    double stFactor = 1.0 / numProcs;
+    for (int k = 2, len = numProcs / 2; k < len; ++k) {
+        int y = numProcs / k;
+        double newStFactor = (double)k / y;
+        if (numProcs % k == 0 && fabs(newStFactor - stExpected) < fabs(stFactor - stExpected)) {
+            stX = k; stY = y;
+            stFactor = newStFactor;
+        }
+    }
+
+    if (withSwap) {
+        std::swap(stX, stY);
+    }
+}
+
 void Field::randomFill() {
     for (size_t index = 0, len = width * height; index < len; ++index) {
         curr[index] = rand() % 100;
@@ -67,6 +143,7 @@ void Field::randomFill() {
 }
 
 double Field::view(double x1, double x2) {
+    // TODO: Evaluate if we own this point and return value greater than zero
     size_t x1index = floor(x1 / hX);
     size_t x2index = floor(x2 / hY);
 
@@ -98,6 +175,7 @@ void Field::enableMatrixOutput() {
 }
 
 void Field::printMatrix() {
+    // TODO: print without overlapses
     if (mfout != NULL && t > nextFrameTime) {
         nextFrameTime += ftr.totalTime() / ftr.MatrixFramesCount();
 
@@ -117,6 +195,7 @@ void Field::printMatrix() {
 }
 
 void Field::printViews() {
+    // TODO: print only owned views
     if (fout != NULL) {
         *fout << t;
         for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
@@ -128,6 +207,7 @@ void Field::printViews() {
 }
 
 void Field::print() {
+    // TODO: print only if we have this view
     printf("Field [%zux%zu](itrs: %zu, time: %.5f)\tview: %.7f\n",
            width, height, lastIterrationsCount, t, view(ftr.DebugView()));
 }
@@ -169,6 +249,7 @@ void Field::nextTimeLayer() {
 }
 
 void Field::fillFactors(size_t row, bool first) {
+    // TODO: Evaluate only if needed.
     double *rw = prev + row * width;
     double *brw = first && transposed == false ? rw : (curr + row * width);
 
@@ -202,8 +283,8 @@ void Field::fillFactors(size_t row, bool first) {
     }
 }
 
-double Field::solve(size_t row, bool first)
-{
+double Field::solve(size_t row, bool first) {
+    // TODO: Send/recieve c, f, y
     double m = 0;
     for (size_t i = 1; i < width; ++i) {
         m = aF[i] / cF[i - 1];
@@ -282,6 +363,7 @@ size_t Field::solveRows() {
 }
 
 void Field::solve() {
+    // TODO: Send/recieve rows
     if (done()) {
         return;
     }
@@ -301,9 +383,7 @@ void Field::solve() {
 
     printMatrix();
     printViews();
-    if (ftr.EnableConsole()) {
-        print();
-    }
+    print();
 }
 
 double Field::time() {

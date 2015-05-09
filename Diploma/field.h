@@ -25,6 +25,13 @@ class Field {
     double epsilon;
     size_t lastIterrationsCount;
 
+    int wPCount, hPCount;
+    size_t mySX, mySY;
+    int leftN, rightN, topN, bottomN;
+
+    void calculateNBS();
+    void calculateGrid(int numProcs, double stExpected, int &stX, int &stY);
+
     void fillFactors(size_t row, bool first);
     double solve(size_t row, bool first);
     size_t solveRows();

@@ -7,15 +7,17 @@
 
 #include "field.h"
 
-int main(int argc, const char * argv[]) {
+int main(int argc, char * argv[]) {
+    MPI_Init(&argc, &argv);
+
     Field field;
-    field.test();
     
     field.fillInitial();
 
-    while (field.done() == false) {
-        field.solve();
-    }
+    //while (field.done() == false) {
+    //    field.solve();
+    //}
 
+    MPI_Finalize();
     return 0;
 }
