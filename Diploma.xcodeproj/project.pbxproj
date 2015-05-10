@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		412688681AE113E600E54667 /* config.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 412688661AE113E600E54667 /* config.cpp */; };
 		41359F7A1AD68008009C2DD0 /* factors.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41359F781AD68008009C2DD0 /* factors.cpp */; };
+		41BB05E01AFFBCFC001A9883 /* field-mpi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41BB05DF1AFFBCFC001A9883 /* field-mpi.cpp */; };
+		41BB05E21AFFBE8B001A9883 /* field-print.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41BB05E11AFFBE8B001A9883 /* field-print.cpp */; };
 		41D42E191ACAC9E100989E03 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41D42E181ACAC9E100989E03 /* main.cpp */; };
 		41D42E1C1ACAC9EE00989E03 /* field.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41D42E1A1ACAC9EE00989E03 /* field.cpp */; };
 /* End PBXBuildFile section */
@@ -30,6 +32,8 @@
 		412688671AE113E600E54667 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		41359F781AD68008009C2DD0 /* factors.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = factors.cpp; sourceTree = "<group>"; };
 		41359F791AD68008009C2DD0 /* factors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = factors.h; sourceTree = "<group>"; };
+		41BB05DF1AFFBCFC001A9883 /* field-mpi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "field-mpi.cpp"; sourceTree = "<group>"; };
+		41BB05E11AFFBE8B001A9883 /* field-print.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "field-print.cpp"; sourceTree = "<group>"; };
 		41CE5CDD1AAF6DF000C5918F /* Diploma */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Diploma; sourceTree = BUILT_PRODUCTS_DIR; };
 		41CED2761AF1623C002334A4 /* output */ = {isa = PBXFileReference; lastKnownFileType = folder; path = output; sourceTree = "<group>"; };
 		41D42E181ACAC9E100989E03 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
@@ -74,6 +78,8 @@
 				41359F781AD68008009C2DD0 /* factors.cpp */,
 				41D42E1B1ACAC9EE00989E03 /* field.h */,
 				41D42E1A1ACAC9EE00989E03 /* field.cpp */,
+				41BB05DF1AFFBCFC001A9883 /* field-mpi.cpp */,
+				41BB05E11AFFBE8B001A9883 /* field-print.cpp */,
 				41D42E181ACAC9E100989E03 /* main.cpp */,
 			);
 			path = Diploma;
@@ -139,6 +145,8 @@
 				412688681AE113E600E54667 /* config.cpp in Sources */,
 				41359F7A1AD68008009C2DD0 /* factors.cpp in Sources */,
 				41D42E191ACAC9E100989E03 /* main.cpp in Sources */,
+				41BB05E21AFFBE8B001A9883 /* field-print.cpp in Sources */,
+				41BB05E01AFFBCFC001A9883 /* field-mpi.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

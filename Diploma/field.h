@@ -9,6 +9,11 @@
 #include <fstream>
 #include <mpi.h>
 
+extern int const MASTER;
+extern int const WAITER;
+extern int const NOBODY;
+extern int const NOTHING;
+
 class Field {
     Factors ftr;
     std::ofstream *fout, *mfout;
@@ -63,7 +68,6 @@ public:
     Field();
     ~Field();
 
-    void randomFill();
     void test();
 
     void fillInitial();
