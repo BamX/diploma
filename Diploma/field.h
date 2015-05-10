@@ -19,8 +19,9 @@ class Field {
     std::ofstream *fout, *mfout;
     double nextFrameTime;
 
-    double *prev, *curr, *buff, *views;
+    double *prev, *curr, *buff, *sendBuff, *recvBuff, *views;
     double *aF, *bF, *cF, *fF;
+    double *rowDeltas;
 
     size_t width;
     size_t height;
@@ -35,17 +36,20 @@ class Field {
     MPI_Comm comm, rowComm, colComm;
     size_t mySX, mySY;
     int leftN, rightN, topN, bottomN;
+    MPI_Op deltasReducerOp;
 
     void calculateNBS();
     void createRowColComms(int myI, int myJ, int sX, int sY);
     void calculateGrid(int numProcs, double stExpected, int &stX, int &stY);
 
-    void fillFactors(size_t row, bool first);
-    double solve(size_t row, bool first);
+    void fillFactors(bool first);
+    void firstPass();
+    void secondPass(bool first);
     size_t solveRows();
     void transpose(double *arr);
     void transpose();
     void nextTimeLayer();
+    void resetDeltas();
 
     void enablePlotOutput();
     void enableMatrixOutput();
@@ -56,19 +60,17 @@ class Field {
     void debug(const char *name);
 
     void sendReceivePrevRows();
-    void sendReceiveCurrRowLeftBorders(size_t row);
-    void sendFirstPass(size_t row);
-    void receiveFirstPass(size_t row);
-    void sendSecondPass(size_t row);
-    void receiveSecondPass(size_t row);
-    void reduceMaxDelta(double &maxDelta);
+    void sendReceiveLeftBorders();
+    void sendFirstPass();
+    void receiveFirstPass();
+    void sendSecondPass();
+    void receiveSecondPass();
+    double reduceMaxDelta();
     void reduceViews();
 
 public:
     Field();
     ~Field();
-
-    void test();
 
     void fillInitial();
     void solve();
