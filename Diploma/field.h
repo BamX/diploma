@@ -27,11 +27,12 @@ class Field {
     size_t lastIterrationsCount;
 
     int myId;
-    MPI_Comm comm;
+    MPI_Comm comm, rowComm, colComm;
     size_t mySX, mySY;
     int leftN, rightN, topN, bottomN;
 
     void calculateNBS();
+    void createRowColComms(int myI, int myJ, int sX, int sY);
     void calculateGrid(int numProcs, double stExpected, int &stX, int &stY);
 
     void fillFactors(size_t row, bool first);
