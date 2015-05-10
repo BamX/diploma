@@ -16,10 +16,6 @@ int main(int argc, char * argv[]) {
 
     while (field.done() == false) {
         field.solve();
-
-        if (field.time() > 5) {
-            break;
-        }
     }
 
     MPI_Finalize();

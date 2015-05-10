@@ -7,8 +7,11 @@
 #include <iostream>
 #include <cmath>
 #include <mpi.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 //#define DEBUG_PRINT
+//#define DEBUG_WAIT
 
 static int const MASTER = 0;
 static size_t const MAX_ITTERATIONS_COUNT = 50;
@@ -123,7 +126,14 @@ void Field::calculateNBS() {
     width = newWidth;
     height = newHeight;
 
-    //printf("I'm %d\twith w:%zu\th:%zu.\tTop:%d\tbottom:%d\tleft:%d\tright:%d\n", myId, width, height, topN, bottomN, leftN, rightN);
+    printf("I'm %d(%d)\twith w:%zu\th:%zu.\tTop:%d\tbottom:%d\tleft:%d\tright:%d\n",
+           myId, ::getpid(), width, height, topN, bottomN, leftN, rightN);
+
+#ifdef DEBUG_WAIT
+    int waiter = 0;
+    while (myId == MASTER && waiter == 0) sleep(5);
+    printf("GO\n");
+#endif
 }
 
 void Field::calculateGrid(int numProcs, double stExpected, int &stX, int &stY) {
@@ -136,7 +146,7 @@ void Field::calculateGrid(int numProcs, double stExpected, int &stX, int &stY) {
     }
 
     double stFactor = 1.0 / numProcs;
-    for (int k = 2, len = numProcs / 2; k < len; ++k) {
+    for (int k = 2, len = numProcs / 2; k <= len; ++k) {
         int y = numProcs / k;
         double newStFactor = (double)k / y;
         if (numProcs % k == 0 && fabs(newStFactor - stExpected) < fabs(stFactor - stExpected)) {
@@ -222,9 +232,8 @@ void Field::printMatrix() {
 }
 
 void Field::printViews() {
+    reduceViews();
     if (fout != NULL) {
-        reduceViews();
-
         *fout << t;
         for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
             *fout << "," << views[index];
@@ -238,8 +247,8 @@ void Field::print() {
     double viewValue = view(ftr.DebugView());
 
     if (fabs(viewValue - NOTHING) > __DBL_EPSILON__) {
-        printf("Field (itrs: %zu, time: %.5f)\tview: %.7f\n",
-               lastIterrationsCount, t, viewValue);
+        printf("Field[%d] (itrs: %zu, time: %.5f)\tview: %.7f\n",
+               myId, lastIterrationsCount, t, viewValue);
     }
 }
 
@@ -520,17 +529,14 @@ void Field::receiveSecondPass(size_t row) {
 }
 
 void Field::reduceMaxDelta(double &maxDelta) {
-    double result = 0; // TODO: Check if it could be the same pointer with maxDelta
-    MPI_Allreduce(&maxDelta, &result, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-    maxDelta = result;
+    MPI_Allreduce(&maxDelta, &maxDelta, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 }
 
 void Field::reduceViews() {
-    int viewsCount = (int)ftr.ViewCount();
-    double *tmpViews = new double[viewsCount];
-    for (size_t index = 0; index < viewsCount; ++index) {
-        tmpViews[index] = view(index);
+    for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
+        double value = view(index);
+        double result = 0;
+        MPI_Reduce(&value, &result, 1, MPI_DOUBLE, MPI_MAX, MASTER, MPI_COMM_WORLD);
+        views[index] = result;
     }
-
-    MPI_Reduce(tmpViews, views, viewsCount, MPI_DOUBLE, MPI_MAX, MASTER, MPI_COMM_WORLD);
 }
