@@ -7,6 +7,7 @@
 
 #include "factors.h"
 #include <fstream>
+#include <mpi.h>
 
 class Field {
     Factors ftr;
@@ -26,6 +27,7 @@ class Field {
     size_t lastIterrationsCount;
 
     int myId;
+    MPI_Comm comm;
     size_t mySX, mySY;
     int leftN, rightN, topN, bottomN;
 

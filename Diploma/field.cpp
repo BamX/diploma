@@ -6,7 +6,6 @@
 #include "factors.h"
 #include <iostream>
 #include <cmath>
-#include <mpi.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -15,7 +14,7 @@
 
 static int const MASTER = 0;
 static size_t const MAX_ITTERATIONS_COUNT = 50;
-static int const NOBODY = -1;
+static int const NOBODY = MPI_PROC_NULL;
 static int const NOTHING = -1;
 
 static int const MAX_ROW_INDEX = 100000;
@@ -84,44 +83,35 @@ Field::~Field() {
 void Field::calculateNBS() {
     int numProcs;
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &myId);
 
-    mySX = 0; mySY = 0;
-    leftN = NOBODY; rightN = NOBODY; topN = NOBODY; bottomN = NOBODY;
-
-    int stX = 1, stY = numProcs;
+    int stX = 0, stY = 0;
     calculateGrid(numProcs, (double)width / height, stX, stY);
 
-    int i = myId / stX;
-    int j = myId % stX;
+    int dims[2] = { stY, stX };
+    int wrap[2] = { 0, 0 };
+    MPI_Cart_create(MPI_COMM_WORLD, 2, dims, wrap, 1, &comm);
+
+    int coord[2];
+    MPI_Comm_rank(MPI_COMM_WORLD, &myId);
+    MPI_Cart_coords(comm, myId, 2, coord);
+    MPI_Cart_shift(comm, 0, 1, &topN, &bottomN);
+    MPI_Cart_shift(comm, 1, 1, &leftN, &rightN);
 
     size_t newHeight = height / stY;
-    mySY = newHeight * i;
-    if (i == stY - 1) {
+    size_t newWidth = width / stX;
+
+    mySY = newHeight * coord[0];
+    mySX = newWidth * coord[1];
+
+    if (bottomN == NOBODY) {
         newHeight = height - newHeight * (stY - 1);
     }
-    newHeight += (i > 0 && i < stY - 1) ? 2 : (stY == 1 ? 0 : 1);
+    newHeight += (topN != NOBODY ? 1 : 0) + (bottomN != NOBODY ? 1 : 0);
 
-    size_t newWidth = width / stX;
-    mySX = newWidth * j;
-    if (j == stX - 1) {
+    if (rightN == NOBODY) {
         newWidth = width - newWidth * (stX - 1);
     }
-    newWidth += (i > 0 && i < stX - 1) ? 2 : (stX == 1 ? 0 : 1);
-
-    if (i > 0) {
-        topN = myId - stX;
-    }
-    if (i < stY - 1) {
-        bottomN = myId + stX;
-    }
-
-    if (j > 0) {
-        leftN = myId - 1;
-    }
-    if (j < stX - 1) {
-        rightN = myId + 1;
-    }
+    newWidth += (rightN != NOBODY ? 1 : 0) + (leftN != NOBODY ? 1 : 0);
 
     width = newWidth;
     height = newHeight;
@@ -458,56 +448,36 @@ bool Field::done() {
 }
 
 void Field::sendReceivePrevRows() {
-    if (topN != NOBODY && bottomN != NOBODY) {
-        MPI_Sendrecv(prev + (height - 2) * width, (int)width, MPI_DOUBLE, bottomN, TAG_TOP_TO_BOTTOM_ROWS,
-                     prev, (int)width, MPI_DOUBLE, topN, TAG_TOP_TO_BOTTOM_ROWS,
-                     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Sendrecv(prev + width, (int)width, MPI_DOUBLE, topN, TAG_BOTTOM_TO_TOP_ROWS,
-                     prev + (height - 1) * width, (int)width, MPI_DOUBLE, bottomN, TAG_BOTTOM_TO_TOP_ROWS,
-                     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
-    else if (topN != NOBODY) {
-        MPI_Recv(prev, (int)width, MPI_DOUBLE, topN, TAG_TOP_TO_BOTTOM_ROWS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Send(prev + width, (int)width, MPI_DOUBLE, topN, TAG_BOTTOM_TO_TOP_ROWS, MPI_COMM_WORLD);
-    }
-    else if (bottomN != NOBODY) {
-        MPI_Send(prev + (height - 2) * width, (int)width, MPI_DOUBLE, bottomN, TAG_TOP_TO_BOTTOM_ROWS, MPI_COMM_WORLD);
-        MPI_Recv(prev + (height - 1) * width, (int)width, MPI_DOUBLE, bottomN, TAG_BOTTOM_TO_TOP_ROWS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
+    MPI_Sendrecv(prev + (height - 2) * width, (int)width, MPI_DOUBLE, bottomN, TAG_TOP_TO_BOTTOM_ROWS,
+                 prev, (int)width, MPI_DOUBLE, topN, TAG_TOP_TO_BOTTOM_ROWS,
+                 comm, MPI_STATUS_IGNORE);
+    MPI_Sendrecv(prev + width, (int)width, MPI_DOUBLE, topN, TAG_BOTTOM_TO_TOP_ROWS,
+                 prev + (height - 1) * width, (int)width, MPI_DOUBLE, bottomN, TAG_BOTTOM_TO_TOP_ROWS,
+                 comm, MPI_STATUS_IGNORE);
 }
 
 void Field::sendReceiveCurrRowBorders(size_t row) {
     double *rw = curr + row * width;
 
-    if (leftN != NOBODY && rightN != NOBODY) {
-        MPI_Sendrecv(rw + (width - 2), 1, MPI_DOUBLE, rightN, TAG_LEFT_TO_RIGHT_ROW + (int)row,
-                     rw, 1, MPI_DOUBLE, leftN, TAG_LEFT_TO_RIGHT_ROW + (int)row,
-                     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Sendrecv(rw + 1, 1, MPI_DOUBLE, leftN, TAG_RIGHT_TO_LEFT_ROW + (int)row,
-                     rw + (width - 1), 1, MPI_DOUBLE, rightN, TAG_RIGHT_TO_LEFT_ROW + (int)row,
-                     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
-    else if (leftN != NOBODY) {
-        MPI_Recv(rw, 1, MPI_DOUBLE, leftN, TAG_LEFT_TO_RIGHT_ROW + (int)row, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Send(rw + 1, 1, MPI_DOUBLE, leftN, TAG_RIGHT_TO_LEFT_ROW + (int)row, MPI_COMM_WORLD);
-    }
-    else if (rightN != NOBODY) {
-        MPI_Send(rw + (width - 2), 1, MPI_DOUBLE, rightN, TAG_LEFT_TO_RIGHT_ROW + (int)row, MPI_COMM_WORLD);
-        MPI_Recv(rw + (width - 1), 1, MPI_DOUBLE, rightN, TAG_RIGHT_TO_LEFT_ROW + (int)row, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
+    MPI_Sendrecv(rw + (width - 2), 1, MPI_DOUBLE, rightN, TAG_LEFT_TO_RIGHT_ROW + (int)row,
+                 rw, 1, MPI_DOUBLE, leftN, TAG_LEFT_TO_RIGHT_ROW + (int)row,
+                 comm, MPI_STATUS_IGNORE);
+    MPI_Sendrecv(rw + 1, 1, MPI_DOUBLE, leftN, TAG_RIGHT_TO_LEFT_ROW + (int)row,
+                 rw + (width - 1), 1, MPI_DOUBLE, rightN, TAG_RIGHT_TO_LEFT_ROW + (int)row,
+                 comm, MPI_STATUS_IGNORE);
 }
 
 void Field::sendFirstPass(size_t row) {
     if (rightN != NOBODY) {
         double bff[] = { bF[width - 2], cF[width - 2], fF[width - 2] };
-        MPI_Send(bff, 3, MPI_DOUBLE, rightN, TAG_FIRST_PASS + (int)row, MPI_COMM_WORLD);
+        MPI_Send(bff, 3, MPI_DOUBLE, rightN, TAG_FIRST_PASS + (int)row, comm);
     }
 }
 
 void Field::receiveFirstPass(size_t row) {
     if (leftN != NOBODY) {
         double bff[3];
-        MPI_Recv(bff, 3, MPI_DOUBLE, leftN, TAG_FIRST_PASS + (int)row, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(bff, 3, MPI_DOUBLE, leftN, TAG_FIRST_PASS + (int)row, comm, MPI_STATUS_IGNORE);
         bF[0] = bff[0];
         cF[0] = bff[1];
         fF[0] = bff[2];
@@ -517,26 +487,26 @@ void Field::receiveFirstPass(size_t row) {
 void Field::sendSecondPass(size_t row) {
     double *y = curr + row * width;
     if (leftN != NOBODY) {
-        MPI_Send(y + 1, 1, MPI_DOUBLE, leftN, TAG_SECOND_PASS + (int)row, MPI_COMM_WORLD);
+        MPI_Send(y + 1, 1, MPI_DOUBLE, leftN, TAG_SECOND_PASS + (int)row, comm);
     }
 }
 
 void Field::receiveSecondPass(size_t row) {
     double *y = curr + row * width;
     if (rightN != NOBODY) {
-        MPI_Recv(y + width - 1, 1, MPI_DOUBLE, rightN, TAG_SECOND_PASS + (int)row, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(y + width - 1, 1, MPI_DOUBLE, rightN, TAG_SECOND_PASS + (int)row, comm, MPI_STATUS_IGNORE);
     }
 }
 
 void Field::reduceMaxDelta(double &maxDelta) {
-    MPI_Allreduce(&maxDelta, &maxDelta, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(&maxDelta, &maxDelta, 1, MPI_DOUBLE, MPI_MAX, comm);
 }
 
 void Field::reduceViews() {
     for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
         double value = view(index);
         double result = 0;
-        MPI_Reduce(&value, &result, 1, MPI_DOUBLE, MPI_MAX, MASTER, MPI_COMM_WORLD);
+        MPI_Reduce(&value, &result, 1, MPI_DOUBLE, MPI_MAX, MASTER, comm);
         views[index] = result;
     }
 }
