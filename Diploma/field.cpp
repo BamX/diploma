@@ -178,7 +178,7 @@ double Field::solve(size_t row, bool first) {
     sendSecondPass(row);
 
     reduceMaxDelta(maxDelta);
-    sendReceiveCurrRowBorders(row);
+    sendReceiveCurrRowLeftBorders(row);
 
     return maxDelta;
 }

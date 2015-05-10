@@ -130,14 +130,11 @@ void Field::sendReceivePrevRows() {
     debug("prevs");
 }
 
-void Field::sendReceiveCurrRowBorders(size_t row) {
+void Field::sendReceiveCurrRowLeftBorders(size_t row) {
     double *rw = curr + row * width;
 
     MPI_Sendrecv(rw + (width - 2), 1, MPI_DOUBLE, rightN, TAG_LEFT_TO_RIGHT_ROW + (int)row,
                  rw, 1, MPI_DOUBLE, leftN, TAG_LEFT_TO_RIGHT_ROW + (int)row,
-                 comm, MPI_STATUS_IGNORE);
-    MPI_Sendrecv(rw + 1, 1, MPI_DOUBLE, leftN, TAG_RIGHT_TO_LEFT_ROW + (int)row,
-                 rw + (width - 1), 1, MPI_DOUBLE, rightN, TAG_RIGHT_TO_LEFT_ROW + (int)row,
                  comm, MPI_STATUS_IGNORE);
 }
 

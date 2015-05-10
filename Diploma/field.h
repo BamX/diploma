@@ -56,7 +56,7 @@ class Field {
     void debug(const char *name);
 
     void sendReceivePrevRows();
-    void sendReceiveCurrRowBorders(size_t row);
+    void sendReceiveCurrRowLeftBorders(size_t row);
     void sendFirstPass(size_t row);
     void receiveFirstPass(size_t row);
     void sendSecondPass(size_t row);
