@@ -31,14 +31,13 @@ class Field {
     double epsilon;
     size_t lastIterrationsCount;
 
-    int myId;
-    MPI_Comm comm, rowComm, colComm;
+    int myId, numProcs, myCoord;
+    MPI_Comm comm;
+    MPI_Datatype mpiAllType;
     size_t mySX, mySY;
-    int leftN, rightN, topN, bottomN;
+    int topN, bottomN;
 
     void calculateNBS();
-    void createRowColComms(int myI, int myJ, int sX, int sY);
-    void calculateGrid(int numProcs, double stExpected, int &stX, int &stY);
 
     void fillFactors(size_t row, bool first);
     double solve(size_t row, bool first);
@@ -55,20 +54,15 @@ class Field {
     void printViews();
     void debug(const char *name);
 
-    void sendReceivePrevRows();
-    void sendReceiveCurrRowLeftBorders(size_t row);
-    void sendFirstPass(size_t row);
-    void receiveFirstPass(size_t row);
-    void sendSecondPass(size_t row);
-    void receiveSecondPass(size_t row);
-    void reduceMaxDelta(double &maxDelta);
     void reduceViews();
 
 public:
     Field();
     ~Field();
+    void finalize();
 
     void test();
+    void testPrint();
 
     void fillInitial();
     void solve();

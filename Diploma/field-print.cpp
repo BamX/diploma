@@ -5,12 +5,15 @@
 #include "field.h"
 #include <cmath>
 
-double Field::view(double x1, double x2) {
-    ssize_t x1index = floor(x1 / hX) - mySX + (leftN != NOBODY ? 1 : 0);
-    ssize_t x2index = floor(x2 / hY) - mySY + (topN != NOBODY ? 1 : 0);
+#include <sys/types.h>
+#include <unistd.h>
 
-    bool notInMyX1 = x1index < (leftN != NOBODY ? 1 : 0) || x1index >= width - (rightN != NOBODY ? 1 : 0);
-    bool notInMyX2 = x2index < (topN != NOBODY ? 1 : 0) || x2index >= height - (bottomN != NOBODY ? 1 : 0);
+double Field::view(double x1, double x2) {
+    ssize_t x1index = floor(x1 / hX) - mySX;
+    ssize_t x2index = floor(x2 / hY) - mySY;
+
+    bool notInMyX1 = x1index < 0 || x1index >= width;
+    bool notInMyX2 = x2index < 0 || x2index >= height;
     if (notInMyX1 || notInMyX2) {
         return NOTHING;
     }
@@ -88,5 +91,23 @@ void Field::print() {
     if (fabs(viewValue - NOTHING) > __DBL_EPSILON__) {
         printf("Field[%d] (itrs: %zu, time: %.5f)\tview: %.7f\n",
                myId, lastIterrationsCount, t, viewValue);
+    }
+}
+
+void Field::testPrint() {
+    MPI_Barrier(comm);
+    sleep(1);
+
+    for (int p = 0; p < numProcs; ++p) {
+        if (p == myCoord) {
+            for (int i = 0, index = 0; i < height; ++i) {
+                for (int j = 0; j < width; ++j, ++index) {
+                    printf("%.0f\t", prev[index]);
+                }
+                printf("\n");
+            }
+        }
+        MPI_Barrier(comm);
+        sleep(1);
     }
 }
