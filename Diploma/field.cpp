@@ -70,13 +70,15 @@ double Field::view(double x1, double x2) {
     size_t x1index = floor(x1 / hX);
     size_t x2index = floor(x2 / hY);
 
-    double x1factor = x1 - x1index * hX;
+    return curr[x2index * width + x1index];
+
+    /*double x1factor = x1 - x1index * hX;
     double x2factor = x2 - x2index * hY;
 
     double value = curr[x2index * width + x1index] + x1factor * curr[x2index * width + x1index + 1];
     value += x2factor * (curr[(x2index + 1) * width + x1index] + x1factor * curr[(x2index + 1) * width + x1index + 1]);
 
-    return value;
+    return value;*/
 }
 
 double Field::view(size_t index) {
