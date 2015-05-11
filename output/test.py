@@ -10,7 +10,7 @@ for t, v in zip([l.split(',') for l in test], [l.split(',') for l in view]):
             print "Wrong time grid %s vs %s" % (t[0], v[0])
         deltas = [abs(float(tView) - float(vView)) for (tView, vView) in zip(t[1:], v[1:])]
         if len(filter(lambda delta: delta > 0.0001, deltas)) > 0:
-            print t, deltas
+            print t[0], deltas
             isOk = False
 
 if isOk:
