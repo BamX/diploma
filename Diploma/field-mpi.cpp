@@ -14,18 +14,9 @@ static int const MAX_ROW_INDEX = 1000000;
 static int const TAG_TOP_TO_BOTTOM_ROWS = 23;
 static int const TAG_BOTTOM_TO_TOP_ROWS = 24;
 static int const TAG_LEFT_TO_RIGHT_ROW = 1 * MAX_ROW_INDEX;
+static int const TAG_RIGHT_TO_LEFT_ROW = 2 * MAX_ROW_INDEX;
 static int const TAG_FIRST_PASS = 3 * MAX_ROW_INDEX;
 static int const TAG_SECOND_PASS = 4 * MAX_ROW_INDEX;
-
-void deltasReducer(void *in, void *inout, int *len, MPI_Datatype *dptr) {
-    double *din = (double *)in;
-    double *dinout = (double *)inout;
-
-    for (int i = 0; i < *len; ++i) {
-        *dinout = std::max(*din, *dinout);
-        ++din; ++dinout;
-    }
-}
 
 void Field::debug(const char *name) {
 #ifdef DEBUG_PRINT
@@ -34,8 +25,6 @@ void Field::debug(const char *name) {
 }
 
 void Field::calculateNBS() {
-    MPI_Op_create(&deltasReducer, 1, &deltasReducerOp);
-
     int numProcs;
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
@@ -79,7 +68,6 @@ void Field::calculateNBS() {
 #ifdef DEBUG_WAIT
     int waiter = myId;
     while (waiter == WAITER) sleep(5);
-    MPI_Barrier(comm);
     printf("GO\n");
 #endif
 }
@@ -142,120 +130,55 @@ void Field::sendReceivePrevRows() {
     debug("prevs");
 }
 
-void Field::sendReceiveLeftBorders() {
-    size_t shift = 0;
-    for (size_t row = (topN != NOBODY ? 1 : 0), len = height - (bottomN != NOBODY ? 1 : 0); row < len; ++row) {
-        double *rw = curr + row * width;
+void Field::sendReceiveCurrRowLeftBorders(size_t row) {
+    double *rw = curr + row * width;
 
-        sendBuff[shift++] = rw[width - 2];
-    }
-
-    MPI_Sendrecv(sendBuff, (int)shift, MPI_DOUBLE, rightN, TAG_LEFT_TO_RIGHT_ROW,
-                 recvBuff, (int)shift, MPI_DOUBLE, leftN, TAG_LEFT_TO_RIGHT_ROW,
+    MPI_Sendrecv(rw + (width - 2), 1, MPI_DOUBLE, rightN, TAG_LEFT_TO_RIGHT_ROW + (int)row,
+                 rw, 1, MPI_DOUBLE, leftN, TAG_LEFT_TO_RIGHT_ROW + (int)row,
                  comm, MPI_STATUS_IGNORE);
-
-    shift = 0;
-    for (size_t row = (topN != NOBODY ? 1 : 0), len = height - (bottomN != NOBODY ? 1 : 0); row < len; ++row) {
-        double *rw = curr + row * width;
-
-        rw[0] = recvBuff[shift++];
-    }
 }
 
-void Field::sendFirstPass() {
+void Field::sendFirstPass(size_t row) {
     if (rightN != NOBODY) {
-        size_t shift = 0;
-        for (size_t row = (topN != NOBODY ? 1 : 0), len = height - (bottomN != NOBODY ? 1 : 0); row < len; ++row) {
-
-            double *rbF = bF + row * width;
-            double *rcF = cF + row * width;
-            double *rfF = fF + row * width;
-
-            sendBuff[shift++] = rbF[width - 2];
-            sendBuff[shift++] = rcF[width - 2];
-            sendBuff[shift++] = rfF[width - 2];
-        }
-
-        debug("first pass send");
-        MPI_Send(sendBuff, (int)shift, MPI_DOUBLE, rightN, TAG_FIRST_PASS, comm);
-        debug("first pass send");
+        debug("s first pass");
+        double bff[] = { bF[width - 2], cF[width - 2], fF[width - 2] };
+        MPI_Send(bff, 3, MPI_DOUBLE, rightN, TAG_FIRST_PASS + (int)row, comm);
+        debug("s first pass");
     }
 }
 
-void Field::receiveFirstPass() {
+void Field::receiveFirstPass(size_t row) {
     if (leftN != NOBODY) {
-        size_t shift = 0;
-        for (size_t row = (topN != NOBODY ? 1 : 0), len = height - (bottomN != NOBODY ? 1 : 0); row < len; ++row) {
-            shift += 3;
-        }
-
-        debug("first pass receive");
-        MPI_Recv(recvBuff, (int)shift, MPI_DOUBLE, leftN, TAG_FIRST_PASS, comm, MPI_STATUS_IGNORE);
-        debug("first pass receive");
-
-        shift = 0;
-        for (size_t row = (topN != NOBODY ? 1 : 0), len = height - (bottomN != NOBODY ? 1 : 0); row < len; ++row) {
-
-            double *rbF = bF + row * width;
-            double *rcF = cF + row * width;
-            double *rfF = fF + row * width;
-
-            rbF[0] = recvBuff[shift++];
-            rcF[0] = recvBuff[shift++];
-            rfF[0] = recvBuff[shift++];
-        }
+        debug("r first pass");
+        double bff[3];
+        MPI_Recv(bff, 3, MPI_DOUBLE, leftN, TAG_FIRST_PASS + (int)row, comm, MPI_STATUS_IGNORE);
+        bF[0] = bff[0];
+        cF[0] = bff[1];
+        fF[0] = bff[2];
+        debug("r first pass");
     }
 }
 
-void Field::sendSecondPass() {
+void Field::sendSecondPass(size_t row) {
     if (leftN != NOBODY) {
-        size_t shift = 0;
-        for (size_t row = (topN != NOBODY ? 1 : 0), len = height - (bottomN != NOBODY ? 1 : 0); row < len; ++row) {
-
-            double *y = curr + row * width;
-
-            sendBuff[shift++] = y[1];
-        }
-
-        debug("second pass send");
-        MPI_Send(sendBuff, (int)shift, MPI_DOUBLE, leftN, TAG_SECOND_PASS, comm);
-        debug("second pass send");
+        debug("s second pass");
+        double *y = curr + row * width;
+        MPI_Send(y + 1, 1, MPI_DOUBLE, leftN, TAG_SECOND_PASS + (int)row, comm);
+        debug("s second pass");
     }
 }
 
-void Field::receiveSecondPass() {
+void Field::receiveSecondPass(size_t row) {
     if (rightN != NOBODY) {
-        size_t shift = 0;
-        for (size_t row = (topN != NOBODY ? 1 : 0), len = height - (bottomN != NOBODY ? 1 : 0); row < len; ++row) {
-            ++shift;
-        }
-
-        debug("second pass receive");
-        MPI_Recv(recvBuff, (int)shift, MPI_DOUBLE, rightN, TAG_SECOND_PASS, comm, MPI_STATUS_IGNORE);
-        debug("second pass receive");
-
-        shift = 0;
-        for (size_t row = (topN != NOBODY ? 1 : 0), len = height - (bottomN != NOBODY ? 1 : 0); row < len; ++row) {
-
-            double *y = curr + row * width;
-
-            y[width - 1] = recvBuff[shift++];
-        }
+        debug("r second pass");
+        double *y = curr + row * width;
+        MPI_Recv(y + width - 1, 1, MPI_DOUBLE, rightN, TAG_SECOND_PASS + (int)row, comm, MPI_STATUS_IGNORE);
+        debug("r second pass");
     }
 }
 
-double Field::reduceMaxDelta() {
-    int count = (int)std::max(width, height);
-    memcpy(sendBuff, rowDeltas, count * sizeof(double));
-    MPI_Allreduce(sendBuff, rowDeltas, count, MPI_DOUBLE, deltasReducerOp, rowComm);
-
-    double maxDelta = 0;
-    for (size_t row = (topN != NOBODY ? 1 : 0), len = height - (bottomN != NOBODY ? 1 : 0); row < len; ++row) {
-        maxDelta = std::max(rowDeltas[row], maxDelta);
-    }
-
-    //printf("max delta: %.5f\n", maxDelta);
-    return maxDelta;
+void Field::reduceMaxDelta(double &maxDelta) {
+    MPI_Allreduce(&maxDelta, &maxDelta, 1, MPI_DOUBLE, MPI_MAX, rowComm);
 }
 
 void Field::reduceViews() {
