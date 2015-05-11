@@ -74,7 +74,9 @@ void Field::printMatrix() {
 }
 
 void Field::printViews() {
-    reduceViews();
+    if (ftr.EnablePlot()) {
+        reduceViews();
+    }
     if (fout != NULL) {
         *fout << t;
         for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
