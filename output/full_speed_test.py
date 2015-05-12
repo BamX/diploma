@@ -77,7 +77,7 @@ def processTasks(tasksParams):
             if not t in results or waitState(results[t][0]):
                 results[t] = taskStatus(t)
                 anyRuning = anyRuning or waitState(results[t][0])
-            print '%s : [%s] w: %s\tc: %s\tnodes=%s' % (t, results[t][0], results[t][1], results[t][2], results[t][3])
+            print '%s(x%s)\t: [%s] w: %s\tc: %s\tnodes=%s' % (t, procCount(results[t][3]), results[t][0], results[t][1], results[t][2], results[t][3])
         if anyRuning:
             time.sleep(SLEEPINTERVAL)
 
@@ -86,6 +86,6 @@ def processTasks(tasksParams):
 #print runTask(4, 4)
 #print taskStatus('186314')
 
-times = processTasks([(4, 1), (4, 2), (4, 4), (4, 8)])
+times = processTasks([(1, 1), (2, 1), (4, 1), (8, 1), (4, 3), (4, 4), (5, 4)])
 for (time, proc) in times:
     print proc, time
