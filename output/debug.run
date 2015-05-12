@@ -1,0 +1,1 @@
+cd /home/volosatov/diploma/output && mpirun ./debug
