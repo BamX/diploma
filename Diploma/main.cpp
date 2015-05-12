@@ -18,7 +18,6 @@ int main(int argc, char * argv[]) {
         field.solve();
     }
 
-    field.finalize();
     MPI_Finalize();
     return 0;
 }

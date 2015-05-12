@@ -80,11 +80,28 @@ void Field::fillInitial() {
     }
 }
 
+void Field::transpose(double *arr) {
+    for (size_t index = 0, len = width * height; index < len; ++index) {
+        size_t newIndex = (index % width) * height + index / width;
+        buff[newIndex] = arr[index];
+    }
+    for (size_t index = 0, len = width * height; index < len; ++index) {
+        arr[index] = buff[index];
+    }
+}
+
 void Field::transpose() {
-    transpose(transposed ? curr : prev);
+    sendReceivePrevRows();
+    transpose(prev);
+    transpose(curr);
     
+    std::swap(width, height);
     std::swap(hX, hY);
     transposed = transposed == false;
+
+    std::swap(leftN, topN);
+    std::swap(rightN, bottomN);
+    std::swap(colComm, rowComm);
 }
 
 void Field::nextTimeLayer() {
@@ -94,26 +111,29 @@ void Field::nextTimeLayer() {
 
 void Field::fillFactors(size_t row, bool first) {
     double *rw = prev + row * width;
-    double *brw = first ? rw : (curr + row * width);
+    double *brw = first && transposed == false ? rw : (curr + row * width);
 
-    double lm0 = ftr.lambda(brw[0]), lmh = ftr.lambda(brw[1]);
-    aF[0] = 0;
-    cF[0] = dT * (lm0 + lmh) + hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]);
-    bF[0] = -dT * (lm0 + lmh);
-    fF[0] = hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]) * rw[0];
+    if (leftN == NOBODY) {
+        double lm0 = ftr.lambda(brw[0]), lmh = ftr.lambda(brw[1]);
+        aF[0] = 0;
+        cF[0] = dT * (lm0 + lmh) + hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]);
+        bF[0] = -dT * (lm0 + lmh);
+        fF[0] = hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]) * rw[0];
+    }
 
-
-    double TPrev = brw[width - 1];
-    double TPrev4 = TPrev * TPrev * TPrev * TPrev;
-    double lmXX = ftr.lambda(brw[width - 1]), lmXXm1 = ftr.lambda(brw[width - 2]);
-    aF[width - 1] = -dT * (lmXXm1 + lmXX);
-    cF[width - 1] = dT * (lmXXm1 + lmXX)
-                     + hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1])
-                     + 2 * hX * dT * ftr.alpha(t);
-    bF[width - 1] = 0;
-    fF[width - 1] = hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1]) * rw[width - 1]
-                     - 2 * hX * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
-                     + 2 * hX * dT * ftr.alpha(t) * ftr.TEnv();
+    if (rightN == NOBODY) {
+        double TPrev = brw[width - 1];
+        double TPrev4 = TPrev * TPrev * TPrev * TPrev;
+        double lmXX = ftr.lambda(brw[width - 1]), lmXXm1 = ftr.lambda(brw[width - 2]);
+        aF[width - 1] = -dT * (lmXXm1 + lmXX);
+        cF[width - 1] = dT * (lmXXm1 + lmXX)
+                         + hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1])
+                         + 2 * hX * dT * ftr.alpha(t);
+        bF[width - 1] = 0;
+        fF[width - 1] = hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1]) * rw[width - 1]
+                         - 2 * hX * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
+                         + 2 * hX * dT * ftr.alpha(t) * ftr.TEnv();
+    }
 
     for (size_t index = 1; index < width - 1; ++index) {
         double roc = ftr.ro(brw[index]) * ftr.cEf(brw[index]);
@@ -127,20 +147,26 @@ void Field::fillFactors(size_t row, bool first) {
 }
 
 double Field::solve(size_t row, bool first) {
+    receiveFirstPass(row);
     double m = 0;
     for (size_t i = 1; i < width; ++i) {
         m = aF[i] / cF[i - 1];
         cF[i] -= m * bF[i - 1];
         fF[i] -= m * fF[i - 1];
     }
+    sendFirstPass(row);
 
     double *y = curr + row * width;
     double *py = first ? (prev + row * width) : y;
 
     double newValue = 0, maxDelta = 0;
-    newValue = fF[width - 1] / cF[width - 1];
-    maxDelta = fabs(newValue - py[width - 1]);
-    y[width - 1] = newValue;
+    if (rightN == NOBODY) {
+        newValue = fF[width - 1] / cF[width - 1];
+        maxDelta = fabs(newValue - py[width - 1]);
+        y[width - 1] = newValue;
+    } else {
+        receiveSecondPass(row);
+    }
 
     for (ssize_t i = width - 2; i >= 0; --i) {
         newValue = (fF[i] - bF[i] * y[i + 1]) / cF[i];
@@ -149,23 +175,39 @@ double Field::solve(size_t row, bool first) {
         maxDelta = std::max(maxDelta, newDelta);
         y[i] = newValue;
     }
+    sendSecondPass(row);
+
+    reduceMaxDelta(maxDelta);
+    sendReceiveCurrRowLeftBorders(row);
 
     return maxDelta;
 }
 
 void Field::test() {
-    for (size_t index = 0; index < width * height; ++index) {
-        prev[index] = myCoord * width * height + index;
+    size_t w = width;
+    aF[0] = 0; aF[1] = 1; aF[2] = 1; aF[3] = 1; aF[4] = 1;
+    bF[0] = 3; bF[1] = -1; bF[2] = 1; bF[3] = -1; bF[4] = 0;
+    cF[0] = 4; cF[1] = 2; cF[2] = 4; cF[3] = 2; cF[4] = 2;
+    fF[0] = 4; fF[1] = 2; fF[2] = 7.5; fF[3] = 1; fF[4] = -3;
+    prev[0] = -0.540909; prev[1] = 2.05455; prev[2] = 1.56818; prev[3] = -0.827273; prev[4] = -1.08636;
+
+    width = 5;
+
+    solve(0, true);
+
+    for (size_t i = 0; i < 5; ++i) {
+        if (fabs(prev[i] - curr[i]) > 0.00001) {
+            printf("Error: %lu\n", i);
+        }
     }
 
-    MPI_Barrier(comm);
-    transpose();
+    width = w;
 }
 
 size_t Field::solveRows() {
     size_t maxIterationsCount = 0;
 
-    for (size_t row = 0; row < height; ++row) {
+    for (size_t row = (topN != NOBODY ? 1 : 0); row < height - (bottomN != NOBODY ? 1 : 0); ++row) {
         fillFactors(row, true);
         double delta = solve(row, true);
         size_t iterationsCount = 1;
