@@ -10,10 +10,10 @@
 
 double Field::view(double x1, double x2) {
     ssize_t x1index = floor(x1 / hX) - mySX;
-    ssize_t x2index = floor(x2 / hY) - mySY;
+    ssize_t x2index = floor(x2 / hY) - mySY + (topN != NOBODY ? 1 : 0);
 
     bool notInMyX1 = x1index < 0 || x1index >= width;
-    bool notInMyX2 = x2index < 0 || x2index >= height;
+    bool notInMyX2 = x2index < (topN != NOBODY ? 1 : 0) || x2index >= height - (bottomN != NOBODY ? 1 : 0);
     if (notInMyX1 || notInMyX2) {
         return NOTHING;
     }
@@ -43,34 +43,10 @@ void Field::enablePlotOutput() {
 }
 
 void Field::enableMatrixOutput() {
-    if (myId != MASTER) {
-        return;
-    }
-
     if (mfout != NULL) {
         mfout->close();
     }
-    mfout = new std::ofstream("matrix.csv");
-}
-
-void Field::printMatrix() {
-    // TODO: print without overlapses
-    if (mfout != NULL && t > nextFrameTime) {
-        nextFrameTime += ftr.totalTime() / ftr.MatrixFramesCount();
-
-        size_t index = 0;
-        for (size_t row = 0; row < height; ++row) {
-            for (size_t col = 0; col < width; ++col, ++index) {
-                *mfout << curr[index];
-                if (col < width - 1) {
-                    *mfout << " ";
-                }
-            }
-            *mfout << "\n";
-        }
-        *mfout << "\n";
-        mfout->flush();
-    }
+    mfout = new std::ofstream("matrix.csv", std::ios::trunc);
 }
 
 void Field::printViews() {

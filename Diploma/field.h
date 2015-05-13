@@ -13,6 +13,7 @@ extern int const MASTER;
 extern int const WAITER;
 extern int const NOBODY;
 extern int const NOTHING;
+extern int const SEND_PACK_SIZE;
 
 class Field {
     Factors ftr;
@@ -20,7 +21,8 @@ class Field {
     double nextFrameTime;
 
     double *prev, *curr, *buff, *views;
-    double *aF, *bF, *cF, *fF;
+    double *maF, *mbF, *mcF, *mfF;
+    bool *calculatingRows, *prevCalculatingRows;
 
     size_t width;
     size_t height;
@@ -33,18 +35,24 @@ class Field {
 
     int myId, numProcs, myCoord;
     MPI_Comm comm;
-    MPI_Datatype mpiAllType;
     size_t mySX, mySY;
-    int topN, bottomN;
+    int topN, bottomN, leftN, rightN;
+    size_t bundleSizeLimit;
+    double *sendBuff, *receiveBuff;
+    bool *boolSendBuff;
 
     void calculateNBS();
 
     void fillFactors(size_t row, bool first);
+    void firstPass(size_t row);
+    double secondPass(size_t row, bool first);
     double solve(size_t row, bool first);
+
     size_t solveRows();
     void transpose(double *arr);
     void transpose();
     void nextTimeLayer();
+    void resetCalculatingRows();
 
     void enablePlotOutput();
     void enableMatrixOutput();
@@ -53,6 +61,12 @@ class Field {
     void printMatrix();
     void printViews();
     void debug(const char *name);
+
+    void sendRecieveRows();
+    void sendFistPass(size_t fromRow);
+    void recieveFirstPass(size_t fromRow);
+    void sendSecondPass(size_t fromRow);
+    void recieveSecondPass(size_t fromRow);
 
     void reduceViews();
 
