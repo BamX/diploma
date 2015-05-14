@@ -11,6 +11,7 @@ key_walltime = 'resources_used.walltime'
 key_cputime = 'resources_used.cput'
 key_jobstate = 'job_state'
 key_nodes = 'Resource_List.nodes'
+key_exit_status = 'exit_status'
 value_jobstate_done = 'C'
 value_jobstate_queued = 'Q'
 value_jobstate_running = 'R'
@@ -45,6 +46,7 @@ def taskStatus(taskId):
     wallTime = 0
     cpuTime = 0
     nodes = ''
+    exitCode = ''
 
     if key_jobstate in data:
         jobState = data[key_jobstate]
@@ -52,8 +54,9 @@ def taskStatus(taskId):
         if jobState == value_jobstate_done:
             wallTime = parseTime(data[key_walltime])
             cpuTime = parseTime(data[key_cputime])
+            exitCode = data[key_exit_status]
         
-    return ( jobState, wallTime, cpuTime, nodes )
+    return ( jobState, wallTime, cpuTime, nodes, exitCode )
 
 def waitState(state):
     return state == value_jobstate_queued or state == value_jobstate_running
@@ -61,7 +64,6 @@ def waitState(state):
 def procCount(nodes):
     splits = [int(s.strip('=')) for s in nodes.split(':ppn')]
     return splits[0] * splits[1]
-
 
 def processTasks(tasksParams):
     tasks = [runTask(nodes, ppn) for (nodes, ppn) in tasksParams]
@@ -77,7 +79,7 @@ def processTasks(tasksParams):
             if not t in results or waitState(results[t][0]):
                 results[t] = taskStatus(t)
                 anyRuning = anyRuning or waitState(results[t][0])
-            print '%s(x%s)\t: [%s] w: %s\tc: %s\tnodes=%s' % (t, procCount(results[t][3]), results[t][0], results[t][1], results[t][2], results[t][3])
+            print '%s(x%s)\t: [%s:%s] w: %s\tc: %s\tnodes=%s' % (t, procCount(results[t][3]), results[t][0], results[t][4], results[t][1], results[t][2], results[t][3])
         if anyRuning:
             time.sleep(SLEEPINTERVAL)
 
@@ -86,6 +88,8 @@ def processTasks(tasksParams):
 #print runTask(4, 4)
 #print taskStatus('186314')
 
-times = processTasks([(1, 1), (2, 1), (4, 1), (8, 1), (4, 3), (4, 4), (5, 4)])
+#times = processTasks([(1, 1), (1, 2), (1, 4), (1, 8), (2, 6), (2, 8), (3, 6), (3, 8)])
+# 6 8 10 12 16 20 24 28 30 36 42
+times = processTasks([(2, 3), (2, 4), (2, 5), (3, 4), (4, 4), (4, 5), (4, 6), (4, 7), (5, 6), (6, 6), (6, 7)])
 for (time, proc) in times:
-    print proc, time
+    print "%s\t%s" % (proc, time)
