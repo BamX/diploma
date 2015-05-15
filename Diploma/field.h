@@ -63,6 +63,7 @@ class Field {
     void debug(const char *name);
 
     void sendRecieveRows();
+    void sendRecieveCalculatingRows();
     void sendFistPass(size_t fromRow);
     void recieveFirstPass(size_t fromRow);
     void sendSecondPass(size_t fromRow);

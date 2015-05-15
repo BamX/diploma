@@ -231,6 +231,7 @@ size_t Field::solveRows() {
         while (solving) {
             solving = false;
 
+            sendRecieveCalculatingRows();
             size_t fromRow = 0;
             while (fromRow < height) {
                 size_t bundleSize = 0;
