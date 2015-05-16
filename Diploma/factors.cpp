@@ -106,7 +106,7 @@ Factors::Factors() {
 
     _viewCount = config.value("ViewCount");
     _debugView = config.value("DebugView");
-    _matrixFramesCount = config.value("MatrixFramesCount");
+    _framesCount = config.value("FramesCount");
 
     for (size_t index = 0; index < _viewCount; ++index) {
         char buff[10];
@@ -232,8 +232,8 @@ size_t Factors::DebugView() const {
     return _debugView;
 }
 
-size_t Factors::MatrixFramesCount() const {
-    return _matrixFramesCount;
+size_t Factors::FramesCount() const {
+    return _framesCount;
 }
 
 double Factors::X1View(size_t index) const {

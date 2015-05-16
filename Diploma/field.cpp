@@ -343,9 +343,7 @@ void Field::solve() {
     lastIterrationsCount += solveRows();
     transpose();
 
-    printMatrix();
-    printViews();
-    print();
+    printAll();
 }
 
 double Field::time() {

@@ -15,7 +15,7 @@ class Factors {
         _x1SplitCount, _x2SplitCount, _timeSplitCount, _epsilon,
         _TStart, _TEnv, _TEnv4;
     bool _enableConsole, _enablePlot, _enableMatrix;
-    size_t _viewCount, _debugView, _matrixFramesCount;
+    size_t _viewCount, _debugView, _framesCount;
     std::vector<double> _x1View, _x2View;
 
 public:
@@ -49,7 +49,7 @@ public:
 
     size_t ViewCount() const;
     size_t DebugView() const;
-    size_t MatrixFramesCount() const;
+    size_t FramesCount() const;
     double X1View(size_t index) const;
     double X2View(size_t index) const;
 
