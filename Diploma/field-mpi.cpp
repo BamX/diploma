@@ -201,9 +201,6 @@ void Field::recieveSecondPass(size_t fromRow) {
 }
 
 void Field::sendRecieveRows() {
-    MPI_Sendrecv(prev + (height - 2) * width, (int)width, MPI_DOUBLE, bottomN, TAG_TOP_TO_BOTTOM_ROWS,
-                 prev, (int)width, MPI_DOUBLE, topN, TAG_TOP_TO_BOTTOM_ROWS,
-                 comm, MPI_STATUS_IGNORE);
     MPI_Sendrecv(prev + width, (int)width, MPI_DOUBLE, topN, TAG_BOTTOM_TO_TOP_ROWS,
                  prev + (height - 1) * width, (int)width, MPI_DOUBLE, bottomN, TAG_BOTTOM_TO_TOP_ROWS,
                  comm, MPI_STATUS_IGNORE);
