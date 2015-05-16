@@ -49,26 +49,39 @@ void Field::enableMatrixOutput() {
     mfout = new std::ofstream("matrix.csv", std::ios::trunc);
 }
 
-void Field::printViews() {
-    if (ftr.EnablePlot()) {
-        reduceViews();
-    }
-    if (fout != NULL) {
-        *fout << t;
-        for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
-            *fout << "," << views[index];
-        }
-        *fout << "\n";
-        fout->flush();
+void Field::printAll() {
+    if (t > nextFrameTime) {
+        nextFrameTime += ftr.totalTime() / ftr.FramesCount();
+
+        printConsole();
+        printViews();
+        printMatrix();
     }
 }
 
-void Field::print() {
-    double viewValue = view(ftr.DebugView());
+void Field::printConsole() {
+    if (ftr.EnableConsole()) {
+        double viewValue = view(ftr.DebugView());
 
-    if (fabs(viewValue - NOTHING) > __DBL_EPSILON__) {
-        printf("Field[%d] (itrs: %zu, time: %.5f)\tview: %.7f\n",
-               myId, lastIterrationsCount, t, viewValue);
+        if (fabs(viewValue - NOTHING) > __DBL_EPSILON__) {
+            printf("Field[%d] (itrs: %zu, time: %.5f)\tview: %.7f\n",
+                   myId, lastIterrationsCount, t, viewValue);
+        }
+    }
+}
+
+void Field::printViews() {
+    if (ftr.EnablePlot()) {
+        reduceViews();
+
+        if (fout != NULL) {
+            *fout << t;
+            for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
+                *fout << "," << views[index];
+            }
+            *fout << "\n";
+            fout->flush();
+        }
     }
 }
 

@@ -46,7 +46,7 @@ void Field::calculateNBS() {
     newHeight += (topN != NOBODY ? 1 : 0) + (bottomN != NOBODY ? 1 : 0);
 
     height = newHeight;
-    bundleSizeLimit =   ceil((double)width / numProcs / 2);
+    bundleSizeLimit = std::max(ceil((double)width / numProcs / 2), 15.0);
 
     printf("I'm %d(%d)\twith w:%zu\th:%zu\tbs:%zu.\tTop:%d\tbottom:%d\n",
            myId, ::getpid(), width, height, bundleSizeLimit, topN, bottomN);
@@ -220,35 +220,31 @@ void Field::reduceViews() {
 
 void Field::printMatrix() {
     if (ftr.EnableMatrix()) {
-        if (t > nextFrameTime) {
-            nextFrameTime += ftr.totalTime() / ftr.MatrixFramesCount();
-
-            for (int p = 0; p < numProcs; ++p) {
-                if (p == myCoord) {
-                    if (mfout != NULL) {
-                        mfout->close();
-                    }
-                    mfout = new std::ofstream("matrix.csv", std::ios::app);
-                    
-                    size_t index = 0;
-                    for (size_t row = (topN == NOBODY ? 0 : 1); row < height - (bottomN == NOBODY ? 0 : 1); ++row) {
-                        for (size_t col = 0; col < width; ++col, ++index) {
-                            *mfout << curr[index];
-                            if (col < width - 1) {
-                                *mfout << " ";
-                            }
-                        }
-                        *mfout << "\n";
-                    }
-                    if (myCoord == numProcs - 1) {
-                        *mfout << "\n";
-                    }
-
+        for (int p = 0; p < numProcs; ++p) {
+            if (p == myCoord) {
+                if (mfout != NULL) {
                     mfout->close();
-                    mfout = NULL;
                 }
-                MPI_Barrier(comm);
+                mfout = new std::ofstream("matrix.csv", std::ios::app);
+                
+                size_t index = 0;
+                for (size_t row = (topN == NOBODY ? 0 : 1); row < height - (bottomN == NOBODY ? 0 : 1); ++row) {
+                    for (size_t col = 0; col < width; ++col, ++index) {
+                        *mfout << curr[index];
+                        if (col < width - 1) {
+                            *mfout << " ";
+                        }
+                    }
+                    *mfout << "\n";
+                }
+                if (myCoord == numProcs - 1) {
+                    *mfout << "\n";
+                }
+
+                mfout->close();
+                mfout = NULL;
             }
+            MPI_Barrier(comm);
         }
     }
 }

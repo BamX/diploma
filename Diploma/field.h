@@ -57,7 +57,8 @@ class Field {
     void enablePlotOutput();
     void enableMatrixOutput();
 
-    void print();
+    void printAll();
+    void printConsole();
     void printMatrix();
     void printViews();
     void debug(const char *name);

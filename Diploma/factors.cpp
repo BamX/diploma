@@ -10,7 +10,6 @@ namespace ftr {
 
     static double const TLik = 1738; // К
     static double const TSol = 1679; // К
-    static double const dT = 0.000001; // K ???
 
     static double const L = 272; // кДж/кг
     static double const cLik = 710; // Дж/(кг * К)
@@ -80,6 +79,43 @@ namespace ftr {
         double cSolS = -11.0388 + 0.278656e-1 * T - 0.120163e-4 * T * T;
         return (cLikS - 0.7) / (cLikS - cSolS);
     }
+
+    inline double ksiFunc(double T) { // k = 0.7
+        double x2 = x * x;
+        double z = (1.8691e6 - 2843.51*x + x*x);
+        return (1.31914e9 - 1.51221e6*x + 444.52*x2)/(z * z);
+    }
+}
+
+Factors::Factors() {
+    _x1 = config.value("X1");
+    _x2 = config.value("X2");
+    _totalTime = ftr::totalLength / config.value("Speed");
+    _x1SplitCount = config.value("X1SplitCount");
+    _x2SplitCount = config.value("X2SplitCount");
+    _timeSplitCount = config.value("TimeSplitCount");
+    _epsilon = config.value("Epsilon");
+
+    _TStart = config.value("InitT");
+    _TEnv = config.value("EnvT");
+    _TEnv4 = _TEnv * _TEnv * _TEnv * _TEnv;
+
+    _enableConsole = config.value("EnableConsole") > 0;
+    _enablePlot = config.value("EnablePlot") > 0;
+    _enableMatrix = config.value("EnableMatrix") > 0;
+
+    _viewCount = config.value("ViewCount");
+    _debugView = config.value("DebugView");
+    _framesCount = config.value("FramesCount");
+
+    for (size_t index = 0; index < _viewCount; ++index) {
+        char buff[10];
+        snprintf(buff, 10, "View%zuX1", index);
+        _x1View.push_back(config.value(buff));
+
+        snprintf(buff, 10, "View%zuX2", index);
+        _x2View.push_back(config.value(buff));
+    }
 }
 
 double Factors::cEf(double T) const {
@@ -87,7 +123,7 @@ double Factors::cEf(double T) const {
         return ftr::cLik;
     }
     else if (T > ftr::TSol) {
-        return ftr::cSol(T) - ftr::L * (ftr::sigm(T + ftr::dT) - ftr::sigm(T)) / ftr::dT;
+        return ftr::cSol(T) - ftr::L * ftr::ksiFunc(T);
     }
     else {
         return ftr::cSol(T);
@@ -137,84 +173,73 @@ double Factors::ro(double T) const {
 }
 
 double Factors::X1() const {
-    return config.value("X1");
+    return _x1;
 }
 
 double Factors::X2() const {
-    return config.value("X2");
+    return _x2;
 }
 
 double Factors::totalTime() const {
-    return ftr::totalLength / config.value("Speed");
+    return _totalTime;
 }
 
 double Factors::X1SplitCount() const {
-    return config.value("X1SplitCount");
+    return _x1SplitCount;
 }
 
 double Factors::X2SplitCount() const {
-    return config.value("X2SplitCount");
+    return _x2SplitCount;
 }
 
 double Factors::TimeSplitCount() const {
-    return config.value("TimeSplitCount");
+    return _timeSplitCount;
 }
 
 double Factors::Epsilon() const {
-    return config.value("Epsilon");
+    return _epsilon;
 }
 
 double Factors::TStart() const {
-    return config.value("InitT");
+    return _TStart;
 }
 
 double Factors::TEnv() const {
-    return config.value("EnvT");
+    return _TEnv;
 }
 
 double Factors::TEnv4() const {
-    double value = TEnv();
-    value *= value;
-    value *= value;
-    return value;
+    return _TEnv4;
 }
 
 bool Factors::EnableConsole() const {
-    return config.value("EnableConsole") > 0;
+    return _enableConsole;
 }
 
 bool Factors::EnablePlot() const {
-    return config.value("EnablePlot") > 0;
+    return _enablePlot;
 }
 
 bool Factors::EnableMatrix() const {
-    return config.value("EnableMatrix") > 0;
+    return _enableMatrix;
 }
 
 size_t Factors::ViewCount() const {
-    return config.value("ViewCount");
+    return _viewCount;
 }
 
 size_t Factors::DebugView() const {
-    return config.value("DebugView");
+    return _debugView;
 }
 
-size_t Factors::MatrixFramesCount() const {
-    return config.value("MatrixFramesCount");
+size_t Factors::FramesCount() const {
+    return _framesCount;
 }
 
 double Factors::X1View(size_t index) const {
-    char buff[10];
-    snprintf(buff, 10, "View%luX1", index);
-    std::string key = buff;
-
-    return config.value(key);
+    return _x1View[index];
 }
 
 double Factors::X2View(size_t index) const {
-    char buff[10];
-    snprintf(buff, 10, "View%luX2", index);
-    std::string key = buff;
-
-    return config.value(key);
+    return _x2View[index];
 }
