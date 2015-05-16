@@ -3,6 +3,7 @@ import subprocess
 import re
 import time
 
+BUILDSCRIPT = './build.sh'
 RUNSCRIPT = 'debug.run'
 SLEEPINTERVAL = 10
 lineRegex = re.compile('([^ ]+) = (.*)')
@@ -66,6 +67,10 @@ def procCount(nodes):
     return splits[0] * splits[1]
 
 def processTasks(tasksParams):
+    buildResult = run(BUILDSCRIPT)
+    if len(buildResult) > 0:
+        print buildResult
+        return []
     tasks = [runTask(nodes, ppn) for (nodes, ppn) in tasksParams]
 
     results = dict()
