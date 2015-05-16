@@ -46,7 +46,7 @@ void Field::calculateNBS() {
     newHeight += (topN != NOBODY ? 1 : 0) + (bottomN != NOBODY ? 1 : 0);
 
     height = newHeight;
-    bundleSizeLimit =   ceil((double)width / numProcs / 2);
+    bundleSizeLimit = std::max(ceil((double)width / numProcs / 2), 15.0);
 
     printf("I'm %d(%d)\twith w:%zu\th:%zu\tbs:%zu.\tTop:%d\tbottom:%d\n",
            myId, ::getpid(), width, height, bundleSizeLimit, topN, bottomN);
