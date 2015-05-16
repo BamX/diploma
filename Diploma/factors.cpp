@@ -10,7 +10,6 @@ namespace ftr {
 
     static double const TLik = 1738; // К
     static double const TSol = 1679; // К
-    static double const dT = 0.000001; // K ???
 
     static double const L = 272; // кДж/кг
     static double const cLik = 710; // Дж/(кг * К)
@@ -80,6 +79,12 @@ namespace ftr {
         double cSolS = -11.0388 + 0.278656e-1 * T - 0.120163e-4 * T * T;
         return (cLikS - 0.7) / (cLikS - cSolS);
     }
+
+    inline double ksiFunc(double T) { // k = 0.7
+        double x2 = x * x;
+        double z = (1.8691e6 - 2843.51*x + x*x);
+        return (1.31914e9 - 1.51221e6*x + 444.52*x2)/(z * z);
+    }
 }
 
 Factors::Factors() {
@@ -118,7 +123,7 @@ double Factors::cEf(double T) const {
         return ftr::cLik;
     }
     else if (T > ftr::TSol) {
-        return ftr::cSol(T) - ftr::L * (ftr::sigm(T + ftr::dT) - ftr::sigm(T)) / ftr::dT;
+        return ftr::cSol(T) - ftr::L * ftr::ksiFunc(T);
     }
     else {
         return ftr::cSol(T);
