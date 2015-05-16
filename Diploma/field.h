@@ -18,19 +18,19 @@ extern int const SEND_PACK_SIZE;
 class Field {
     Factors ftr;
     std::ofstream *fout, *mfout;
-    float nextFrameTime;
+    double nextFrameTime;
 
-    float *prev, *curr, *buff, *views;
-    float *maF, *mbF, *mcF, *mfF;
+    double *prev, *curr, *buff, *views;
+    double *maF, *mbF, *mcF, *mfF;
     bool *calculatingRows, *prevCalculatingRows;
 
     size_t width;
     size_t height;
     bool transposed;
 
-    float t;
-    float hX, hY, dT;
-    float epsilon;
+    double t;
+    double hX, hY, dT;
+    double epsilon;
     size_t lastIterrationsCount;
 
     int myId, numProcs, myCoord;
@@ -38,18 +38,18 @@ class Field {
     size_t mySX, mySY;
     int topN, bottomN, leftN, rightN;
     size_t bundleSizeLimit;
-    float *sendBuff, *receiveBuff;
+    double *sendBuff, *receiveBuff;
     bool *boolSendBuff;
 
     void calculateNBS();
 
     void fillFactors(size_t row, bool first);
     void firstPass(size_t row);
-    float secondPass(size_t row, bool first);
-    float solve(size_t row, bool first);
+    double secondPass(size_t row, bool first);
+    double solve(size_t row, bool first);
 
     size_t solveRows();
-    void transpose(float *arr);
+    void transpose(double *arr);
     void transpose();
     void nextTimeLayer();
     void resetCalculatingRows();
@@ -81,11 +81,11 @@ public:
 
     void fillInitial();
     void solve();
-    float time();
+    double time();
     bool done();
 
-    float view(float x1, float x2);
-    float view(size_t index);
+    double view(double x1, double x2);
+    double view(size_t index);
 
 };
 

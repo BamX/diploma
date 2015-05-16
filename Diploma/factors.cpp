@@ -6,53 +6,53 @@
 #include <cmath>
 
 namespace ftr {
-    static float const moveVelocity = 0.75 / 60; // м/с
+    static double const moveVelocity = 0.75 / 60; // м/с
 
-    static float const TLik = 1738; // К
-    static float const TSol = 1679; // К
-    static float const dT = 0.000001; // K ???
+    static double const TLik = 1738; // К
+    static double const TSol = 1679; // К
+    static double const dT = 0.000001; // K ???
 
-    static float const L = 272; // кДж/кг
-    static float const cLik = 710; // Дж/(кг * К)
-    static float const x = 0.7;
+    static double const L = 272; // кДж/кг
+    static double const cLik = 710; // Дж/(кг * К)
+    static double const x = 0.7;
 
-    static float const totalLength = (0.4 + 0.4 + 0.47 + 0.95 + 1.51 + 18.97); // с
+    static double const totalLength = (0.4 + 0.4 + 0.47 + 0.95 + 1.51 + 18.97); // с
 
-    static float Temps[] = { 273, 373, 473, 573, 673, 773, 873,
+    static double Temps[] = { 273, 373, 473, 573, 673, 773, 873,
         973, 1073, 1173, 1273, 1373, 1473, 1679, 1682, 1800
     };
-    static float Lambds[] = {
+    static double Lambds[] = {
         52.56057, 51.35258, 49.16971, 46.22939, 42.74907, 38.94618, 35.03819,
         31.24254, 24.06517, 25.37233, 26.95363, 28.32515, 29.40302, 31.62343,
         28.0, 28.0
     };
-    static float Ros[] = {
+    static double Ros[] = {
         7885.884, 7845.138, 7804.392, 7763.646, 7722.9, 7682.901, 7647.512, 7621.141,
         7631.934, 7572.359, 7512.151, 7453.459, 7398.322, 7190.562, 7000.0, 7000.0,
     };
 
-    static float Ti[] = { 1000, 1033, 923, 1033 };
-    static float dTi[] = { 70, 350, 1100, 170 };
+    static double Ti[] = { 1000, 1033, 923, 1033 };
+    static double dTi[] = { 70, 350, 1100, 170 };
 
-    inline float alphaForT(float T, size_t &index) {
+    inline double alphaForT(double T, size_t &index) {
         index = 0;
         while (Temps[index] < T) ++index;
         return (T - Temps[index - 1]) / (Temps[index] - Temps[index - 1]);
     }
 
-    inline float Lambda(float T) {
+    inline double Lambda(double T) {
         size_t index = 0;
-        float alpha = alphaForT(T, index);
+        double alpha = alphaForT(T, index);
         return Lambds[index - 1] + alpha * (Lambds[index] - Lambds[index - 1]);
     }
 
-    inline float Ro(float T) {
+    inline double Ro(double T) {
         size_t index = 0;
-        float alpha = alphaForT(T, index);
+        double alpha = alphaForT(T, index);
         return Ros[index - 1] + alpha * (Ros[index] - Ros[index - 1]);
     }
 
-    inline float Li(unsigned short i, float x) {
+    inline double Li(unsigned short i, double x) {
         switch (i) {
             case 0:
                 return 44076 - 85622 * x * x + 50357 * x;
@@ -66,18 +66,18 @@ namespace ftr {
         return 0.0;
     }
 
-    inline float cSol(float T) {
-        float result = 469 + 0.16 * (T - 323);
+    inline double cSol(double T) {
+        double result = 469 + 0.16 * (T - 323);
         for (unsigned short i = 0; i < 4; ++i) {
-            float tC = (Ti[i] - T) / dTi[i];
+            double tC = (Ti[i] - T) / dTi[i];
             result += 4.5141 * Li(i, x) / dTi[i] * exp(-16 * tC * tC);
         }
         return result;
     }
 
-    inline float sigm(float T) {
-        float cLikS = 15.463359 - 0.124528e-1 * T + 0.216279e-5 * T * T;
-        float cSolS = -11.0388 + 0.278656e-1 * T - 0.120163e-4 * T * T;
+    inline double sigm(double T) {
+        double cLikS = 15.463359 - 0.124528e-1 * T + 0.216279e-5 * T * T;
+        double cSolS = -11.0388 + 0.278656e-1 * T - 0.120163e-4 * T * T;
         return (cLikS - 0.7) / (cLikS - cSolS);
     }
 }
@@ -113,7 +113,7 @@ Factors::Factors() {
     }
 }
 
-float Factors::cEf(float T) const {
+double Factors::cEf(double T) const {
     if (T >= ftr::TLik) {
         return ftr::cLik;
     }
@@ -125,8 +125,8 @@ float Factors::cEf(float T) const {
     }
 }
 
-float Factors::alpha(float t) const {
-    float x = t * ftr::moveVelocity;
+double Factors::alpha(double t) const {
+    double x = t * ftr::moveVelocity;
 
     if (x <= 0.4) {
         return 2100;
@@ -148,8 +148,8 @@ float Factors::alpha(float t) const {
     }
 }
 
-float Factors::sigma(float t) const {
-    float x = t * ftr::moveVelocity;
+double Factors::sigma(double t) const {
+    double x = t * ftr::moveVelocity;
 
     if (x <= 0.4 + 0.4 + 0.47 + 0.95 + 1.51) {
         return 0;
@@ -159,51 +159,51 @@ float Factors::sigma(float t) const {
     }
 }
 
-float Factors::lambda(float T) const {
+double Factors::lambda(double T) const {
     return ftr::Lambda(T);
 }
 
-float Factors::ro(float T) const {
+double Factors::ro(double T) const {
     return ftr::Ro(T);
 }
 
-float Factors::X1() const {
+double Factors::X1() const {
     return _x1;
 }
 
-float Factors::X2() const {
+double Factors::X2() const {
     return _x2;
 }
 
-float Factors::totalTime() const {
+double Factors::totalTime() const {
     return _totalTime;
 }
 
-float Factors::X1SplitCount() const {
+double Factors::X1SplitCount() const {
     return _x1SplitCount;
 }
 
-float Factors::X2SplitCount() const {
+double Factors::X2SplitCount() const {
     return _x2SplitCount;
 }
 
-float Factors::TimeSplitCount() const {
+double Factors::TimeSplitCount() const {
     return _timeSplitCount;
 }
 
-float Factors::Epsilon() const {
+double Factors::Epsilon() const {
     return _epsilon;
 }
 
-float Factors::TStart() const {
+double Factors::TStart() const {
     return _TStart;
 }
 
-float Factors::TEnv() const {
+double Factors::TEnv() const {
     return _TEnv;
 }
 
-float Factors::TEnv4() const {
+double Factors::TEnv4() const {
     return _TEnv4;
 }
 
@@ -231,10 +231,10 @@ size_t Factors::MatrixFramesCount() const {
     return _matrixFramesCount;
 }
 
-float Factors::X1View(size_t index) const {
+double Factors::X1View(size_t index) const {
     return _x1View[index];
 }
 
-float Factors::X2View(size_t index) const {
+double Factors::X2View(size_t index) const {
     return _x2View[index];
 }

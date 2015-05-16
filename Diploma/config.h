@@ -9,11 +9,11 @@
 #include <string>
 
 class Config {
-    std::map<std::string, float> values;
+    std::map<std::string, double> values;
 public:
 
     Config();
-    float value(std::string name) const;
+    double value(std::string name) const;
 };
 
 #endif /* defined(__Diploma__config__) */

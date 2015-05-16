@@ -11,37 +11,37 @@
 class Factors {
     Config config;
 
-    float _x1, _x2, _totalTime,
+    double _x1, _x2, _totalTime,
         _x1SplitCount, _x2SplitCount, _timeSplitCount, _epsilon,
         _TStart, _TEnv, _TEnv4;
     bool _enableConsole, _enablePlot, _enableMatrix;
     size_t _viewCount, _debugView, _matrixFramesCount;
-    std::vector<float> _x1View, _x2View;
+    std::vector<double> _x1View, _x2View;
 
 public:
 
     Factors();
 
-    float cEf(float T) const;
+    double cEf(double T) const;
     
-    float alpha(float t) const;
-    float sigma(float t) const;
+    double alpha(double t) const;
+    double sigma(double t) const;
 
-    float lambda(float T) const;
-    float ro(float T) const;
+    double lambda(double T) const;
+    double ro(double T) const;
 
-    float X1() const;
-    float X2() const;
-    float totalTime() const;
+    double X1() const;
+    double X2() const;
+    double totalTime() const;
 
-    float X1SplitCount() const;
-    float X2SplitCount() const;
-    float TimeSplitCount() const;
-    float Epsilon() const;
+    double X1SplitCount() const;
+    double X2SplitCount() const;
+    double TimeSplitCount() const;
+    double Epsilon() const;
 
-    float TStart() const;
-    float TEnv() const;
-    float TEnv4() const;
+    double TStart() const;
+    double TEnv() const;
+    double TEnv4() const;
 
     bool EnableConsole() const;
     bool EnablePlot() const;
@@ -50,8 +50,8 @@ public:
     size_t ViewCount() const;
     size_t DebugView() const;
     size_t MatrixFramesCount() const;
-    float X1View(size_t index) const;
-    float X2View(size_t index) const;
+    double X1View(size_t index) const;
+    double X2View(size_t index) const;
 
 };
 

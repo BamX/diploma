@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-float Field::view(float x1, float x2) {
+double Field::view(double x1, double x2) {
     ssize_t x1index = floor(x1 / hX) - mySX;
     ssize_t x2index = floor(x2 / hY) - mySY + (topN != NOBODY ? 1 : 0);
 
@@ -18,16 +18,16 @@ float Field::view(float x1, float x2) {
         return NOTHING;
     }
 
-    /*float x1factor = x1 - x1index * hX;
-     float x2factor = x2 - x2index * hY;
+    /*double x1factor = x1 - x1index * hX;
+     double x2factor = x2 - x2index * hY;
 
-     float value = curr[x2index * width + x1index] + x1factor * curr[x2index * width + x1index + 1];
+     double value = curr[x2index * width + x1index] + x1factor * curr[x2index * width + x1index + 1];
      value += x2factor * (curr[(x2index + 1) * width + x1index] + x1factor * curr[(x2index + 1) * width + x1index + 1]);*/
 
     return curr[x2index * width + x1index];
 }
 
-float Field::view(size_t index) {
+double Field::view(size_t index) {
     return view(ftr.X1View(index), ftr.X2View(index));
 }
 
@@ -64,7 +64,7 @@ void Field::printViews() {
 }
 
 void Field::print() {
-    float viewValue = view(ftr.DebugView());
+    double viewValue = view(ftr.DebugView());
 
     if (fabs(viewValue - NOTHING) > __DBL_EPSILON__) {
         printf("Field[%d] (itrs: %zu, time: %.5f)\tview: %.7f\n",
