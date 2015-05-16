@@ -6,10 +6,21 @@
 #define __Diploma__factors__
 
 #include "config.h"
+#include <vector>
 
 class Factors {
     Config config;
+
+    float _x1, _x2, _totalTime,
+        _x1SplitCount, _x2SplitCount, _timeSplitCount, _epsilon,
+        _TStart, _TEnv, _TEnv4;
+    bool _enableConsole, _enablePlot, _enableMatrix;
+    size_t _viewCount, _debugView, _matrixFramesCount;
+    std::vector<float> _x1View, _x2View;
+
 public:
+
+    Factors();
 
     float cEf(float T) const;
     
