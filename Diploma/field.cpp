@@ -351,5 +351,5 @@ double Field::time() {
 }
 
 bool Field::done() {
-    return t >= ftr.totalTime();
+    return t >= ftr.TMax();
 }

@@ -11,7 +11,6 @@
 //#define DEBUG_WAIT
 
 static int const TAG_PREFIX = 1000000;
-static int const TAG_TOP_TO_BOTTOM_ROWS = 21;
 static int const TAG_BOTTOM_TO_TOP_ROWS = 22;
 static int const TAG_CALCULATING_ROWS = 23;
 static int const TAG_FIRST_PASS = 24 * TAG_PREFIX;

@@ -12,7 +12,7 @@ class Factors {
     Config config;
 
     double _x1, _x2, _totalTime,
-        _x1SplitCount, _x2SplitCount, _timeSplitCount, _epsilon,
+        _x1SplitCount, _x2SplitCount, _timeSplitCount, _epsilon, _tMax,
         _TStart, _TEnv, _TEnv4;
     bool _enableConsole, _enablePlot, _enableMatrix;
     size_t _viewCount, _debugView, _framesCount;
@@ -38,6 +38,7 @@ public:
     double X2SplitCount() const;
     double TimeSplitCount() const;
     double Epsilon() const;
+    double TMax() const;
 
     double TStart() const;
     double TEnv() const;
