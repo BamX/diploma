@@ -11,26 +11,26 @@ class Factors {
     Config config;
 public:
 
-    double cEf(double T) const;
+    float cEf(float T) const;
     
-    double alpha(double t) const;
-    double sigma(double t) const;
+    float alpha(float t) const;
+    float sigma(float t) const;
 
-    double lambda(double T) const;
-    double ro(double T) const;
+    float lambda(float T) const;
+    float ro(float T) const;
 
-    double X1() const;
-    double X2() const;
-    double totalTime() const;
+    float X1() const;
+    float X2() const;
+    float totalTime() const;
 
-    double X1SplitCount() const;
-    double X2SplitCount() const;
-    double TimeSplitCount() const;
-    double Epsilon() const;
+    float X1SplitCount() const;
+    float X2SplitCount() const;
+    float TimeSplitCount() const;
+    float Epsilon() const;
 
-    double TStart() const;
-    double TEnv() const;
-    double TEnv4() const;
+    float TStart() const;
+    float TEnv() const;
+    float TEnv4() const;
 
     bool EnableConsole() const;
     bool EnablePlot() const;
@@ -39,8 +39,8 @@ public:
     size_t ViewCount() const;
     size_t DebugView() const;
     size_t MatrixFramesCount() const;
-    double X1View(size_t index) const;
-    double X2View(size_t index) const;
+    float X1View(size_t index) const;
+    float X2View(size_t index) const;
 
 };
 

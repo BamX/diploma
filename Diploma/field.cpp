@@ -28,22 +28,22 @@ Field::Field() {
 
     calculateNBS();
 
-    prev = new double[height * width];
-    curr = new double[height * width];
-    buff = new double[height * width];
-    views = new double[ftr.ViewCount()];
+    prev = new float[height * width];
+    curr = new float[height * width];
+    buff = new float[height * width];
+    views = new float[ftr.ViewCount()];
 
-    maF = new double[height * width];
-    mbF = new double[height * width];
-    mcF = new double[height * width];
-    mfF = new double[height * width];
+    maF = new float[height * width];
+    mbF = new float[height * width];
+    mcF = new float[height * width];
+    mfF = new float[height * width];
     calculatingRows = new bool[width];
     prevCalculatingRows = new bool[width];
 
 
-    sendBuff = new double[width * SEND_PACK_SIZE];
+    sendBuff = new float[width * SEND_PACK_SIZE];
     boolSendBuff = new bool[width];
-    receiveBuff = new double[width * SEND_PACK_SIZE];
+    receiveBuff = new float[width * SEND_PACK_SIZE];
 
     if (ftr.EnablePlot()) {
         enablePlotOutput();
@@ -93,7 +93,7 @@ void Field::fillInitial() {
     }
 }
 
-void Field::transpose(double *arr) {
+void Field::transpose(float *arr) {
     for (size_t index = 0, len = width * height; index < len; ++index) {
         size_t newIndex = (index % width) * height + index / width;
         buff[newIndex] = arr[index];
@@ -126,16 +126,16 @@ void Field::resetCalculatingRows() {
 }
 
 void Field::fillFactors(size_t row, bool first) {
-    double *aF = maF + row * width;
-    double *bF = mbF + row * width;
-    double *cF = mcF + row * width;
-    double *fF = mfF + row * width;
+    float *aF = maF + row * width;
+    float *bF = mbF + row * width;
+    float *cF = mcF + row * width;
+    float *fF = mfF + row * width;
 
-    double *rw = prev + row * width;
-    double *brw = first ? rw : (curr + row * width);
+    float *rw = prev + row * width;
+    float *brw = first ? rw : (curr + row * width);
 
     if (leftN == NOBODY) {
-        double lm0 = ftr.lambda(brw[0]), lmh = ftr.lambda(brw[1]);
+        float lm0 = ftr.lambda(brw[0]), lmh = ftr.lambda(brw[1]);
         aF[0] = 0;
         cF[0] = dT * (lm0 + lmh) + hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]);
         bF[0] = -dT * (lm0 + lmh);
@@ -143,9 +143,9 @@ void Field::fillFactors(size_t row, bool first) {
     }
 
     if (rightN == NOBODY) {
-        double TPrev = brw[width - 1];
-        double TPrev4 = TPrev * TPrev * TPrev * TPrev;
-        double lmXX = ftr.lambda(brw[width - 1]), lmXXm1 = ftr.lambda(brw[width - 2]);
+        float TPrev = brw[width - 1];
+        float TPrev4 = TPrev * TPrev * TPrev * TPrev;
+        float lmXX = ftr.lambda(brw[width - 1]), lmXXm1 = ftr.lambda(brw[width - 2]);
         aF[width - 1] = -dT * (lmXXm1 + lmXX);
         cF[width - 1] = dT * (lmXXm1 + lmXX)
                          + hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1])
@@ -157,8 +157,8 @@ void Field::fillFactors(size_t row, bool first) {
     }
 
     for (size_t index = 1; index < width - 1; ++index) {
-        double roc = ftr.ro(brw[index]) * ftr.cEf(brw[index]);
-        double lmXm1 = ftr.lambda(brw[index - 1]), lmX = ftr.lambda(brw[index]), lmXp1 = ftr.lambda(brw[index + 1]);
+        float roc = ftr.ro(brw[index]) * ftr.cEf(brw[index]);
+        float lmXm1 = ftr.lambda(brw[index - 1]), lmX = ftr.lambda(brw[index]), lmXp1 = ftr.lambda(brw[index + 1]);
 
         aF[index] = dT * (lmX + lmXm1);
         bF[index] = dT * (lmXp1 + lmX);
@@ -168,12 +168,12 @@ void Field::fillFactors(size_t row, bool first) {
 }
 
 void Field::firstPass(size_t row) {
-    double *aF = maF + row * width;
-    double *bF = mbF + row * width;
-    double *cF = mcF + row * width;
-    double *fF = mfF + row * width;
+    float *aF = maF + row * width;
+    float *bF = mbF + row * width;
+    float *cF = mcF + row * width;
+    float *fF = mfF + row * width;
 
-    double m = 0;
+    float m = 0;
     for (size_t i = 1; i < width; ++i) {
         m = aF[i] / cF[i - 1];
         cF[i] -= m * bF[i - 1];
@@ -181,15 +181,15 @@ void Field::firstPass(size_t row) {
     }
 }
 
-double Field::secondPass(size_t row, bool first) {
-    double *bF = mbF + row * width;
-    double *cF = mcF + row * width;
-    double *fF = mfF + row * width;
+float Field::secondPass(size_t row, bool first) {
+    float *bF = mbF + row * width;
+    float *cF = mcF + row * width;
+    float *fF = mfF + row * width;
 
-    double *y = curr + row * width;
-    double *py = first ? (prev + row * width) : y;
+    float *y = curr + row * width;
+    float *py = first ? (prev + row * width) : y;
 
-    double newValue = 0, maxDelta = 0;
+    float newValue = 0, maxDelta = 0;
     if (rightN == NOBODY) {
         newValue = fF[width - 1] / cF[width - 1];
         maxDelta = fabs(newValue - py[width - 1]);
@@ -199,7 +199,7 @@ double Field::secondPass(size_t row, bool first) {
     for (ssize_t i = width - 2; i >= 0; --i) {
         newValue = (fF[i] - bF[i] * y[i + 1]) / cF[i];
 
-        double newDelta = fabs(newValue - py[i]);
+        float newDelta = fabs(newValue - py[i]);
         maxDelta = std::max(maxDelta, newDelta);
         y[i] = newValue;
     }
@@ -207,7 +207,7 @@ double Field::secondPass(size_t row, bool first) {
     return maxDelta;
 }
 
-double Field::solve(size_t row, bool first) {
+float Field::solve(size_t row, bool first) {
     firstPass(row);
     return secondPass(row, first);
 }
@@ -276,7 +276,7 @@ size_t Field::solveRows() {
                         continue;
                     }
 
-                    double delta = secondPass(row, first);
+                    float delta = secondPass(row, first);
 
                     calculatingRows[row] = (rightN == NOBODY ? false : calculatingRows[row]) || delta > epsilon;
 
@@ -303,7 +303,7 @@ size_t Field::solveRows() {
         size_t realHeight = height - (bottomN == NOBODY ? 0 : 1);
         for (size_t row = startRow; row < realHeight; ++row) {
             fillFactors(row, true);
-            double delta = solve(row, true);
+            float delta = solve(row, true);
             size_t iterationsCount = 1;
 
             while (delta > epsilon) {
@@ -311,7 +311,7 @@ size_t Field::solveRows() {
                 delta = solve(row, false);
                 ++iterationsCount;
 
-                if (iterationsCount > MAX_ITTERATIONS_COUNT) {
+                if (iterationsCount >= MAX_ITTERATIONS_COUNT) {
                     break;
                 }
             }
@@ -343,7 +343,7 @@ void Field::solve() {
     print();
 }
 
-double Field::time() {
+float Field::time() {
     return t;
 }
 

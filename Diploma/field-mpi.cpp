@@ -46,7 +46,7 @@ void Field::calculateNBS() {
     newHeight += (topN != NOBODY ? 1 : 0) + (bottomN != NOBODY ? 1 : 0);
 
     height = newHeight;
-    bundleSizeLimit =   ceil((double)width / numProcs / 2);
+    bundleSizeLimit =   ceil((float)width / numProcs / 2);
 
     printf("I'm %d(%d)\twith w:%zu\th:%zu\tbs:%zu.\tTop:%d\tbottom:%d\n",
            myId, ::getpid(), width, height, bundleSizeLimit, topN, bottomN);
@@ -70,7 +70,7 @@ void Field::sendRecieveCalculatingRows() {
 void Field::sendFistPass(size_t fromRow) {
     // calculatingRows x [prevCalculatingRows] + (y + b + c + f) x [calculatingRows]
     if (rightN != NOBODY) {
-        double *sBuff = sendBuff + fromRow * SEND_PACK_SIZE;
+        float *sBuff = sendBuff + fromRow * SEND_PACK_SIZE;
 
         int sSize = 0;
         size_t bundleSize = 0;
@@ -93,7 +93,7 @@ void Field::sendFistPass(size_t fromRow) {
             return;
         }
         MPI_Request request;
-        MPI_Isend(sBuff, sSize, MPI_DOUBLE, rightN, TAG_FIRST_PASS + (int)fromRow, comm, &request);
+        MPI_Isend(sBuff, sSize, MPI_FLOAT, rightN, TAG_FIRST_PASS + (int)fromRow, comm, &request);
     }
 }
 
@@ -117,7 +117,7 @@ void Field::recieveFirstPass(size_t fromRow) {
             return;
         }
 
-        MPI_Recv(receiveBuff, sSize, MPI_DOUBLE, leftN, TAG_FIRST_PASS + (int)fromRow, comm, MPI_STATUS_IGNORE);
+        MPI_Recv(receiveBuff, sSize, MPI_FLOAT, leftN, TAG_FIRST_PASS + (int)fromRow, comm, MPI_STATUS_IGNORE);
         sSize = 0;
         bundleSize = 0;
         for (size_t row = fromRow; row < height; ++row) {
@@ -140,7 +140,7 @@ void Field::recieveFirstPass(size_t fromRow) {
 void Field::sendSecondPass(size_t fromRow) {
     // (calculatingRows + y) x [prevCalculatingRows]
     if (leftN != NOBODY) {
-        double *sBuff = sendBuff + fromRow * SEND_PACK_SIZE;
+        float *sBuff = sendBuff + fromRow * SEND_PACK_SIZE;
         int sSize = 0;
         size_t bundleSize = 0;
         for (size_t row = fromRow; row < height; ++row) {
@@ -158,7 +158,7 @@ void Field::sendSecondPass(size_t fromRow) {
         }
 
         MPI_Request request;
-        MPI_Isend(sBuff, sSize, MPI_DOUBLE, leftN, TAG_SECOND_PASS + (int)fromRow, comm, &request);
+        MPI_Isend(sBuff, sSize, MPI_FLOAT, leftN, TAG_SECOND_PASS + (int)fromRow, comm, &request);
     }
 }
 
@@ -181,7 +181,7 @@ void Field::recieveSecondPass(size_t fromRow) {
             return;
         }
 
-        MPI_Recv(receiveBuff, sSize, MPI_DOUBLE, rightN, TAG_SECOND_PASS + (int)fromRow, comm, MPI_STATUS_IGNORE);
+        MPI_Recv(receiveBuff, sSize, MPI_FLOAT, rightN, TAG_SECOND_PASS + (int)fromRow, comm, MPI_STATUS_IGNORE);
         sSize = 0;
         bundleSize = 0;
         for (size_t row = fromRow; row < height; ++row) {
@@ -189,7 +189,7 @@ void Field::recieveSecondPass(size_t fromRow) {
                 continue;
             }
 
-            double value = receiveBuff[sSize++];
+            float value = receiveBuff[sSize++];
             calculatingRows[row] = value > 0;
             curr[(row + 1) * width - 1] = calculatingRows[row] ? value : -value;
             ++bundleSize;
@@ -201,19 +201,19 @@ void Field::recieveSecondPass(size_t fromRow) {
 }
 
 void Field::sendRecieveRows() {
-    MPI_Sendrecv(prev + (height - 2) * width, (int)width, MPI_DOUBLE, bottomN, TAG_TOP_TO_BOTTOM_ROWS,
-                 prev, (int)width, MPI_DOUBLE, topN, TAG_TOP_TO_BOTTOM_ROWS,
+    MPI_Sendrecv(prev + (height - 2) * width, (int)width, MPI_FLOAT, bottomN, TAG_TOP_TO_BOTTOM_ROWS,
+                 prev, (int)width, MPI_FLOAT, topN, TAG_TOP_TO_BOTTOM_ROWS,
                  comm, MPI_STATUS_IGNORE);
-    MPI_Sendrecv(prev + width, (int)width, MPI_DOUBLE, topN, TAG_BOTTOM_TO_TOP_ROWS,
-                 prev + (height - 1) * width, (int)width, MPI_DOUBLE, bottomN, TAG_BOTTOM_TO_TOP_ROWS,
+    MPI_Sendrecv(prev + width, (int)width, MPI_FLOAT, topN, TAG_BOTTOM_TO_TOP_ROWS,
+                 prev + (height - 1) * width, (int)width, MPI_FLOAT, bottomN, TAG_BOTTOM_TO_TOP_ROWS,
                  comm, MPI_STATUS_IGNORE);
 }
 
 void Field::reduceViews() {
     for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
-        double value = view(index);
-        double result = 0;
-        MPI_Reduce(&value, &result, 1, MPI_DOUBLE, MPI_MAX, MASTER, comm);
+        float value = view(index);
+        float result = 0;
+        MPI_Reduce(&value, &result, 1, MPI_FLOAT, MPI_MAX, MASTER, comm);
         views[index] = result;
     }
 }

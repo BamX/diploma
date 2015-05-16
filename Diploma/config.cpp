@@ -10,7 +10,7 @@ Config::Config() {
     std::ifstream fin("config.ini");
 
     std::string name;
-    double value;
+    float value;
 
     while (fin.good()) {
         fin >> name >> value;
@@ -22,6 +22,6 @@ Config::Config() {
     fin.close();
 }
 
-double Config::value(std::string name) const {
+float Config::value(std::string name) const {
     return values.at(name);
 }
