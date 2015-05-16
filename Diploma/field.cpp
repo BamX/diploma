@@ -157,14 +157,15 @@ void Field::fillFactors(size_t row, bool first) {
     }
 
     double lmXm1 = lm0, lmX = lmh, lmXp1;
+    double mhh2rocdT;
     for (size_t index = 1; index < width - 1; ++index) {
         lmXp1 = ftr.lambda(brw[index + 1]);
-        double roc = ftr.ro(brw[index]) * ftr.cEf(brw[index]);
+        mhh2rocdT = - 2 * hX * hX * ftr.ro(brw[index]) * ftr.cEf(brw[index]) / dT;
 
-        aF[index] = dT * (lmX + lmXm1);
-        bF[index] = dT * (lmXp1 + lmX);
-        cF[index] = -dT * (lmXp1 + 2 * lmX + lmXm1) - 2 * hX * hX * roc;
-        fF[index] = -2 * hX * hX * roc * rw[index];
+        aF[index] = lmX + lmXm1;
+        bF[index] = lmXp1 + lmX;
+        cF[index] = -(lmXp1 + 2 * lmX + lmXm1) + mhh2rocdT;
+        fF[index] = mhh2rocdT * rw[index];
 
         lmXm1 = lmX;
         lmX = lmXp1;
