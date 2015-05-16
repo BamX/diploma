@@ -51,7 +51,7 @@ void Field::enableMatrixOutput() {
 
 void Field::printAll() {
     if (t > nextFrameTime) {
-        nextFrameTime += ftr.totalTime() / ftr.FramesCount();
+        nextFrameTime += ftr.TMax() / ftr.FramesCount();
 
         printConsole();
         printViews();
