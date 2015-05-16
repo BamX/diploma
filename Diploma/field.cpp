@@ -134,8 +134,8 @@ void Field::fillFactors(size_t row, bool first) {
     double *rw = prev + row * width;
     double *brw = first ? rw : (curr + row * width);
 
+    double lm0 = ftr.lambda(brw[0]), lmh = ftr.lambda(brw[1]);
     if (leftN == NOBODY) {
-        double lm0 = ftr.lambda(brw[0]), lmh = ftr.lambda(brw[1]);
         aF[0] = 0;
         cF[0] = dT * (lm0 + lmh) + hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]);
         bF[0] = -dT * (lm0 + lmh);
@@ -156,14 +156,18 @@ void Field::fillFactors(size_t row, bool first) {
                          + 2 * hX * dT * ftr.alpha(t) * ftr.TEnv();
     }
 
+    double lmXm1 = lm0, lmX = lmh, lmXp1;
     for (size_t index = 1; index < width - 1; ++index) {
+        lmXp1 = ftr.lambda(brw[index + 1]);
         double roc = ftr.ro(brw[index]) * ftr.cEf(brw[index]);
-        double lmXm1 = ftr.lambda(brw[index - 1]), lmX = ftr.lambda(brw[index]), lmXp1 = ftr.lambda(brw[index + 1]);
 
         aF[index] = dT * (lmX + lmXm1);
         bF[index] = dT * (lmXp1 + lmX);
         cF[index] = -dT * (lmXp1 + 2 * lmX + lmXm1) - 2 * hX * hX * roc;
         fF[index] = -2 * hX * hX * roc * rw[index];
+
+        lmXm1 = lmX;
+        lmX = lmXp1;
     }
 }
 
