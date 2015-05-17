@@ -281,8 +281,8 @@ size_t Field::secondPasses(size_t fromRow, bool first, bool async) {
 
 void Field::balanceBundleSize() {
     //printf("%zu\t%zu\n", lastWaitingCount, lastIterationsCount);
-    if (lastWaitingCount > lastIterationsCount * 0.7) {
-        bundleSizeLimit = std::max(bundleSizeLimit - 1, 10ul);
+    if (lastWaitingCount > lastIterationsCount * 0.4) {
+        bundleSizeLimit = std::max(bundleSizeLimit - 1, 5ul);
     }
     else {
         bundleSizeLimit = std::min(bundleSizeLimit + 1, height / 2);
@@ -297,36 +297,39 @@ size_t Field::solveRows() {
     if (transposed) {
         resetCalculatingRows();
         bool first = true;
+
+        if (myCoord == 0) {
+            balanceBundleSize();
+        }
+
         bool solving = true;
         while (solving) {
             sendRecieveCalculatingRows();
-            solving = false;
-            for (size_t row = 0; row < height; ++row) {
-                if (calculatingRows[row]) {
-                    solving = true;
+            if (first == false) {
+                solving = false;
+                for (size_t row = 0; row < height; ++row) {
+                    if (calculatingRows[row]) {
+                        solving = true;
+                        break;
+                    }
+                }
+                if (solving == false) {
                     break;
                 }
-            }
-            if (solving == false) {
-                break;
-            }
-
-            if (myCoord == 0 && first) {
-                balanceBundleSize();
             }
 
             size_t fromFirstPassRow = 0;
             size_t fromSecondPassRow = 0;
 
             while (fromFirstPassRow < height || fromSecondPassRow < height) {
-                size_t nextFirstPassRow = 0;
-                if (fromFirstPassRow < height) {
-                    nextFirstPassRow = firstPasses(fromFirstPassRow, first, true);
-                }
-
                 size_t nextSecondPassRow = 0;
                 if (fromSecondPassRow < height && fromFirstPassRow > fromSecondPassRow) {
                     nextSecondPassRow = secondPasses(fromSecondPassRow, first, true);
+                }
+
+                size_t nextFirstPassRow = 0;
+                if (fromFirstPassRow < height) {
+                    nextFirstPassRow = firstPasses(fromFirstPassRow, first, true);
                 }
 
                 if (nextFirstPassRow == 0 && nextSecondPassRow == 0) {
