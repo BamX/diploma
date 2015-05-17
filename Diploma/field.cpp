@@ -257,7 +257,7 @@ size_t Field::secondPasses(size_t fromRow, bool first, bool async) {
         }
     }
 
-    if (myCoord == 0) {
+    if (async == false && myCoord == 0) {
         ++lastIterationsCount;
     }
 
@@ -281,7 +281,7 @@ size_t Field::secondPasses(size_t fromRow, bool first, bool async) {
 
 void Field::balanceBundleSize() {
     //printf("%zu\t%zu\n", lastWaitingCount, lastIterationsCount);
-    if (lastWaitingCount > lastIterationsCount * 0.4) {
+    if (lastWaitingCount > lastIterationsCount * 0.2) {
         bundleSizeLimit = std::max(bundleSizeLimit - 1, 5ul);
     }
     else {
