@@ -13,7 +13,7 @@ class Factors {
 
     double _x1, _x2, _totalTime,
         _x1SplitCount, _x2SplitCount, _timeSplitCount, _epsilon, _tMax,
-        _TStart, _TEnv, _TEnv4;
+        _TStart, _TEnv, _TEnv4, _balanceFactor;
     bool _enableConsole, _enablePlot, _enableMatrix;
     size_t _viewCount, _debugView, _framesCount;
     std::vector<double> _x1View, _x2View;
@@ -39,6 +39,7 @@ public:
     double TimeSplitCount() const;
     double Epsilon() const;
     double TMax() const;
+    double BalanceFactor() const;
 
     double TStart() const;
     double TEnv() const;

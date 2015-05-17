@@ -96,6 +96,7 @@ Factors::Factors() {
     _timeSplitCount = config.value("TimeSplitCount");
     _epsilon = config.value("Epsilon");
     _tMax = config.value("TMax");
+    _balanceFactor = config.value("BalanceFactor");
 
     _TStart = config.value("InitT");
     _TEnv = config.value("EnvT");
@@ -203,6 +204,10 @@ double Factors::Epsilon() const {
 
 double Factors::TMax() const {
     return _tMax;
+}
+
+double Factors::BalanceFactor() const {
+    return _balanceFactor;
 }
 
 double Factors::TStart() const {
