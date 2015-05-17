@@ -257,7 +257,7 @@ size_t Field::secondPasses(size_t fromRow, bool first, bool async) {
         }
     }
 
-    if (async == false && myCoord == 0) {
+    if (myCoord == 0) {
         ++lastIterationsCount;
     }
 
