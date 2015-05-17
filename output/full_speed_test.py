@@ -123,7 +123,11 @@ def processTasks(tasksParams):
     if len(buildResult) > 0:
         print buildResult
         return []
-    tasks = [runTask(nodes, ppn) for (nodes, ppn) in tasksParams]
+    tasks = []
+    for (nodes, ppn) in tasksParams:
+        tasks.append(runTask(nodes, ppn))
+        print "Run %s" % (nodes * ppn)
+        time.sleep(3)
     outDir = createOutputFolder()
     copyInputs(outDir)
 
@@ -172,7 +176,8 @@ def printResults(results):
 #print taskStatus('186314')
 
 #times = processTasks([(2, 3)])
-times = processTasks([(1, 1), (1, 2), (1, 4), (2, 3), (2, 4), (2, 5), (3, 4), (3, 5), (3, 6), (3, 7)])
+#times = processTasks([(1, 1), (1, 2), (1, 4), (2, 4), (3, 4), (3, 5), (3, 6), (3, 7)])
+times = processTasks([(1, 1), (2, 1), (2, 2), (4, 2), (3, 4), (3, 5), (3, 6), (3, 7)])
 #times = processTasks([(1, 1), (1, 2), (1, 3), (1, 4), (2, 1), (2, 2), (2, 3), (2, 4), (3, 1), (3, 2), (3, 3), (3, 4)])
 # 6 8 10 12 16 20 24 28 30 36 42
 #times = processTasks([(2, 3), (2, 4), (2, 5), (3, 4), (4, 4), (4, 5), (4, 6), (4, 7), (5, 6), (6, 6), (6, 7)])
