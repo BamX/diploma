@@ -2,6 +2,9 @@ import sys
 import subprocess
 import re
 import time
+import datetime
+import shutil
+import os
 
 BUILDSCRIPT = './build.sh'
 RUNSCRIPT = 'debug.run'
@@ -41,30 +44,79 @@ def parseTime(timeStr):
     splits = [int(x) for x in timeStr.split(':')]
     return splits[0] * 3600 + splits[1] * 60 + splits[2]
 
+def parseNodes(nodes):
+    splits = [int(s.strip('=')) for s in nodes.split(':ppn')]
+    return ( splits[0], splits[1] )
+
 def taskStatus(taskId):
     data = monitorTask(taskId)
     jobState = value_jobstate_none
     wallTime = 0
     cpuTime = 0
-    nodes = ''
+    nodes = 0
+    procs = 0
     exitCode = ''
 
     if key_jobstate in data:
         jobState = data[key_jobstate]
-        nodes = data[key_nodes]
+        (nodes, procs) = parseNodes(data[key_nodes])
         if jobState == value_jobstate_done:
             wallTime = parseTime(data[key_walltime])
             cpuTime = parseTime(data[key_cputime])
             exitCode = data[key_exit_status]
         
-    return ( jobState, wallTime, cpuTime, nodes, exitCode )
+    return { 
+        'state': jobState, 
+        'time': wallTime, 
+        'cpu': cpuTime, 
+        'nodes': nodes, 
+        'ppn': procs, 
+        'code': exitCode 
+    }
+
+def createOutputFolder():
+    currTime = datetime.datetime.now()
+    folderName = currTime.strftime('%Y-%m-%d_%H%M%S')
+    if not os.path.exists(folderName):
+        os.makedirs(folderName)
+    return folderName
+
+def copyInputs(outDir):
+    shutil.copyfile("config.ini", "%s/config.ini" % outDir)
+
+def copyTaskOutputs(taskId, procCount, outDir):
+    for prefix in ['e', 'o']:
+        shutil.move("%s.%s%s" % (RUNSCRIPT, prefix, taskId), "%s/%s%sx%s" % (outDir, prefix, taskId, procCount))
 
 def waitState(state):
     return state == value_jobstate_queued or state == value_jobstate_running
 
-def procCount(nodes):
-    splits = [int(s.strip('=')) for s in nodes.split(':ppn')]
-    return splits[0] * splits[1]
+def saveTaskStatus(taskId, procCount, outDir):
+    ftaskStatus = open('%s/s%sx%s' % (outDir, taskId, procCount), 'w')
+    status = str(subprocess.Popen(['qstat', '-f', taskId], stdout=subprocess.PIPE).stdout.read())
+    ftaskStatus.write(status)
+    ftaskStatus.close()
+
+def saveResults(results, outDir):
+    fstatus = open('%s/status.txt' % outDir, 'w')
+    fresults = open('%s/results.txt' % outDir, 'w')
+
+    zeroTime = -1
+    for task, result in results.iteritems():
+        fstatus.write('%s(x%s)\t: [%s:%s] w: %s\tc: %s\tnodes=%s:ppn=%s\n' % (task, result['nodes'] * result['ppn'], result['state'], result['code'], result['time'], result['cpu'], result['nodes'], result['ppn']))
+        time = result['time']
+        procs = result['nodes'] * result['ppn']
+        if zeroTime == -1:
+            zeroTime = time
+        speedUp = 0
+        eff = 0
+        if zeroTime > 0:
+            speedUp = float(time) / zeroTime
+            eff = float(time) / zeroTime / procs
+        fresults.write("%s\t%s\t%s\t%s\n" % (procs, time, speedUp, eff))
+
+    fstatus.close()
+    fresults.close()
 
 def processTasks(tasksParams):
     buildResult = run(BUILDSCRIPT)
@@ -72,6 +124,8 @@ def processTasks(tasksParams):
         print buildResult
         return []
     tasks = [runTask(nodes, ppn) for (nodes, ppn) in tasksParams]
+    outDir = createOutputFolder()
+    copyInputs(outDir)
 
     results = dict()
     anyRuning = True
@@ -81,20 +135,46 @@ def processTasks(tasksParams):
         sys.stderr.write("\x1b[2J\x1b[H")
         print 'Status:'
         for t in tasks:
-            if not t in results or waitState(results[t][0]):
-                results[t] = taskStatus(t)
-                anyRuning = anyRuning or waitState(results[t][0])
-            print '%s(x%s)\t: [%s:%s] w: %s\tc: %s\tnodes=%s' % (t, procCount(results[t][3]), results[t][0], results[t][4], results[t][1], results[t][2], results[t][3])
+            result = None
+            if not t in results or waitState(results[t]['state']):
+                result = taskStatus(t)
+                results[t] = result
+                anyRuning = anyRuning or waitState(result['state'])
+                if not waitState(result['state']):
+                    copyTaskOutputs(t, result['nodes'] * result['ppn'], outDir)
+                    saveTaskStatus(t, result['nodes'] * result['ppn'], outDir)
+            else:
+                result = results[t]
+
+            print '%s(x%s)\t: [%s:%s] w: %s\tc: %s\tnodes=%s:ppn=%s' % (t, result['nodes'] * result['ppn'], result['state'], result['code'], result['time'], result['cpu'], result['nodes'], result['ppn'])
         if anyRuning:
             time.sleep(SLEEPINTERVAL)
 
-    return [(results[t][1], procCount(results[t][3])) for t in tasks]
+    saveResults(results, outDir)
+    return results
+
+def printResults(results):
+    zeroTime = -1
+    for task, result in results.iteritems():
+        time = result['time']
+        procs = result['nodes'] * result['ppn']
+        if zeroTime == -1:
+            zeroTime = time
+        speedUp = 0
+        eff = 0
+        if zeroTime > 0:
+            speedUp = float(time) / zeroTime
+            eff = float(time) / zeroTime / procs
+        print "%s\t%s\t%s\t%s" % (procs, time, speedUp, eff)
+
 
 #print runTask(4, 4)
 #print taskStatus('186314')
 
-#times = processTasks([(1, 1), (1, 2), (1, 4), (1, 8), (2, 6), (2, 8), (3, 6), (3, 8)])
+#times = processTasks([(2, 3)])
+times = processTasks([(1, 1), (1, 2), (1, 4), (2, 3), (2, 4), (2, 5), (3, 4), (3, 5), (3, 6), (3, 7)])
+#times = processTasks([(1, 1), (1, 2), (1, 3), (1, 4), (2, 1), (2, 2), (2, 3), (2, 4), (3, 1), (3, 2), (3, 3), (3, 4)])
 # 6 8 10 12 16 20 24 28 30 36 42
-times = processTasks([(2, 3), (2, 4), (2, 5), (3, 4), (4, 4), (4, 5), (4, 6), (4, 7), (5, 6), (6, 6), (6, 7)])
-for (time, proc) in times:
-    print "%s\t%s" % (proc, time)
+#times = processTasks([(2, 3), (2, 4), (2, 5), (3, 4), (4, 4), (4, 5), (4, 6), (4, 7), (5, 6), (6, 6), (6, 7)])
+
+printResults(times)
