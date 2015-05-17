@@ -281,8 +281,8 @@ size_t Field::secondPasses(size_t fromRow, bool first, bool async) {
 
 void Field::balanceBundleSize() {
     //printf("%zu\t%zu\n", lastWaitingCount, lastIterationsCount);
-    if (lastWaitingCount > lastIterationsCount / 2) {
-        bundleSizeLimit = std::max(bundleSizeLimit - 1, 1ul);
+    if (lastWaitingCount > lastIterationsCount * 0.7) {
+        bundleSizeLimit = std::max(bundleSizeLimit - 1, 10ul);
     }
     else {
         bundleSizeLimit = std::min(bundleSizeLimit + 1, height / 2);
