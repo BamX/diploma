@@ -96,6 +96,8 @@ Factors::Factors() {
     _timeSplitCount = config.value("TimeSplitCount");
     _epsilon = config.value("Epsilon");
     _tMax = config.value("TMax");
+
+    _minimumBundle = config.value("MinimumBundle");
     _balanceFactor = config.value("BalanceFactor");
 
     _TStart = config.value("InitT");
@@ -204,6 +206,10 @@ double Factors::Epsilon() const {
 
 double Factors::TMax() const {
     return _tMax;
+}
+
+size_t Factors::MinimumBundle() const {
+    return _minimumBundle;
 }
 
 double Factors::BalanceFactor() const {
