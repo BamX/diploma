@@ -40,6 +40,7 @@ class Field {
     size_t bundleSizeLimit;
     double *sendBuff, *receiveBuff;
     bool *boolSendBuff;
+    size_t lastWaitingCount, lastIterationsCount;
 
     void calculateNBS();
 
@@ -65,6 +66,8 @@ class Field {
 
     void sendRecieveRows();
     void sendRecieveCalculatingRows();
+    void balanceBundleSize();
+    void checkWaiting();
     void sendFistPass(size_t fromRow);
     void recieveFirstPass(size_t fromRow, bool first);
     void sendSecondPass(size_t fromRow);

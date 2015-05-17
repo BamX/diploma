@@ -40,6 +40,7 @@ Field::Field() {
     calculatingRows = new bool[width];
     prevCalculatingRows = new bool[width];
 
+    lastIterationsCount = lastWaitingCount = 0;
 
     sendBuff = new double[width * SEND_PACK_SIZE];
     boolSendBuff = new bool[width];
@@ -246,6 +247,10 @@ size_t Field::solveRows() {
                 break;
             }
 
+            if (myCoord == 0 && first) {
+                balanceBundleSize();
+            }
+
             size_t fromRow = 0;
             while (fromRow < height) {
                 size_t bundleSize = 0;
@@ -270,6 +275,9 @@ size_t Field::solveRows() {
 
             std::swap(prevCalculatingRows, calculatingRows);
 
+            if (myCoord == 0) {
+                checkWaiting();
+            }
 
             fromRow = 0;
             while (fromRow < height) {

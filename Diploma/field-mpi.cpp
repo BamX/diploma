@@ -171,6 +171,27 @@ void Field::reduceViews() {
     }
 }
 
+void Field::balanceBundleSize() {
+    //printf("%zu\n", lastWaitingCount);
+    if (lastWaitingCount > lastIterationsCount / 2) {
+        bundleSizeLimit = std::max(bundleSizeLimit - 1, 1ul);
+    }
+    else {
+        bundleSizeLimit = std::min(bundleSizeLimit + 1, height / 2);
+    }
+    lastIterationsCount = 0;
+    lastWaitingCount = 0;
+}
+
+void Field::checkWaiting() {
+    ++lastIterationsCount;
+    int flag;
+    MPI_Iprobe(rightN, TAG_SECOND_PASS, comm, &flag, MPI_STATUS_IGNORE);
+    if (flag == false) {
+        ++lastWaitingCount;
+    }
+}
+
 void Field::printMatrix() {
     if (ftr.EnableMatrix()) {
         for (int p = 0; p < numProcs; ++p) {
