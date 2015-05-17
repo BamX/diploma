@@ -7,7 +7,7 @@
 #include <cmath>
 
 int const MASTER = 0;
-int const WAITER = 0;
+int const WAITER = 3;
 int const NOBODY = MPI_PROC_NULL;
 int const NOTHING = -1;
 int const SEND_PACK_SIZE = 6;
@@ -38,7 +38,7 @@ Field::Field() {
     mcF = new double[height * width];
     mfF = new double[height * width];
     calculatingRows = new bool[width];
-    prevCalculatingRows = new bool[width];
+    nextCalculatingRows = new bool[width];
 
     lastIterationsCount = lastWaitingCount = 0;
 
@@ -75,7 +75,7 @@ Field::~Field() {
     delete[] mcF;
     delete[] mfF;
     delete[] calculatingRows;
-    delete[] prevCalculatingRows;
+    delete[] nextCalculatingRows;
 
     delete[] sendBuff;
     delete[] boolSendBuff;
@@ -122,7 +122,7 @@ void Field::nextTimeLayer() {
 
 void Field::resetCalculatingRows() {
     for (size_t index = 0; index < height; ++index) {
-        calculatingRows[index] = prevCalculatingRows[index] = true;
+        calculatingRows[index] = nextCalculatingRows[index] = true;
     }
 }
 
@@ -227,6 +227,70 @@ void Field::test() {
     transpose();
 }
 
+size_t Field::firstPasses(size_t fromRow, bool first, bool async) {
+    if (async && checkIncomingFirstPass(fromRow) == false) {
+        return 0;
+    }
+
+    recieveFirstPass(fromRow, first); // calculatingRows x [prevCalculatingRows] + (b + c + f) x [calculatingRows]
+    size_t row = fromRow;
+    for (size_t bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
+        if (calculatingRows[row] == false) {
+            continue;
+        }
+
+        fillFactors(row, first);
+        firstPass(row);
+    }
+    sendFistPass(fromRow); // calculatingRows x [prevCalculatingRows] + (b + c + f) x [calculatingRows]
+
+    return row;
+}
+
+size_t Field::secondPasses(size_t fromRow, bool first, bool async) {
+    if (checkIncomingSecondPass(fromRow) == false) {
+        if (async) {
+            return 0;
+        }
+        else if (myCoord == 0) {
+            ++lastWaitingCount;
+        }
+    }
+
+    if (myCoord == 0) {
+        ++lastIterationsCount;
+    }
+
+    recieveSecondPass(fromRow); // (nextCalculatingRows + y) x [prevCalculatingRows]
+
+    size_t row = fromRow;
+    for (size_t bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
+        if (calculatingRows[row] == false) {
+            nextCalculatingRows[row] = false;
+            continue;
+        }
+
+        double delta = secondPass(row, first);
+
+        nextCalculatingRows[row] = (rightN == NOBODY ? false : nextCalculatingRows[row]) || delta > epsilon;
+    }
+    sendSecondPass(fromRow); // (nextCalculatingRows + y) x [prevCalculatingRows]
+
+    return row;
+}
+
+void Field::balanceBundleSize() {
+    //printf("%zu\t%zu\n", lastWaitingCount, lastIterationsCount);
+    if (lastWaitingCount > lastIterationsCount / 2) {
+        bundleSizeLimit = std::max(bundleSizeLimit - 1, 1ul);
+    }
+    else {
+        bundleSizeLimit = std::min(bundleSizeLimit + 1, height / 2);
+    }
+    lastIterationsCount = 0;
+    lastWaitingCount = 0;
+}
+
 size_t Field::solveRows() {
     size_t maxIterationsCount = 0;
 
@@ -251,57 +315,39 @@ size_t Field::solveRows() {
                 balanceBundleSize();
             }
 
-            size_t fromRow = 0;
-            while (fromRow < height) {
-                size_t bundleSize = 0;
+            size_t fromFirstPassRow = 0;
+            size_t fromSecondPassRow = 0;
 
-                recieveFirstPass(fromRow, first); // calculatingRows x [prevCalculatingRows] + (b + c + f) x [calculatingRows]
-                size_t row = fromRow;
-                for (; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
-                    if (calculatingRows[row] == false) {
-                        continue;
-                    }
-
-                    fillFactors(row, first);
-                    firstPass(row);
+            while (fromFirstPassRow < height || fromSecondPassRow < height) {
+                size_t nextFirstPassRow = 0;
+                if (fromFirstPassRow < height) {
+                    nextFirstPassRow = firstPasses(fromFirstPassRow, first, true);
                 }
-                sendFistPass(fromRow); // calculatingRows x [prevCalculatingRows] + (b + c + f) x [calculatingRows]
-                fromRow = row;
-            }
 
-            if (solving == false) {
-                break;
-            }
-
-            std::swap(prevCalculatingRows, calculatingRows);
-
-            if (myCoord == 0) {
-                checkWaiting();
-            }
-
-            fromRow = 0;
-            while (fromRow < height) {
-                size_t bundleSize = 0;
-
-                recieveSecondPass(fromRow); // (calculatingRows + y) x [prevCalculatingRows]
-
-                size_t row = fromRow;
-                for (; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
-                    if (prevCalculatingRows[row] == false) {
-                        calculatingRows[row] = false;
-                        continue;
-                    }
-
-                    double delta = secondPass(row, first);
-
-                    calculatingRows[row] = (rightN == NOBODY ? false : calculatingRows[row]) || delta > epsilon;
+                size_t nextSecondPassRow = 0;
+                if (fromSecondPassRow < height && fromFirstPassRow > fromSecondPassRow) {
+                    nextSecondPassRow = secondPasses(fromSecondPassRow, first, true);
                 }
-                sendSecondPass(fromRow); // (calculatingRows + y) x [prevCalculatingRows]
 
-                fromRow = row;
+                if (nextFirstPassRow == 0 && nextSecondPassRow == 0) {
+                    if (fromFirstPassRow < height) {
+                        nextFirstPassRow = firstPasses(fromFirstPassRow, first, false);
+                    }
+                    else {
+                        nextSecondPassRow = secondPasses(fromSecondPassRow, first, false);
+                    }
+                }
+
+                if (nextFirstPassRow > 0) {
+                    fromFirstPassRow = nextFirstPassRow;
+                }
+                if (nextSecondPassRow > 0) {
+                    fromSecondPassRow = nextSecondPassRow;
+                }
             }
 
             first = false;
+            std::swap(nextCalculatingRows, calculatingRows);
             ++maxIterationsCount;
             if (maxIterationsCount >= MAX_ITTERATIONS_COUNT) {
                 solving = false;

@@ -88,6 +88,16 @@ void Field::sendFistPass(size_t fromRow) {
     }
 }
 
+bool Field::checkIncomingFirstPass(size_t fromRow) {
+    if (leftN == NOBODY) {
+        return true;
+    }
+
+    int flag;
+    MPI_Iprobe(leftN, TAG_FIRST_PASS + (int)fromRow, comm, &flag, MPI_STATUS_IGNORE);
+    return flag;
+}
+
 void Field::recieveFirstPass(size_t fromRow, bool first) {
     // calculatingRows x [prevCalculatingRows] + (y + b + c + f) x [calculatingRows]
     if (leftN != NOBODY) {
@@ -117,15 +127,15 @@ void Field::recieveFirstPass(size_t fromRow, bool first) {
 }
 
 void Field::sendSecondPass(size_t fromRow) {
-    // (calculatingRows + y) x [prevCalculatingRows]
+    // (nextCalculatingRows + y) x [prevCalculatingRows]
     if (leftN != NOBODY) {
         double *sBuff = sendBuff + fromRow * SEND_PACK_SIZE;
         int sSize = 0;
         for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
-            if (prevCalculatingRows[row] == false) {
+            if (calculatingRows[row] == false) {
                 continue;
             }
-            sBuff[sSize++] = (calculatingRows[row] ? 1 : -1) * curr[row * width + 1];
+            sBuff[sSize++] = (nextCalculatingRows[row] ? 1 : -1) * curr[row * width + 1];
         }
 
         MPI_Request request;
@@ -133,8 +143,18 @@ void Field::sendSecondPass(size_t fromRow) {
     }
 }
 
+bool Field::checkIncomingSecondPass(size_t fromRow) {
+    if (rightN == NOBODY) {
+        return true;
+    }
+
+    int flag;
+    MPI_Iprobe(rightN, TAG_SECOND_PASS + (int)fromRow, comm, &flag, MPI_STATUS_IGNORE);
+    return flag;
+}
+
 void Field::recieveSecondPass(size_t fromRow) {
-    // (calculatingRows + y) x [prevCalculatingRows]
+    // (nextCalculatingRows + y) x [prevCalculatingRows]
     if (rightN != NOBODY) {
         MPI_Status status;
         MPI_Probe(rightN, TAG_SECOND_PASS + (int)fromRow, comm, &status);
@@ -145,13 +165,13 @@ void Field::recieveSecondPass(size_t fromRow) {
 
         sSize = 0;
         for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
-            if (prevCalculatingRows[row] == false) {
+            if (calculatingRows[row] == false) {
                 continue;
             }
 
             double value = receiveBuff[sSize++];
-            calculatingRows[row] = value > 0;
-            curr[(row + 1) * width - 1] = calculatingRows[row] ? value : -value;
+            nextCalculatingRows[row] = value > 0;
+            curr[(row + 1) * width - 1] = nextCalculatingRows[row] ? value : -value;
         }
     }
 }
@@ -168,27 +188,6 @@ void Field::reduceViews() {
         double result = 0;
         MPI_Reduce(&value, &result, 1, MPI_DOUBLE, MPI_MAX, MASTER, comm);
         views[index] = result;
-    }
-}
-
-void Field::balanceBundleSize() {
-    //printf("%zu\n", lastWaitingCount);
-    if (lastWaitingCount > lastIterationsCount / 2) {
-        bundleSizeLimit = std::max(bundleSizeLimit - 1, 1ul);
-    }
-    else {
-        bundleSizeLimit = std::min(bundleSizeLimit + 1, height / 2);
-    }
-    lastIterationsCount = 0;
-    lastWaitingCount = 0;
-}
-
-void Field::checkWaiting() {
-    ++lastIterationsCount;
-    int flag;
-    MPI_Iprobe(rightN, TAG_SECOND_PASS, comm, &flag, MPI_STATUS_IGNORE);
-    if (flag == false) {
-        ++lastWaitingCount;
     }
 }
 

@@ -22,7 +22,7 @@ class Field {
 
     double *prev, *curr, *buff, *views;
     double *maF, *mbF, *mcF, *mfF;
-    bool *calculatingRows, *prevCalculatingRows;
+    bool *calculatingRows, *nextCalculatingRows;
 
     size_t width;
     size_t height;
@@ -47,6 +47,8 @@ class Field {
     void fillFactors(size_t row, bool first);
     void firstPass(size_t row);
     double secondPass(size_t row, bool first);
+    size_t firstPasses(size_t fromRow, bool first, bool async);
+    size_t secondPasses(size_t fromRow, bool first, bool async);
     double solve(size_t row, bool first);
 
     size_t solveRows();
@@ -67,10 +69,12 @@ class Field {
     void sendRecieveRows();
     void sendRecieveCalculatingRows();
     void balanceBundleSize();
-    void checkWaiting();
+
     void sendFistPass(size_t fromRow);
+    bool checkIncomingFirstPass(size_t fromRow);
     void recieveFirstPass(size_t fromRow, bool first);
     void sendSecondPass(size_t fromRow);
+    bool checkIncomingSecondPass(size_t fromRow);
     void recieveSecondPass(size_t fromRow);
 
     void reduceViews();
