@@ -72,8 +72,7 @@ void Field::sendFistPass(size_t fromRow) {
         double *sBuff = sendBuff + fromRow * SEND_PACK_SIZE;
 
         int sSize = 0;
-        size_t bundleSize = 0;
-        for (size_t row = fromRow; row < height; ++row) {
+        for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
             if (calculatingRows[row] == false) {
                 continue;
             }
@@ -82,44 +81,29 @@ void Field::sendFistPass(size_t fromRow) {
             sBuff[sSize++] = mbF[index];
             sBuff[sSize++] = mcF[index];
             sBuff[sSize++] = mfF[index];
-            ++bundleSize;
-            if (bundleSize >= bundleSizeLimit) {
-                break;
-            }
         }
 
-        if (sSize == 0) {
-            return;
-        }
         MPI_Request request;
         MPI_Isend(sBuff, sSize, MPI_DOUBLE, rightN, TAG_FIRST_PASS + (int)fromRow, comm, &request);
     }
 }
 
-void Field::recieveFirstPass(size_t fromRow) {
+void Field::recieveFirstPass(size_t fromRow, bool first) {
     // calculatingRows x [prevCalculatingRows] + (y + b + c + f) x [calculatingRows]
     if (leftN != NOBODY) {
-        int sSize = 0;
-        size_t bundleSize = 0;
-        for (size_t row = fromRow; row < height; ++row) {
-            if (calculatingRows[row] == false) {
-                continue;
-            }
-            sSize += 3;
-            ++bundleSize;
-
-            if (bundleSize >= bundleSizeLimit) {
-                break;
-            }
-        }
-        if (sSize == 0) {
-            return;
+        MPI_Status status;
+        MPI_Probe(leftN, TAG_FIRST_PASS + (int)fromRow, comm, &status);
+        int sSize;
+        MPI_Get_count(&status, MPI_DOUBLE, &sSize);
+        
+        if (fromRow == 0 && first) {
+            bundleSizeLimit = sSize / 3;
         }
 
         MPI_Recv(receiveBuff, sSize, MPI_DOUBLE, leftN, TAG_FIRST_PASS + (int)fromRow, comm, MPI_STATUS_IGNORE);
+
         sSize = 0;
-        bundleSize = 0;
-        for (size_t row = fromRow; row < height; ++row) {
+        for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
             if (calculatingRows[row] == false) {
                 continue;
             }
@@ -128,10 +112,6 @@ void Field::recieveFirstPass(size_t fromRow) {
             mbF[index] = receiveBuff[sSize++];
             mcF[index] = receiveBuff[sSize++];
             mfF[index] = receiveBuff[sSize++];
-            ++bundleSize;
-            if (bundleSize >= bundleSizeLimit) {
-                break;
-            }
         }
     }
 }
@@ -141,19 +121,11 @@ void Field::sendSecondPass(size_t fromRow) {
     if (leftN != NOBODY) {
         double *sBuff = sendBuff + fromRow * SEND_PACK_SIZE;
         int sSize = 0;
-        size_t bundleSize = 0;
-        for (size_t row = fromRow; row < height; ++row) {
+        for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
             if (prevCalculatingRows[row] == false) {
                 continue;
             }
             sBuff[sSize++] = (calculatingRows[row] ? 1 : -1) * curr[row * width + 1];
-            ++bundleSize;
-            if (bundleSize >= bundleSizeLimit) {
-                break;
-            }
-        }
-        if (sSize == 0) {
-            return;
         }
 
         MPI_Request request;
@@ -164,26 +136,15 @@ void Field::sendSecondPass(size_t fromRow) {
 void Field::recieveSecondPass(size_t fromRow) {
     // (calculatingRows + y) x [prevCalculatingRows]
     if (rightN != NOBODY) {
-        int sSize = 0;
-        size_t bundleSize = 0;
-        for (size_t row = fromRow; row < height; ++row) {
-            if (prevCalculatingRows[row] == false) {
-                continue;
-            }
-            ++sSize;
-            ++bundleSize;
-            if (bundleSize >= bundleSizeLimit) {
-                break;
-            }
-        }
-        if (sSize == 0) {
-            return;
-        }
+        MPI_Status status;
+        MPI_Probe(rightN, TAG_SECOND_PASS + (int)fromRow, comm, &status);
+        int sSize;
+        MPI_Get_count(&status, MPI_DOUBLE, &sSize);
 
         MPI_Recv(receiveBuff, sSize, MPI_DOUBLE, rightN, TAG_SECOND_PASS + (int)fromRow, comm, MPI_STATUS_IGNORE);
+
         sSize = 0;
-        bundleSize = 0;
-        for (size_t row = fromRow; row < height; ++row) {
+        for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
             if (prevCalculatingRows[row] == false) {
                 continue;
             }
@@ -191,10 +152,6 @@ void Field::recieveSecondPass(size_t fromRow) {
             double value = receiveBuff[sSize++];
             calculatingRows[row] = value > 0;
             curr[(row + 1) * width - 1] = calculatingRows[row] ? value : -value;
-            ++bundleSize;
-            if (bundleSize >= bundleSizeLimit) {
-                break;
-            }
         }
     }
 }

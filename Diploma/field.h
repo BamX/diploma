@@ -66,7 +66,7 @@ class Field {
     void sendRecieveRows();
     void sendRecieveCalculatingRows();
     void sendFistPass(size_t fromRow);
-    void recieveFirstPass(size_t fromRow);
+    void recieveFirstPass(size_t fromRow, bool first);
     void sendSecondPass(size_t fromRow);
     void recieveSecondPass(size_t fromRow);
 

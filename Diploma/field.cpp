@@ -234,30 +234,31 @@ size_t Field::solveRows() {
         bool first = true;
         bool solving = true;
         while (solving) {
-            solving = false;
-
             sendRecieveCalculatingRows();
+            solving = false;
+            for (size_t row = 0; row < height; ++row) {
+                if (calculatingRows[row]) {
+                    solving = true;
+                    break;
+                }
+            }
+            if (solving == false) {
+                break;
+            }
+
             size_t fromRow = 0;
             while (fromRow < height) {
                 size_t bundleSize = 0;
 
-                recieveFirstPass(fromRow); // calculatingRows x [prevCalculatingRows] + (b + c + f) x [calculatingRows]
+                recieveFirstPass(fromRow, first); // calculatingRows x [prevCalculatingRows] + (b + c + f) x [calculatingRows]
                 size_t row = fromRow;
-                for (; row < height; ++row) {
+                for (; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
                     if (calculatingRows[row] == false) {
                         continue;
-                    }
-                    else {
-                        solving = true;
                     }
 
                     fillFactors(row, first);
                     firstPass(row);
-
-                    ++bundleSize;
-                    if (bundleSize >= bundleSizeLimit) {
-                        break;
-                    }
                 }
                 sendFistPass(fromRow); // calculatingRows x [prevCalculatingRows] + (b + c + f) x [calculatingRows]
                 fromRow = row;
@@ -269,13 +270,15 @@ size_t Field::solveRows() {
 
             std::swap(prevCalculatingRows, calculatingRows);
 
+
             fromRow = 0;
             while (fromRow < height) {
                 size_t bundleSize = 0;
 
                 recieveSecondPass(fromRow); // (calculatingRows + y) x [prevCalculatingRows]
+
                 size_t row = fromRow;
-                for (; row < height; ++row) {
+                for (; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
                     if (prevCalculatingRows[row] == false) {
                         calculatingRows[row] = false;
                         continue;
@@ -284,11 +287,6 @@ size_t Field::solveRows() {
                     double delta = secondPass(row, first);
 
                     calculatingRows[row] = (rightN == NOBODY ? false : calculatingRows[row]) || delta > epsilon;
-
-                    ++bundleSize;
-                    if (bundleSize >= bundleSizeLimit) {
-                        break;
-                    }
                 }
                 sendSecondPass(fromRow); // (calculatingRows + y) x [prevCalculatingRows]
 
