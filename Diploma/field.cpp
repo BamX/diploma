@@ -16,7 +16,7 @@ static size_t const MAX_ITTERATIONS_COUNT = 50;
 
 Field::Field() {
     initFactors();
-    
+
     width = ftr.X1SplitCount();
     height = ftr.X2SplitCount();
 
@@ -319,20 +319,16 @@ size_t Field::solveRows() {
                 }
             }
 
-            size_t fromFactorsRow = 0;
+            for (size_t row = 0; row < height; ++row) {
+                if (calculatingRows[row]) {
+                    fillFactors(row, first);
+                }
+            }
+
             size_t fromFirstPassRow = 0;
             size_t fromSecondPassRow = 0;
 
             while (fromSecondPassRow < height) {
-                for (size_t bundleSize = 0; fromFactorsRow < height && bundleSize <= bundleSizeLimit; ++fromFactorsRow, ++bundleSize) {
-                    if (calculatingRows[fromFactorsRow]) {
-                        fillFactors(fromFactorsRow, first);
-                    }
-                }
-                if (fromFactorsRow < height) {
-                    --fromFactorsRow;
-                }
-
                 size_t nextSecondPassRow = 0;
                 if (fromSecondPassRow < height && fromFirstPassRow > fromSecondPassRow) {
                     nextSecondPassRow = secondPasses(fromSecondPassRow, first, true);
