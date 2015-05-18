@@ -22,6 +22,18 @@ void Field::debug(const char *name) {
 #endif
 }
 
+void Field::initFactors() {
+    int procs, id;
+    MPI_Comm_size(MPI_COMM_WORLD, &procs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &id);
+    for (size_t p = 0; p < procs; ++p) {
+        if (p == id) {
+            ftr.initFactors();
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+}
+
 void Field::calculateNBS() {
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 

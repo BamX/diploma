@@ -15,6 +15,8 @@ int const SEND_PACK_SIZE = 6;
 static size_t const MAX_ITTERATIONS_COUNT = 50;
 
 Field::Field() {
+    initFactors();
+    
     width = ftr.X1SplitCount();
     height = ftr.X2SplitCount();
 

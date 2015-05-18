@@ -9,7 +9,7 @@
 #include <vector>
 
 class Factors {
-    Config config;
+    Config *_config;
 
     double _x1, _x2, _totalTime,
         _x1SplitCount, _x2SplitCount, _timeSplitCount, _epsilon, _tMax,
@@ -18,9 +18,12 @@ class Factors {
     size_t _minimumBundle, _viewCount, _debugView, _framesCount;
     std::vector<double> _x1View, _x2View;
 
+    void initFactors(Config config);
+
 public:
 
-    Factors();
+    ~Factors();
+    void initFactors();
 
     double cEf(double T) const;
     

@@ -87,7 +87,7 @@ namespace ftr {
     }
 }
 
-Factors::Factors() {
+void Factors::initFactors(Config config) {
     _x1 = config.value("X1");
     _x2 = config.value("X2");
     _totalTime = ftr::totalLength / config.value("Speed");
@@ -120,6 +120,15 @@ Factors::Factors() {
         snprintf(buff, 10, "View%zuX2", index);
         _x2View.push_back(config.value(buff));
     }
+}
+
+Factors::~Factors() {
+    delete _config;
+}
+
+void Factors::initFactors() {
+    _config = new Config();
+    initFactors(*_config);
 }
 
 double Factors::cEf(double T) const {

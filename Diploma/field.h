@@ -42,6 +42,7 @@ class Field {
     bool *boolSendBuff;
     size_t lastWaitingCount, lastIterationsCount;
 
+    void initFactors();
     void calculateNBS();
 
     void fillFactors(size_t row, bool first);
