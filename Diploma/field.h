@@ -22,7 +22,6 @@ class Field {
 
     double *prev, *curr, *buff, *views;
     double *maF, *mbF, *mcF, *mfF;
-    bool *calculatingRows, *nextCalculatingRows;
 
     size_t width;
     size_t height;
@@ -36,11 +35,8 @@ class Field {
     int myId, numProcs, myCoord;
     MPI_Comm comm;
     size_t mySX, mySY;
-    int topN, bottomN, leftN, rightN;
-    size_t bundleSizeLimit;
-    double *sendBuff, *receiveBuff;
-    bool *boolSendBuff;
-    size_t lastWaitingCount, lastIterationsCount;
+    int topN, bottomN;
+    MPI_Datatype mpiAllType;
 
     void initFactors();
     void calculateNBS();
@@ -48,15 +44,12 @@ class Field {
     void fillFactors(size_t row, bool first);
     void firstPass(size_t row);
     double secondPass(size_t row, bool first);
-    size_t firstPasses(size_t fromRow, bool first, bool async);
-    size_t secondPasses(size_t fromRow, bool first, bool async);
     double solve(size_t row, bool first);
 
     size_t solveRows();
     void transpose(double *arr);
     void transpose();
     void nextTimeLayer();
-    void resetCalculatingRows();
 
     void enablePlotOutput();
     void enableMatrixOutput();
@@ -66,16 +59,6 @@ class Field {
     void printMatrix();
     void printViews();
     void debug(const char *name);
-
-    void sendRecieveCalculatingRows();
-    void balanceBundleSize();
-
-    void sendFistPass(size_t fromRow);
-    bool checkIncomingFirstPass(size_t fromRow);
-    void recieveFirstPass(size_t fromRow, bool first);
-    void sendSecondPass(size_t fromRow);
-    bool checkIncomingSecondPass(size_t fromRow);
-    void recieveSecondPass(size_t fromRow);
 
     void reduceViews();
 

@@ -39,14 +39,6 @@ Field::Field() {
     mbF = new double[height * width];
     mcF = new double[height * width];
     mfF = new double[height * width];
-    calculatingRows = new bool[width];
-    nextCalculatingRows = new bool[width];
-
-    lastIterationsCount = lastWaitingCount = 0;
-
-    sendBuff = new double[width * SEND_PACK_SIZE];
-    boolSendBuff = new bool[width];
-    receiveBuff = new double[width * SEND_PACK_SIZE];
 
     if (ftr.EnablePlot()) {
         enablePlotOutput();
@@ -76,12 +68,6 @@ Field::~Field() {
     delete[] mbF;
     delete[] mcF;
     delete[] mfF;
-    delete[] calculatingRows;
-    delete[] nextCalculatingRows;
-
-    delete[] sendBuff;
-    delete[] boolSendBuff;
-    delete[] receiveBuff;
 }
 
 void Field::fillInitial() {
@@ -96,36 +82,17 @@ void Field::fillInitial() {
     }
 }
 
-void Field::transpose(double *arr) {
-    for (size_t index = 0, len = width * height; index < len; ++index) {
-        size_t newIndex = (index % width) * height + index / width;
-        buff[newIndex] = arr[index];
-    }
-    for (size_t index = 0, len = width * height; index < len; ++index) {
-        arr[index] = buff[index];
-    }
-}
-
 void Field::transpose() {
     transpose(transposed ? curr : prev);
     
     std::swap(hX, hY);
     std::swap(mySX, mySY);
-    std::swap(topN, leftN);
-    std::swap(bottomN, rightN);
-    std::swap(width, height);
     transposed = transposed == false;
 }
 
 void Field::nextTimeLayer() {
     std::swap(curr, prev);
     t += dT;
-}
-
-void Field::resetCalculatingRows() {
-    for (size_t index = 0; index < height; ++index) {
-        calculatingRows[index] = nextCalculatingRows[index] = true;
-    }
 }
 
 void Field::fillFactors(size_t row, bool first) {
@@ -138,26 +105,22 @@ void Field::fillFactors(size_t row, bool first) {
     double *brw = first ? rw : (curr + row * width);
 
     double lm0 = ftr.lambda(brw[0]), lmh = ftr.lambda(brw[1]);
-    if (leftN == NOBODY) {
-        aF[0] = 0;
-        cF[0] = dT * (lm0 + lmh) + hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]);
-        bF[0] = -dT * (lm0 + lmh);
-        fF[0] = hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]) * rw[0];
-    }
+    aF[0] = 0;
+    cF[0] = dT * (lm0 + lmh) + hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]);
+    bF[0] = -dT * (lm0 + lmh);
+    fF[0] = hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]) * rw[0];
 
-    if (rightN == NOBODY) {
-        double TPrev = brw[width - 1];
-        double TPrev4 = TPrev * TPrev * TPrev * TPrev;
-        double lmXX = ftr.lambda(brw[width - 1]), lmXXm1 = ftr.lambda(brw[width - 2]);
-        aF[width - 1] = -dT * (lmXXm1 + lmXX);
-        cF[width - 1] = dT * (lmXXm1 + lmXX)
-                         + hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1])
-                         + 2 * hX * dT * ftr.alpha(t);
-        bF[width - 1] = 0;
-        fF[width - 1] = hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1]) * rw[width - 1]
-                         - 2 * hX * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
-                         + 2 * hX * dT * ftr.alpha(t) * ftr.TEnv();
-    }
+    double TPrev = brw[width - 1];
+    double TPrev4 = TPrev * TPrev * TPrev * TPrev;
+    double lmXX = ftr.lambda(brw[width - 1]), lmXXm1 = ftr.lambda(brw[width - 2]);
+    aF[width - 1] = -dT * (lmXXm1 + lmXX);
+    cF[width - 1] = dT * (lmXXm1 + lmXX)
+                     + hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1])
+                     + 2 * hX * dT * ftr.alpha(t);
+    bF[width - 1] = 0;
+    fF[width - 1] = hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1]) * rw[width - 1]
+                     - 2 * hX * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
+                     + 2 * hX * dT * ftr.alpha(t) * ftr.TEnv();
 
     double lmXm1 = lm0, lmX = lmh, lmXp1;
     double mhh2rocdT;
@@ -198,11 +161,9 @@ double Field::secondPass(size_t row, bool first) {
     double *py = first ? (prev + row * width) : y;
 
     double newValue = 0, maxDelta = 0;
-    if (rightN == NOBODY) {
-        newValue = fF[width - 1] / cF[width - 1];
-        maxDelta = fabs(newValue - py[width - 1]);
-        y[width - 1] = newValue;
-    }
+    newValue = fF[width - 1] / cF[width - 1];
+    maxDelta = fabs(newValue - py[width - 1]);
+    y[width - 1] = newValue;
 
     for (ssize_t i = width - 2; i >= 0; --i) {
         newValue = (fF[i] - bF[i] * y[i + 1]) / cF[i];
@@ -229,159 +190,24 @@ void Field::test() {
     transpose();
 }
 
-size_t Field::firstPasses(size_t fromRow, bool first, bool async) {
-    if (async && checkIncomingFirstPass(fromRow) == false) {
-        return 0;
-    }
-
-    recieveFirstPass(fromRow, first); // calculatingRows x [prevCalculatingRows] + (b + c + f) x [calculatingRows]
-    size_t row = fromRow;
-    for (size_t bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
-        if (calculatingRows[row] == false) {
-            continue;
-        }
-
-        firstPass(row);
-    }
-    sendFistPass(fromRow); // calculatingRows x [prevCalculatingRows] + (b + c + f) x [calculatingRows]
-
-    return row;
-}
-
-size_t Field::secondPasses(size_t fromRow, bool first, bool async) {
-    if (checkIncomingSecondPass(fromRow) == false) {
-        if (async) {
-            return 0;
-        }
-        else if (myCoord == 0) {
-            ++lastWaitingCount;
-        }
-    }
-
-    if (myCoord == 0) {
-        ++lastIterationsCount;
-    }
-
-    recieveSecondPass(fromRow); // (nextCalculatingRows + y) x [prevCalculatingRows]
-
-    size_t row = fromRow;
-    for (size_t bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
-        if (calculatingRows[row] == false) {
-            nextCalculatingRows[row] = false;
-            continue;
-        }
-
-        double delta = secondPass(row, first);
-
-        nextCalculatingRows[row] = (rightN == NOBODY ? false : nextCalculatingRows[row]) || delta > epsilon;
-    }
-    sendSecondPass(fromRow); // (nextCalculatingRows + y) x [prevCalculatingRows]
-
-    return row;
-}
-
-void Field::balanceBundleSize() {
-    //printf("%zu\t%zu\n", lastWaitingCount, lastIterationsCount);
-    if (lastWaitingCount > lastIterationsCount * ftr.BalanceFactor()) {
-        bundleSizeLimit = std::max(bundleSizeLimit - 1, ftr.MinimumBundle());
-    }
-    else {
-        bundleSizeLimit = std::min(bundleSizeLimit + 1, height / 2);
-    }
-    lastIterationsCount = 0;
-    lastWaitingCount = 0;
-}
-
 size_t Field::solveRows() {
     size_t maxIterationsCount = 0;
 
-    if (transposed) {
-        resetCalculatingRows();
-        bool first = true;
+    for (size_t row = 0; row < height; ++row) {
+        fillFactors(row, true);
+        double delta = solve(row, true);
+        size_t iterationsCount = 1;
 
-        if (myCoord == 0) {
-            balanceBundleSize();
-        }
+        while (delta > epsilon) {
+            fillFactors(row, false);
+            delta = solve(row, false);
+            ++iterationsCount;
 
-        bool solving = true;
-        while (solving) {
-            sendRecieveCalculatingRows();
-            if (first == false) {
-                solving = false;
-                for (size_t row = 0; row < height; ++row) {
-                    if (calculatingRows[row]) {
-                        solving = true;
-                        break;
-                    }
-                }
-                if (solving == false) {
-                    break;
-                }
-            }
-
-            for (size_t row = 0; row < height; ++row) {
-                if (calculatingRows[row]) {
-                    fillFactors(row, first);
-                }
-            }
-
-            size_t fromFirstPassRow = 0;
-            size_t fromSecondPassRow = 0;
-
-            while (fromSecondPassRow < height) {
-                size_t nextSecondPassRow = 0;
-                if (fromSecondPassRow < height && fromFirstPassRow > fromSecondPassRow) {
-                    nextSecondPassRow = secondPasses(fromSecondPassRow, first, true);
-                }
-
-                size_t nextFirstPassRow = 0;
-                if (fromFirstPassRow < height) {
-                    nextFirstPassRow = firstPasses(fromFirstPassRow, first, true);
-                }
-
-                if (nextFirstPassRow == 0 && nextSecondPassRow == 0) {
-                    if (fromFirstPassRow < height) {
-                        nextFirstPassRow = firstPasses(fromFirstPassRow, first, false);
-                    }
-                    else {
-                        nextSecondPassRow = secondPasses(fromSecondPassRow, first, false);
-                    }
-                }
-
-                if (nextFirstPassRow > 0) {
-                    fromFirstPassRow = nextFirstPassRow;
-                }
-                if (nextSecondPassRow > 0) {
-                    fromSecondPassRow = nextSecondPassRow;
-                }
-            }
-
-            first = false;
-            std::swap(nextCalculatingRows, calculatingRows);
-            ++maxIterationsCount;
-            if (maxIterationsCount >= MAX_ITTERATIONS_COUNT) {
-                solving = false;
+            if (iterationsCount > MAX_ITTERATIONS_COUNT) {
                 break;
             }
         }
-    }
-    else {
-        for (size_t row = 0; row < height; ++row) {
-            fillFactors(row, true);
-            double delta = solve(row, true);
-            size_t iterationsCount = 1;
-
-            while (delta > epsilon) {
-                fillFactors(row, false);
-                delta = solve(row, false);
-                ++iterationsCount;
-
-                if (iterationsCount > MAX_ITTERATIONS_COUNT) {
-                    break;
-                }
-            }
-            maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
-        }
+        maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
     }
 
     return maxIterationsCount;

@@ -64,8 +64,8 @@ void Field::printConsole() {
         double viewValue = view(ftr.DebugView());
 
         if (fabs(viewValue - NOTHING) > __DBL_EPSILON__) {
-            printf("Field[%d] (itrs: %zu, bsL %zu, time: %.5f)\tview: %.7f\n",
-                   myId, lastIterrationsCount, bundleSizeLimit, t, viewValue);
+            printf("Field[%d] (itrs: %zu, time: %.5f)\tview: %.7f\n",
+                   myId, lastIterrationsCount, t, viewValue);
         }
     }
 }
