@@ -366,9 +366,7 @@ size_t Field::solveRows() {
         }
     }
     else {
-        size_t startRow = topN == NOBODY ? 0 : 1;
-        size_t realHeight = height - (bottomN == NOBODY ? 0 : 1);
-        for (size_t row = startRow; row < realHeight; ++row) {
+        for (size_t row = 0; row < height; ++row) {
             fillFactors(row, true);
             double delta = solve(row, true);
             size_t iterationsCount = 1;
@@ -400,7 +398,6 @@ void Field::solve() {
     lastIterrationsCount += solveRows();
 
     nextTimeLayer();
-    sendRecieveRows();
     transpose();
     lastIterrationsCount += solveRows();
     transpose();

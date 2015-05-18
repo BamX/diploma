@@ -67,7 +67,6 @@ class Field {
     void printViews();
     void debug(const char *name);
 
-    void sendRecieveRows();
     void sendRecieveCalculatingRows();
     void balanceBundleSize();
 

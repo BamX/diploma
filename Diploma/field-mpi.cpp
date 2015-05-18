@@ -188,12 +188,6 @@ void Field::recieveSecondPass(size_t fromRow) {
     }
 }
 
-void Field::sendRecieveRows() {
-    MPI_Sendrecv(prev + width, (int)width, MPI_DOUBLE, topN, TAG_BOTTOM_TO_TOP_ROWS,
-                 prev + (height - 1) * width, (int)width, MPI_DOUBLE, bottomN, TAG_BOTTOM_TO_TOP_ROWS,
-                 comm, MPI_STATUS_IGNORE);
-}
-
 void Field::reduceViews() {
     for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
         double value = view(index);
