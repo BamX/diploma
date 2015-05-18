@@ -239,7 +239,6 @@ size_t Field::firstPasses(size_t fromRow, bool first, bool async) {
             continue;
         }
 
-        fillFactors(row, first);
         firstPass(row);
     }
     sendFistPass(fromRow); // calculatingRows x [prevCalculatingRows] + (b + c + f) x [calculatingRows]
@@ -318,10 +317,20 @@ size_t Field::solveRows() {
                 }
             }
 
+            size_t fromFactorsRow = 0;
             size_t fromFirstPassRow = 0;
             size_t fromSecondPassRow = 0;
 
-            while (fromFirstPassRow < height || fromSecondPassRow < height) {
+            while (fromSecondPassRow < height) {
+                for (size_t bundleSize = 0; fromFactorsRow < height && bundleSize <= bundleSizeLimit; ++fromFactorsRow, ++bundleSize) {
+                    if (calculatingRows[fromFactorsRow]) {
+                        fillFactors(fromFactorsRow, first);
+                    }
+                }
+                if (fromFactorsRow < height) {
+                    --fromFactorsRow;
+                }
+
                 size_t nextSecondPassRow = 0;
                 if (fromSecondPassRow < height && fromFirstPassRow > fromSecondPassRow) {
                     nextSecondPassRow = secondPasses(fromSecondPassRow, first, true);
