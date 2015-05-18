@@ -10,10 +10,10 @@
 
 double Field::view(double x1, double x2) {
     ssize_t x1index = floor(x1 / hX) - mySX;
-    ssize_t x2index = floor(x2 / hY) - mySY + (topN != NOBODY ? 1 : 0);
+    ssize_t x2index = floor(x2 / hY) - mySY;
 
     bool notInMyX1 = x1index < 0 || x1index >= width;
-    bool notInMyX2 = x2index < (topN != NOBODY ? 1 : 0) || x2index >= height - (bottomN != NOBODY ? 1 : 0);
+    bool notInMyX2 = x2index < 0 || x2index >= height;
     if (notInMyX1 || notInMyX2) {
         return NOTHING;
     }

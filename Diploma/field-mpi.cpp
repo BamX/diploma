@@ -39,6 +39,12 @@ void Field::calculateNBS() {
     MPI_Cart_coords(comm, myId, 1, &myCoord);
     MPI_Cart_shift(comm, 0, 1, &topN, &bottomN);
 
+    // Workaround for equal new heights
+    height = ceil((double)height / numProcs) * numProcs;
+    width = height;
+    hX = ftr.X1() / (width - 1);
+    hY = ftr.X2() / (height - 1);
+
     size_t newHeight = height / numProcs;
 
     mySY = newHeight * myCoord;
