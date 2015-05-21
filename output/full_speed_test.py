@@ -5,11 +5,17 @@ import time
 import datetime
 import shutil
 import os
+import os.path
 
 BUILDSCRIPT = './build.sh'
 RUNSCRIPT = 'debug.run'
 SLEEPINTERVAL = 10
+MAXRUNNINGJOBS = 5
+
 lineRegex = re.compile('([^ ]+) = (.*)')
+traceExitCodeRegex = re.compile('Exit_status=([^ ]*)')
+traceTimeRegex = re.compile('resources_used.walltime=(\d+:\d+:\d+)')
+traceCpuRegex = re.compile('resources_used.cput=(\d+:\d+:\d+)')
 
 key_walltime = 'resources_used.walltime'
 key_cputime = 'resources_used.cput'
@@ -39,6 +45,7 @@ def monitorTask(taskId):
             if match:
                 params[match.group(1)] = match.group(2)
     return params
+
 
 def parseTime(timeStr):
     splits = [int(x) for x in timeStr.split(':')]
@@ -74,6 +81,39 @@ def taskStatus(taskId):
         'code': exitCode 
     }
 
+def taskTrace(taskId, np):
+    out = str(subprocess.Popen(['tracejob', '-q', taskId], stdout=subprocess.PIPE).stdout.read())
+
+    jobState = value_jobstate_none
+    wallTime = 0
+    cpuTime = 0
+    (nodes, procs) = np
+    exitCode = ''
+
+    if 'Job Queued' in out:
+        jobState = value_jobstate_queued
+        if 'Job Run' in out:
+            jobState = value_jobstate_running
+            if 'Exit_status' in out:
+                jobState = value_jobstate_done
+                match = traceExitCodeRegex.search(out)
+                if match:
+                    exitCode = match.group(1)
+                match = traceTimeRegex.search(out)
+                if match:
+                    wallTime = parseTime(match.group(1))
+                match = traceCpuRegex.search(out)
+                if match:
+                    cpuTime = parseTime(match.group(1))
+    return { 
+        'state': jobState, 
+        'time': wallTime, 
+        'cpu': cpuTime, 
+        'nodes': nodes, 
+        'ppn': procs, 
+        'code': exitCode 
+    }
+
 def createOutputFolder():
     currTime = datetime.datetime.now()
     folderName = currTime.strftime('%Y-%m-%d_%H%M%S')
@@ -82,27 +122,33 @@ def createOutputFolder():
     return folderName
 
 def copyInputs(outDir):
-    shutil.copyfile("config.ini", "%s/config.ini" % outDir)
+    if os.path.isfile("config.ini"):
+        shutil.copyfile("config.ini", "%s/config.ini" % outDir)
 
 def copyTaskOutputs(taskId, procCount, outDir):
     for prefix in ['e', 'o']:
-        shutil.move("%s.%s%s" % (RUNSCRIPT, prefix, taskId), "%s/%s%sx%s" % (outDir, prefix, taskId, procCount))
+        fname = "%s.%s%s" % (RUNSCRIPT, prefix, taskId)
+        if not os.path.isfile(fname):
+            time.sleep(1)
+        if os.path.isfile(fname):
+            shutil.move(fname, "%s/%s%sx%s" % (outDir, prefix, taskId, procCount))
 
 def waitState(state):
     return state == value_jobstate_queued or state == value_jobstate_running
 
 def saveTaskStatus(taskId, procCount, outDir):
     ftaskStatus = open('%s/s%sx%s' % (outDir, taskId, procCount), 'w')
-    status = str(subprocess.Popen(['qstat', '-f', taskId], stdout=subprocess.PIPE).stdout.read())
+    #status = str(subprocess.Popen(['qstat', '-f', taskId], stdout=subprocess.PIPE).stdout.read())
+    status = str(subprocess.Popen(['tracejob', '-q', taskId], stdout=subprocess.PIPE).stdout.read())
     ftaskStatus.write(status)
     ftaskStatus.close()
 
-def saveResults(results, outDir):
+def saveResults(times, outDir):
     fstatus = open('%s/status.txt' % outDir, 'w')
     fresults = open('%s/results.txt' % outDir, 'w')
 
     zeroTime = -1
-    for task, result in results.iteritems():
+    for task, result in times:
         fstatus.write('%s(x%s)\t: [%s:%s] w: %s\tc: %s\tnodes=%s:ppn=%s\n' % (task, result['nodes'] * result['ppn'], result['state'], result['code'], result['time'], result['cpu'], result['nodes'], result['ppn']))
         time = result['time']
         procs = result['nodes'] * result['ppn']
@@ -123,13 +169,22 @@ def processTasks(tasksParams):
     if len(buildResult) > 0:
         print buildResult
         return []
-    tasks = []
-    for (nodes, ppn) in tasksParams:
-        tasks.append(runTask(nodes, ppn))
-        print "Run %s" % (nodes * ppn)
-        time.sleep(3)
+
     outDir = createOutputFolder()
     copyInputs(outDir)
+
+    jobsRun = 0
+    tasks = []
+    taskParamsDict = dict()
+    for (nodes, ppn) in tasksParams:
+        taskId = runTask(nodes, ppn)
+        tasks.append(taskId)
+        taskParamsDict[taskId] = (nodes, ppn)
+        print "Run %s" % (nodes * ppn)
+        time.sleep(2)
+        jobsRun += 1
+        if jobsRun >= MAXRUNNINGJOBS:
+            break
 
     results = dict()
     anyRuning = True
@@ -138,28 +193,44 @@ def processTasks(tasksParams):
         anyRuning = False
         sys.stderr.write("\x1b[2J\x1b[H")
         print 'Status:'
+        runningJobs = 0
+
         for t in tasks:
             result = None
             if not t in results or waitState(results[t]['state']):
-                result = taskStatus(t)
+                result = taskTrace(t, taskParamsDict[t])
                 results[t] = result
                 anyRuning = anyRuning or waitState(result['state'])
                 if not waitState(result['state']):
                     copyTaskOutputs(t, result['nodes'] * result['ppn'], outDir)
                     saveTaskStatus(t, result['nodes'] * result['ppn'], outDir)
+                else:
+                    runningJobs += 1
             else:
                 result = results[t]
 
             print '%s(x%s)\t: [%s:%s] w: %s\tc: %s\tnodes=%s:ppn=%s' % (t, result['nodes'] * result['ppn'], result['state'], result['code'], result['time'], result['cpu'], result['nodes'], result['ppn'])
+        if runningJobs < MAXRUNNINGJOBS and len(tasks) < len(tasksParams):
+            for (nodes, ppn) in tasksParams[jobsRun:]:
+                taskId = runTask(nodes, ppn)
+                tasks.append(taskId)
+                taskParamsDict[taskId] = (nodes, ppn)
+                print "Run %s" % (nodes * ppn)
+                time.sleep(3)
+                runningJobs += 1
+                if runningJobs >= MAXRUNNINGJOBS:
+                    break
+
         if anyRuning:
             time.sleep(SLEEPINTERVAL)
 
-    saveResults(results, outDir)
-    return results
+    times = sorted(results.iteritems())
+    saveResults(times, outDir)
+    return times
 
-def printResults(results):
+def printResults(times):
     zeroTime = -1
-    for task, result in results.iteritems():
+    for task, result in times:
         time = result['time']
         procs = result['nodes'] * result['ppn']
         if zeroTime == -1:
@@ -175,9 +246,10 @@ def printResults(results):
 #print runTask(4, 4)
 #print taskStatus('186314')
 
-#times = processTasks([(2, 3)])
+times = processTasks([(5, 6), (3, 7)])
+#print taskTrace('188032', (3, 4))
 #times = processTasks([(1, 1), (1, 2), (1, 4), (2, 4), (3, 4), (3, 5), (3, 6), (3, 7)])
-times = processTasks([(1, 1), (2, 1), (2, 2), (4, 2), (3, 4), (3, 5), (3, 6), (3, 7)])
+#times = processTasks([(1, 1), (1, 2), (2, 2), (2, 4), (3, 4), (3, 5), (3, 6), (3, 7), (4, 6), (4, 7), (5, 6), (5, 7), (6, 7), (7, 7), (8, 7), (9, 7)])
 #times = processTasks([(1, 1), (1, 2), (1, 3), (1, 4), (2, 1), (2, 2), (2, 3), (2, 4), (3, 1), (3, 2), (3, 3), (3, 4)])
 # 6 8 10 12 16 20 24 28 30 36 42
 #times = processTasks([(2, 3), (2, 4), (2, 5), (3, 4), (4, 4), (4, 5), (4, 6), (4, 7), (5, 6), (6, 6), (6, 7)])
