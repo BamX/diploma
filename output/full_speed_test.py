@@ -8,7 +8,7 @@ import os
 import os.path
 
 BUILDSCRIPT = './build.sh'
-RUNSCRIPT = 'debug.run'
+RUNSCRIPT = 'pbs.sh'
 SLEEPINTERVAL = 10
 MAXRUNNINGJOBS = 5
 

@@ -1,2 +1,2 @@
 #!/bin/bash
-mpic++ --std=c++11 ../Diploma/* -o debug
+/usr/lib64/openmpi/bin/mpic++ -std=c++0x ../Diploma/* -o debug -O4
