@@ -14,7 +14,7 @@ class Factors {
     double _x1, _x2, _totalTime,
         _x1SplitCount, _x2SplitCount, _timeSplitCount, _epsilon, _tMax,
         _TStart, _TEnv, _TEnv4, _balanceFactor;
-    bool _enableConsole, _enablePlot, _enableMatrix;
+    bool _enableConsole, _enablePlot, _enableMatrix, _enableStates;
     size_t _minimumBundle, _viewCount, _debugView, _framesCount;
     std::vector<double> _x1View, _x2View;
 
@@ -53,6 +53,7 @@ public:
     bool EnableConsole() const;
     bool EnablePlot() const;
     bool EnableMatrix() const;
+    bool EnableStates() const;
 
     size_t ViewCount() const;
     size_t DebugView() const;

@@ -19,6 +19,7 @@ class Field {
     Factors ftr;
     std::ofstream *fout, *mfout;
     double nextFrameTime;
+    std::chrono::high_resolution_clock::time_point startTime;
 
     double *prev, *curr, *buff, *views;
     double *maF, *mbF, *mcF, *mfF;
@@ -66,6 +67,7 @@ class Field {
     void printMatrix();
     void printViews();
     void debug(const char *name);
+    void printState(const char *name);
 
     void sendRecieveCalculatingRows();
     void balanceBundleSize();

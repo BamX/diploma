@@ -107,6 +107,7 @@ void Factors::initFactors(Config config) {
     _enableConsole = config.value("EnableConsole") > 0;
     _enablePlot = config.value("EnablePlot") > 0;
     _enableMatrix = config.value("EnableMatrix") > 0;
+    _enableStates = config.value("EnableStates") > 0;
 
     _viewCount = config.value("ViewCount");
     _debugView = config.value("DebugView");
@@ -247,6 +248,10 @@ bool Factors::EnablePlot() const {
 
 bool Factors::EnableMatrix() const {
     return _enableMatrix;
+}
+
+bool Factors::EnableStates() const {
+    return _enableStates;
 }
 
 size_t Factors::ViewCount() const {

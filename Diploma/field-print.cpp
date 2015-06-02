@@ -102,3 +102,9 @@ void Field::testPrint() {
         sleep(1);
     }
 }
+
+void Field::printState(const char *name) {
+    auto elapsed = std::chrono::high_resolution_clock::now() - startTime;
+    unsigned long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+    printf("[%d](%llu):%s\n", myId, microseconds, name);
+}

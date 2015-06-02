@@ -62,6 +62,9 @@ void Field::calculateNBS() {
     printf("I'm %d(%d)\twith w:%zu\th:%zu\tbs:%zu.\tTop:%d\tbottom:%d\n",
            myId, ::getpid(), width, height, bundleSizeLimit, topN, bottomN);
 
+    MPI_Barrier(comm);
+    startTime = std::chrono::high_resolution_clock::now();
+
 #ifdef DEBUG_WAIT
     int waiter = myId;
     while (waiter == WAITER) sleep(5);
