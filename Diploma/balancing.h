@@ -13,28 +13,29 @@ namespace balancing {
 
     void formatSums(const std::vector<double> &weights) {
         sums.resize(weights.size());
-        sums[0] = weights[0];
+        double prev = sums[0] = weights[0];
         for (size_t i = 1, len = weights.size(); i < len; ++i) {
-            sums[i] = sums[i - 1] + weights[i];
+            prev = sums[i] = prev + weights[i];
         }
     }
 
     size_t binSearch(size_t l, size_t r, double S) {
-        ssize_t start = l;
-        double SStart = start > 0 ? sums[start - 1] : 0;
+        size_t start = l;
+        if (start > 0) {
+            S += sums[start - 1];
+        }
 
         while (true) {
             size_t mid = l + (r - l) / 2;
-            double SMid = sums[mid] - SStart;
 
-            if (SMid > S) {
-                if (l + 1 >= mid) {
+            if (sums[mid] > S) {
+                if (l >= mid) {
                     return start;
                 }
 
-                r = mid - 1;
+                r = mid;
             } else {
-                if (mid == r - 1 || sums[mid + 1] - SStart > S) {
+                if (mid == r - 1 || sums[mid + 1] > S) {
                     return mid + 1;
                 }
 
@@ -43,15 +44,11 @@ namespace balancing {
         }
     }
 
-    ssize_t bucketsCount(ssize_t start, ssize_t end, double S) {
-        if (start >= end) {
-            return 0;
-        }
-
+    ssize_t bucketsCount(size_t start, size_t end, double S) {
         ssize_t partsCount = 0;
         while (start < end) {
-            ssize_t pos = binSearch(start, end, S);
-            if (start == pos) {
+            size_t pos = binSearch(start, end, S);
+            if (pos == start) {
                 return -1;
             }
             start = pos;
@@ -60,16 +57,12 @@ namespace balancing {
         return partsCount;
     }
 
-    bool buckets(ssize_t start, ssize_t end, double S, std::vector<size_t> &parts) {
-        if (start >= end) {
-            return true;
-        }
-
+    bool buckets(size_t start, size_t end, double S, std::vector<size_t> &parts) {
         while (start < end) {
-            ssize_t pos = binSearch(start, end, S);
-            if (start == pos) {
-                return false;
-            }
+            size_t pos = binSearch(start, end, S);
+            //if (start == pos) {
+            //    return false;
+            //}
             parts.push_back(pos - start);
             start = pos;
         }
@@ -108,16 +101,15 @@ namespace balancing {
         }
 
         std::vector<size_t> parts;
-        bool ok = buckets(0, iB, SB, parts);
-        if (ok) {
+        if (SB < __DBL_MAX__ - __DBL_EPSILON__) {
+            parts.reserve(count);
+            buckets(0, iB, SB, parts);
             parts.push_back(jB - iB + 1);
+            buckets(jB + 1, size, SB, parts);
         }
-        ok = ok && buckets(jB + 1, size, SB, parts);
 
         return parts;
     }
-
-
     
 }
 
