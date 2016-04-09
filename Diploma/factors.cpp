@@ -11,7 +11,7 @@ namespace ftr {
     static double const TLik = 1738; // К
     static double const TSol = 1679; // К
 
-    static double const L = 272; // кДж/кг
+    static double const L = 272000; // кДж/кг
     static double const cLik = 710; // Дж/(кг * К)
     static double const x = 0.7;
 
@@ -60,7 +60,7 @@ namespace ftr {
             case 2:
                 return 2622.3 - 92590 * x * x + 80523 * x;
             case 3:
-                return 14775 - 154544 * x * x + 142489 * x;
+                return 14775 + 154544 * x * x - 142489 * x;
         }
         return 0.0;
     }
@@ -72,12 +72,6 @@ namespace ftr {
             result += 4.5141 * Li(i, x) / dTi[i] * exp(-16 * tC * tC);
         }
         return result;
-    }
-
-    inline double sigm(double T) {
-        double cLikS = 15.463359 - 0.124528e-1 * T + 0.216279e-5 * T * T;
-        double cSolS = -11.0388 + 0.278656e-1 * T - 0.120163e-4 * T * T;
-        return (cLikS - 0.7) / (cLikS - cSolS);
     }
 
     inline double ksiFunc(double T) { // k = 0.7
@@ -136,7 +130,7 @@ double Factors::cEf(double T) const {
         return ftr::cLik;
     }
     else if (T > ftr::TSol) {
-        return ftr::cSol(T) - ftr::L * ftr::ksiFunc(T);
+        return ftr::cSol(T) + ftr::L * ftr::ksiFunc(T);
     }
     else {
         return ftr::cSol(T);

@@ -32,6 +32,7 @@
 		412688671AE113E600E54667 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		41359F781AD68008009C2DD0 /* factors.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = factors.cpp; sourceTree = "<group>"; };
 		41359F791AD68008009C2DD0 /* factors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = factors.h; sourceTree = "<group>"; };
+		417C4F6B1C70C89F008FDCFA /* balancing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = balancing.h; sourceTree = "<group>"; };
 		41BB05DF1AFFBCFC001A9883 /* field-mpi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "field-mpi.cpp"; sourceTree = "<group>"; };
 		41BB05E11AFFBE8B001A9883 /* field-print.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "field-print.cpp"; sourceTree = "<group>"; };
 		41CE5CDD1AAF6DF000C5918F /* Diploma */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Diploma; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -80,6 +81,7 @@
 				41D42E1A1ACAC9EE00989E03 /* field.cpp */,
 				41BB05DF1AFFBCFC001A9883 /* field-mpi.cpp */,
 				41BB05E11AFFBE8B001A9883 /* field-print.cpp */,
+				417C4F6B1C70C89F008FDCFA /* balancing.h */,
 				41D42E181ACAC9E100989E03 /* main.cpp */,
 			);
 			path = Diploma;
