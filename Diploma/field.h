@@ -22,7 +22,6 @@ protected:
 
     double *prev, *curr, *buff, *views;
     double *maF, *mbF, *mcF, *mfF;
-    bool *calculatingRows, *nextCalculatingRows;
 
     size_t width;
     size_t height;
@@ -37,11 +36,10 @@ protected:
     MPI_Comm comm;
     size_t mySX, mySY;
     int topN, bottomN, leftN, rightN;
-    double *sendBuff, *receiveBuff;
-    bool *boolSendBuff;
 
+    void fillInitial();
     void initFactors();
-    void calculateNBS();
+    virtual void calculateNBS();
 
     void fillFactors(size_t row, bool first);
     void firstPass(size_t row);
@@ -50,8 +48,7 @@ protected:
 
     virtual size_t solveRows();
 
-    void transpose(double *arr);
-    void transpose();
+    virtual void transpose();
     void nextTimeLayer();
 
     void enablePlotOutput();
@@ -73,7 +70,7 @@ public:
     void test();
     void testPrint();
 
-    void fillInitial();
+    virtual void init();
     void solve();
     double time();
     bool done();

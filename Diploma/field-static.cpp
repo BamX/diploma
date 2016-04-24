@@ -6,10 +6,16 @@
 #include "algo.h"
 #include <cmath>
 
-FieldStatic::FieldStatic() : Field() {
+void FieldStatic::init() {
+    Field::init();
+    
     calculatingRows = new bool[width];
     nextCalculatingRows = new bool[width];
-    
+
+    sendBuff = new double[width * SEND_PACK_SIZE];
+    boolSendBuff = new bool[width];
+    receiveBuff = new double[width * SEND_PACK_SIZE];
+
     lastIterationsCount = lastWaitingCount = 0;
 
     MPI_Comm_dup(comm, &firstPassComm);
@@ -24,13 +30,43 @@ FieldStatic::FieldStatic() : Field() {
 FieldStatic::~FieldStatic() {
     delete[] calculatingRows;
     delete[] nextCalculatingRows;
+
+    delete[] sendBuff;
+    delete[] boolSendBuff;
+    delete[] receiveBuff;
     
     MPI_Comm_free(&firstPassComm);
     MPI_Comm_free(&secondPassComm);
     MPI_Comm_free(&calculatingRowsComm);
 }
 
+void FieldStatic::calculateNBS() {
+    Field::calculateNBS();
+    height += (topN != NOBODY ? 1 : 0) + (bottomN != NOBODY ? 1 : 0);
+}
+
 #pragma mark - Logic
+
+void FieldStatic::transpose(double *arr) {
+    for (size_t index = 0, len = width * height; index < len; ++index) {
+        size_t newIndex = (index % width) * height + index / width;
+        buff[newIndex] = arr[index];
+    }
+    for (size_t index = 0, len = width * height; index < len; ++index) {
+        arr[index] = buff[index];
+    }
+}
+
+void FieldStatic::transpose() {
+    transpose(transposed ? curr : prev);
+
+    std::swap(hX, hY);
+    std::swap(mySX, mySY);
+    std::swap(topN, leftN);
+    std::swap(bottomN, rightN);
+    std::swap(width, height);
+    transposed = transposed == false;
+}
 
 void FieldStatic::resetCalculatingRows() {
     for (size_t index = 0; index < height; ++index) {

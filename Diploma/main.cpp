@@ -6,6 +6,7 @@
 #include <mpi.h>
 
 #include "field-static.h"
+#include "field-transpose.h"
 #include "balancing.h"
 #include "factors.h"
 
@@ -38,9 +39,9 @@ int main(int argc, char * argv[]) {
     MPI_Init(&argc, &argv);
 
     {
-        FieldStatic field;
+        FieldTranspose field;
         
-        field.fillInitial();
+        field.init();
 
         {
             const auto startTime = std::clock();

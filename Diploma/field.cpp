@@ -16,7 +16,31 @@ size_t const MAX_ITTERATIONS_COUNT = 50;
 
 Field::Field() {
     initFactors();
+}
 
+Field::~Field() {
+    if (fout != NULL) {
+        fout->close();
+        delete fout;
+    }
+
+    if (mfout != NULL) {
+        mfout->close();
+        delete mfout;
+    }
+    
+    delete[] prev;
+    delete[] curr;
+    delete[] buff;
+    delete[] views;
+
+    delete[] maF;
+    delete[] mbF;
+    delete[] mcF;
+    delete[] mfF;
+}
+
+void Field::init() {
     width = algo::ftr().X1SplitCount();
     height = algo::ftr().X2SplitCount();
 
@@ -40,9 +64,7 @@ Field::Field() {
     mcF = new double[height * width];
     mfF = new double[height * width];
 
-    sendBuff = new double[width * SEND_PACK_SIZE];
-    boolSendBuff = new bool[width];
-    receiveBuff = new double[width * SEND_PACK_SIZE];
+    fillInitial();
 
     if (algo::ftr().EnablePlot()) {
         enablePlotOutput();
@@ -50,32 +72,6 @@ Field::Field() {
     if (algo::ftr().EnableMatrix()) {
         enableMatrixOutput();
     }
-}
-
-Field::~Field() {
-    if (fout != NULL) {
-        fout->close();
-        delete fout;
-    }
-
-    if (mfout != NULL) {
-        mfout->close();
-        delete mfout;
-    }
-    
-    delete[] prev;
-    delete[] curr;
-    delete[] buff;
-    delete[] views;
-
-    delete[] maF;
-    delete[] mbF;
-    delete[] mcF;
-    delete[] mfF;
-
-    delete[] sendBuff;
-    delete[] boolSendBuff;
-    delete[] receiveBuff;
 }
 
 void Field::fillInitial() {
@@ -90,25 +86,7 @@ void Field::fillInitial() {
     }
 }
 
-void Field::transpose(double *arr) {
-    for (size_t index = 0, len = width * height; index < len; ++index) {
-        size_t newIndex = (index % width) * height + index / width;
-        buff[newIndex] = arr[index];
-    }
-    for (size_t index = 0, len = width * height; index < len; ++index) {
-        arr[index] = buff[index];
-    }
-}
-
 void Field::transpose() {
-    transpose(transposed ? curr : prev);
-    
-    std::swap(hX, hY);
-    std::swap(mySX, mySY);
-    std::swap(topN, leftN);
-    std::swap(bottomN, rightN);
-    std::swap(width, height);
-    transposed = transposed == false;
 }
 
 void Field::nextTimeLayer() {

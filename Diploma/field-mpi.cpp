@@ -49,7 +49,6 @@ void Field::calculateNBS() {
     if (bottomN == NOBODY) {
         newHeight = height - newHeight * (numProcs - 1);
     }
-    newHeight += (topN != NOBODY ? 1 : 0) + (bottomN != NOBODY ? 1 : 0);
 
     height = newHeight;
 

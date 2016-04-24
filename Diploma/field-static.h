@@ -11,10 +11,18 @@ class FieldStatic : public Field {
     size_t bundleSizeLimit;
     size_t lastWaitingCount, lastIterationsCount;
 
+    bool *calculatingRows, *nextCalculatingRows;
+    double *sendBuff, *receiveBuff;
+    bool *boolSendBuff;
+
+    void calculateNBS() override;
     void resetCalculatingRows();
 
     size_t firstPasses(size_t fromRow, bool first, bool async);
     size_t secondPasses(size_t fromRow, bool first, bool async);
+
+    void transpose(double *arr);
+    void transpose() override;
 
     size_t solveRows() override;
 
@@ -33,8 +41,9 @@ class FieldStatic : public Field {
     void printConsole() override;
     
 public:
-    FieldStatic();
     ~FieldStatic();
+
+    void init() override;
 };
 
 #endif /* field_static_h */
