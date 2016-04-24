@@ -3,6 +3,7 @@
 //
 
 #include "field.h"
+#include "algo.h"
 #include <cmath>
 #include <sys/types.h>
 #include <unistd.h>
@@ -28,7 +29,7 @@ void Field::initFactors() {
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
     for (size_t p = 0; p < procs; ++p) {
         if (p == id) {
-            ftr.initFactors();
+            algo::ftr().initFactors();
         }
         MPI_Barrier(MPI_COMM_WORLD);
     }
@@ -189,7 +190,7 @@ void Field::recieveSecondPass(size_t fromRow) {
 }
 
 void Field::reduceViews() {
-    for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
+    for (size_t index = 0, len = algo::ftr().ViewCount(); index < len; ++index) {
         double value = view(index);
         double result = 0;
         MPI_Reduce(&value, &result, 1, MPI_DOUBLE, MPI_MAX, MASTER, comm);
@@ -198,7 +199,7 @@ void Field::reduceViews() {
 }
 
 void Field::printMatrix() {
-    if (ftr.EnableMatrix()) {
+    if (algo::ftr().EnableMatrix()) {
         for (int p = 0; p < numProcs; ++p) {
             if (p == myCoord) {
                 if (mfout != NULL) {

@@ -3,6 +3,7 @@
 //
 
 #include "field.h"
+#include "algo.h"
 #include <cmath>
 
 #include <sys/types.h>
@@ -28,7 +29,7 @@ double Field::view(double x1, double x2) {
 }
 
 double Field::view(size_t index) {
-    return view(ftr.X1View(index), ftr.X2View(index));
+    return view(algo::ftr().X1View(index), algo::ftr().X2View(index));
 }
 
 void Field::enablePlotOutput() {
@@ -51,7 +52,7 @@ void Field::enableMatrixOutput() {
 
 void Field::printAll() {
     if (t > nextFrameTime) {
-        nextFrameTime += ftr.TMax() / ftr.FramesCount();
+        nextFrameTime += algo::ftr().TMax() / algo::ftr().FramesCount();
 
         printConsole();
         printViews();
@@ -60,8 +61,8 @@ void Field::printAll() {
 }
 
 void Field::printConsole() {
-    if (ftr.EnableConsole()) {
-        double viewValue = view(ftr.DebugView());
+    if (algo::ftr().EnableConsole()) {
+        double viewValue = view(algo::ftr().DebugView());
 
         if (fabs(viewValue - NOTHING) > __DBL_EPSILON__) {
             printf("Field[%d] (itrs: %zu, bsL %zu, time: %.5f)\tview: %.7f\n",
@@ -71,12 +72,12 @@ void Field::printConsole() {
 }
 
 void Field::printViews() {
-    if (ftr.EnablePlot()) {
+    if (algo::ftr().EnablePlot()) {
         reduceViews();
 
         if (fout != NULL) {
             *fout << t;
-            for (size_t index = 0, len = ftr.ViewCount(); index < len; ++index) {
+            for (size_t index = 0, len = algo::ftr().ViewCount(); index < len; ++index) {
                 *fout << "," << views[index];
             }
             *fout << "\n";

@@ -5,7 +5,6 @@
 #ifndef __Diploma__field__
 #define __Diploma__field__
 
-#include "factors.h"
 #include <fstream>
 #include <mpi.h>
 
@@ -16,7 +15,7 @@ extern int const NOTHING;
 extern int const SEND_PACK_SIZE;
 
 class Field {
-    Factors ftr;
+protected:
     std::ofstream *fout, *mfout;
     double nextFrameTime;
 

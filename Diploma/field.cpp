@@ -3,7 +3,7 @@
 //
 
 #include "field.h"
-#include "factors.h"
+#include "algo.h"
 #include <cmath>
 
 int const MASTER = 0;
@@ -17,13 +17,13 @@ static size_t const MAX_ITTERATIONS_COUNT = 50;
 Field::Field() {
     initFactors();
 
-    width = ftr.X1SplitCount();
-    height = ftr.X2SplitCount();
+    width = algo::ftr().X1SplitCount();
+    height = algo::ftr().X2SplitCount();
 
-    hX = ftr.X1() / (width - 1);
-    hY = ftr.X2() / (height - 1);
-    dT = ftr.totalTime() / ftr.TimeSplitCount();
-    epsilon = ftr.Epsilon();
+    hX = algo::ftr().X1() / (width - 1);
+    hY = algo::ftr().X2() / (height - 1);
+    dT = algo::ftr().totalTime() / algo::ftr().TimeSplitCount();
+    epsilon = algo::ftr().Epsilon();
     transposed = false;
     fout = NULL;
     mfout = NULL;
@@ -33,7 +33,7 @@ Field::Field() {
     prev = new double[height * width];
     curr = new double[height * width];
     buff = new double[height * width];
-    views = new double[ftr.ViewCount()];
+    views = new double[algo::ftr().ViewCount()];
 
     maF = new double[height * width];
     mbF = new double[height * width];
@@ -48,10 +48,10 @@ Field::Field() {
     boolSendBuff = new bool[width];
     receiveBuff = new double[width * SEND_PACK_SIZE];
 
-    if (ftr.EnablePlot()) {
+    if (algo::ftr().EnablePlot()) {
         enablePlotOutput();
     }
-    if (ftr.EnableMatrix()) {
+    if (algo::ftr().EnableMatrix()) {
         enableMatrixOutput();
     }
 }
@@ -92,7 +92,7 @@ void Field::fillInitial() {
     }
 
     for (size_t index = 0, len = width * height; index < len; ++index) {
-        curr[index] = ftr.TStart();
+        curr[index] = algo::ftr().TStart();
     }
 }
 
@@ -137,42 +137,7 @@ void Field::fillFactors(size_t row, bool first) {
     double *rw = prev + row * width;
     double *brw = first ? rw : (curr + row * width);
 
-    double lm0 = ftr.lambda(brw[0]), lmh = ftr.lambda(brw[1]);
-    if (leftN == NOBODY) {
-        aF[0] = 0;
-        cF[0] = dT * (lm0 + lmh) + hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]);
-        bF[0] = -dT * (lm0 + lmh);
-        fF[0] = hX * hX * ftr.ro(brw[0]) * ftr.cEf(brw[0]) * rw[0];
-    }
-
-    if (rightN == NOBODY) {
-        double TPrev = brw[width - 1];
-        double TPrev4 = TPrev * TPrev * TPrev * TPrev;
-        double lmXX = ftr.lambda(brw[width - 1]), lmXXm1 = ftr.lambda(brw[width - 2]);
-        aF[width - 1] = -dT * (lmXXm1 + lmXX);
-        cF[width - 1] = dT * (lmXXm1 + lmXX)
-                         + hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1])
-                         + 2 * hX * dT * ftr.alpha(t);
-        bF[width - 1] = 0;
-        fF[width - 1] = hX * hX * ftr.ro(brw[width - 1]) * ftr.cEf(brw[width - 1]) * rw[width - 1]
-                         - 2 * hX * dT * ftr.sigma(t) * (TPrev4 - ftr.TEnv4())
-                         + 2 * hX * dT * ftr.alpha(t) * ftr.TEnv();
-    }
-
-    double lmXm1 = lm0, lmX = lmh, lmXp1;
-    double mhh2rocdT;
-    for (size_t index = 1; index < width - 1; ++index) {
-        lmXp1 = ftr.lambda(brw[index + 1]);
-        mhh2rocdT = - 2 * hX * hX * ftr.ro(brw[index]) * ftr.cEf(brw[index]) / dT;
-
-        aF[index] = lmX + lmXm1;
-        bF[index] = lmXp1 + lmX;
-        cF[index] = -(lmXp1 + 2 * lmX + lmXm1) + mhh2rocdT;
-        fF[index] = mhh2rocdT * rw[index];
-
-        lmXm1 = lmX;
-        lmX = lmXp1;
-    }
+    algo::fillFactors(rw, brw, width, aF, bF, cF, fF, t, hX, dT, leftN == NOBODY, rightN == NOBODY);
 }
 
 void Field::firstPass(size_t row) {
@@ -181,12 +146,7 @@ void Field::firstPass(size_t row) {
     double *cF = mcF + row * width;
     double *fF = mfF + row * width;
 
-    double m = 0;
-    for (size_t i = 1; i < width; ++i) {
-        m = aF[i] / cF[i - 1];
-        cF[i] -= m * bF[i - 1];
-        fF[i] -= m * fF[i - 1];
-    }
+    algo::firstPass(width, aF, bF, cF, fF);
 }
 
 double Field::secondPass(size_t row, bool first) {
@@ -197,20 +157,8 @@ double Field::secondPass(size_t row, bool first) {
     double *y = curr + row * width;
     double *py = first ? (prev + row * width) : y;
 
-    double newValue = 0, maxDelta = 0;
-    if (rightN == NOBODY) {
-        newValue = fF[width - 1] / cF[width - 1];
-        maxDelta = fabs(newValue - py[width - 1]);
-        y[width - 1] = newValue;
-    }
-
-    for (ssize_t i = width - 2; i >= 0; --i) {
-        newValue = (fF[i] - bF[i] * y[i + 1]) / cF[i];
-
-        double newDelta = fabs(newValue - py[i]);
-        maxDelta = std::max(maxDelta, newDelta);
-        y[i] = newValue;
-    }
+    double maxDelta = 0;
+    algo::secondPass(py, y, width, bF, cF, fF, rightN == NOBODY, &maxDelta);
 
     return maxDelta;
 }
@@ -282,8 +230,8 @@ size_t Field::secondPasses(size_t fromRow, bool first, bool async) {
 
 void Field::balanceBundleSize() {
     //printf("%zu\t%zu\n", lastWaitingCount, lastIterationsCount);
-    if (lastWaitingCount > lastIterationsCount * ftr.BalanceFactor()) {
-        bundleSizeLimit = std::max(bundleSizeLimit - 1, ftr.MinimumBundle());
+    if (lastWaitingCount > lastIterationsCount * algo::ftr().BalanceFactor()) {
+        bundleSizeLimit = std::max(bundleSizeLimit - 1, algo::ftr().MinimumBundle());
     }
     else {
         bundleSizeLimit = std::min(bundleSizeLimit + 1, height / 2);
@@ -410,5 +358,5 @@ double Field::time() {
 }
 
 bool Field::done() {
-    return t >= ftr.TMax();
+    return t >= algo::ftr().TMax();
 }
