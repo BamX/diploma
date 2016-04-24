@@ -17,26 +17,28 @@ namespace ftr {
 
     static double const totalLength = (0.4 + 0.4 + 0.47 + 0.95 + 1.51 + 18.97); // с
 
-    static double Temps[] = { 273, 373, 473, 573, 673, 773, 873,
+    static double const Temps[] = { 273, 373, 473, 573, 673, 773, 873,
         973, 1073, 1173, 1273, 1373, 1473, 1679, 1682, 1800
     };
-    static double Lambds[] = {
+    static double const Lambds[] = {
         52.56057, 51.35258, 49.16971, 46.22939, 42.74907, 38.94618, 35.03819,
         31.24254, 24.06517, 25.37233, 26.95363, 28.32515, 29.40302, 31.62343,
         28.0, 28.0
     };
-    static double Ros[] = {
+    static double const Ros[] = {
         7885.884, 7845.138, 7804.392, 7763.646, 7722.9, 7682.901, 7647.512, 7621.141,
         7631.934, 7572.359, 7512.151, 7453.459, 7398.322, 7190.562, 7000.0, 7000.0,
     };
 
-    static double Ti[] = { 1000, 1033, 923, 1033 };
-    static double dTi[] = { 70, 350, 1100, 170 };
-
     inline double alphaForT(double T, size_t &index) {
-        index = 0;
-        while (Temps[index] < T) ++index;
-        return (T - Temps[index - 1]) / (Temps[index] - Temps[index - 1]);
+        if (T < 1473) {
+            index = ((size_t)(T - Temps[0]) / 100) + 1;
+            return (T - Temps[index - 1]) / 100;
+        } else {
+            index = 13;
+            while (Temps[index] < T) ++index;
+            return (T - Temps[index - 1]) / (Temps[index] - Temps[index - 1]);
+        }
     }
 
     inline double Lambda(double T) {
@@ -51,33 +53,27 @@ namespace ftr {
         return Ros[index - 1] + alpha * (Ros[index] - Ros[index - 1]);
     }
 
-    inline double Li(unsigned short i, double x) {
-        switch (i) {
-            case 0:
-                return 44076 - 85622 * x * x + 50357 * x;
-            case 1:
-                return 5163.2 - 74009 * x * x + 70232 * x;
-            case 2:
-                return 2622.3 - 92590 * x * x + 80523 * x;
-            case 3:
-                return 14775 + 154544 * x * x - 142489 * x;
-        }
-        return 0.0;
-    }
+    static double const Ti[] = { 1000, 1033, 923, 1033 };
+    static double const dTi[] = { 70, 350, 1100, 170 };
+    static double Li[] = {
+        4.5141 * (44076  - 85622  * x * x + 50357  * x) / dTi[0],
+        4.5141 * (5163.2 - 74009  * x * x + 70232  * x) / dTi[1],
+        4.5141 * (2622.3 - 92590  * x * x + 80523  * x) / dTi[2],
+        4.5141 * (14775  + 154544 * x * x - 142489 * x) / dTi[3]
+    };
 
     inline double cSol(double T) {
         double result = 469 + 0.16 * (T - 323);
         for (unsigned short i = 0; i < 4; ++i) {
             double tC = (Ti[i] - T) / dTi[i];
-            result += 4.5141 * Li(i, x) / dTi[i] * exp(-16 * tC * tC);
+            result += Li[i] * exp(-16 * tC * tC);
         }
         return result;
     }
 
     inline double ksiFunc(double T) { // k = 0.7
-        double x2 = x * x;
-        double z = (1.8691e6 - 2843.51*x + x*x);
-        return (1.31914e9 - 1.51221e6*x + 444.52*x2)/(z * z);
+        double z = 1.8691e6 - (2843.51 + T) * T;
+        return (1.31914e9 - (1.51221e6 + 444.52 * T) * T) / (z * z);
     }
 }
 
