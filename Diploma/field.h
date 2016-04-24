@@ -13,6 +13,7 @@ extern int const WAITER;
 extern int const NOBODY;
 extern int const NOTHING;
 extern int const SEND_PACK_SIZE;
+extern size_t const MAX_ITTERATIONS_COUNT;
 
 class Field {
 protected:
@@ -36,10 +37,8 @@ protected:
     MPI_Comm comm;
     size_t mySX, mySY;
     int topN, bottomN, leftN, rightN;
-    size_t bundleSizeLimit;
     double *sendBuff, *receiveBuff;
     bool *boolSendBuff;
-    size_t lastWaitingCount, lastIterationsCount;
 
     void initFactors();
     void calculateNBS();
@@ -47,34 +46,22 @@ protected:
     void fillFactors(size_t row, bool first);
     void firstPass(size_t row);
     double secondPass(size_t row, bool first);
-    size_t firstPasses(size_t fromRow, bool first, bool async);
-    size_t secondPasses(size_t fromRow, bool first, bool async);
     double solve(size_t row, bool first);
 
-    size_t solveRows();
+    virtual size_t solveRows();
+
     void transpose(double *arr);
     void transpose();
     void nextTimeLayer();
-    void resetCalculatingRows();
 
     void enablePlotOutput();
     void enableMatrixOutput();
 
     void printAll();
-    void printConsole();
+    virtual void printConsole();
     void printMatrix();
     void printViews();
     void debug(const char *name);
-
-    void sendRecieveCalculatingRows();
-    void balanceBundleSize();
-
-    void sendFistPass(size_t fromRow);
-    bool checkIncomingFirstPass(size_t fromRow);
-    void recieveFirstPass(size_t fromRow, bool first);
-    void sendSecondPass(size_t fromRow);
-    bool checkIncomingSecondPass(size_t fromRow);
-    void recieveSecondPass(size_t fromRow);
 
     void reduceViews();
 

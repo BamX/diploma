@@ -14,6 +14,8 @@
 		41D42E191ACAC9E100989E03 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41D42E181ACAC9E100989E03 /* main.cpp */; };
 		41D42E1C1ACAC9EE00989E03 /* field.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41D42E1A1ACAC9EE00989E03 /* field.cpp */; };
 		41DE06DF1CCCCE1800AB2F5A /* algo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41DE06DD1CCCCE1800AB2F5A /* algo.cpp */; };
+		41DE06E21CCCE26F00AB2F5A /* field-transpose.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41DE06E01CCCE26F00AB2F5A /* field-transpose.cpp */; };
+		41DE06E51CCCE2EF00AB2F5A /* field-static.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41DE06E31CCCE2EF00AB2F5A /* field-static.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -43,6 +45,10 @@
 		41D42E1B1ACAC9EE00989E03 /* field.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = field.h; sourceTree = "<group>"; };
 		41DE06DD1CCCCE1800AB2F5A /* algo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = algo.cpp; sourceTree = "<group>"; };
 		41DE06DE1CCCCE1800AB2F5A /* algo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = algo.h; sourceTree = "<group>"; };
+		41DE06E01CCCE26F00AB2F5A /* field-transpose.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "field-transpose.cpp"; sourceTree = "<group>"; };
+		41DE06E11CCCE26F00AB2F5A /* field-transpose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "field-transpose.h"; sourceTree = "<group>"; };
+		41DE06E31CCCE2EF00AB2F5A /* field-static.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "field-static.cpp"; sourceTree = "<group>"; };
+		41DE06E41CCCE2EF00AB2F5A /* field-static.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "field-static.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -86,6 +92,10 @@
 				41D42E1A1ACAC9EE00989E03 /* field.cpp */,
 				41BB05DF1AFFBCFC001A9883 /* field-mpi.cpp */,
 				41BB05E11AFFBE8B001A9883 /* field-print.cpp */,
+				41DE06E11CCCE26F00AB2F5A /* field-transpose.h */,
+				41DE06E01CCCE26F00AB2F5A /* field-transpose.cpp */,
+				41DE06E41CCCE2EF00AB2F5A /* field-static.h */,
+				41DE06E31CCCE2EF00AB2F5A /* field-static.cpp */,
 				417C4F6B1C70C89F008FDCFA /* balancing.h */,
 				41D42E181ACAC9E100989E03 /* main.cpp */,
 			);
@@ -152,7 +162,9 @@
 				412688681AE113E600E54667 /* config.cpp in Sources */,
 				41359F7A1AD68008009C2DD0 /* factors.cpp in Sources */,
 				41DE06DF1CCCCE1800AB2F5A /* algo.cpp in Sources */,
+				41DE06E21CCCE26F00AB2F5A /* field-transpose.cpp in Sources */,
 				41D42E191ACAC9E100989E03 /* main.cpp in Sources */,
+				41DE06E51CCCE2EF00AB2F5A /* field-static.cpp in Sources */,
 				41BB05E21AFFBE8B001A9883 /* field-print.cpp in Sources */,
 				41BB05E01AFFBCFC001A9883 /* field-mpi.cpp in Sources */,
 			);

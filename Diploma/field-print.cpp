@@ -61,14 +61,6 @@ void Field::printAll() {
 }
 
 void Field::printConsole() {
-    if (algo::ftr().EnableConsole()) {
-        double viewValue = view(algo::ftr().DebugView());
-
-        if (fabs(viewValue - NOTHING) > __DBL_EPSILON__) {
-            printf("Field[%d] (itrs: %zu, bsL %zu, time: %.5f)\tview: %.7f\n",
-                   myId, lastIterrationsCount, bundleSizeLimit, t, viewValue);
-        }
-    }
 }
 
 void Field::printViews() {
