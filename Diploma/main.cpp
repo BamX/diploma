@@ -40,6 +40,7 @@ int main(int argc, char * argv[]) {
 
     {
         FieldTranspose field;
+        //FieldStatic field;
         
         field.init();
 

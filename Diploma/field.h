@@ -23,8 +23,7 @@ protected:
     double *prev, *curr, *buff, *views;
     double *maF, *mbF, *mcF, *mfF;
 
-    size_t width;
-    size_t height;
+    size_t width, height, origWidth, origHeight;
     bool transposed;
 
     double t;
@@ -56,11 +55,21 @@ protected:
 
     void printAll();
     virtual void printConsole();
-    void printMatrix();
+    virtual void printMatrix();
     void printViews();
     void debug(const char *name);
 
     void reduceViews();
+
+#pragma mark - Balancing MPI
+
+    double *weights;
+    size_t *balanceBuckets;
+
+    void cleanWeights();
+    virtual void syncWeights();
+    virtual bool balanceNeeded();
+    virtual void balance();
 
 public:
     Field();
@@ -75,7 +84,7 @@ public:
     double time();
     bool done();
 
-    double view(double x1, double x2);
+    virtual double view(double x1, double x2);
     double view(size_t index);
 
 };

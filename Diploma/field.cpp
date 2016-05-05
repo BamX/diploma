@@ -7,7 +7,7 @@
 #include <cmath>
 
 int const MASTER = 0;
-int const WAITER = 3;
+int const WAITER = 0;
 int const NOBODY = MPI_PROC_NULL;
 int const NOTHING = -1;
 int const SEND_PACK_SIZE = 6;
@@ -38,6 +38,8 @@ Field::~Field() {
     delete[] mbF;
     delete[] mcF;
     delete[] mfF;
+
+    delete[] weights;
 }
 
 void Field::init() {
@@ -72,6 +74,9 @@ void Field::init() {
     if (algo::ftr().EnableMatrix()) {
         enableMatrixOutput();
     }
+
+    weights = new double[std::max(height, width)];
+    balanceBuckets = new size_t[numProcs];
 }
 
 void Field::fillInitial() {

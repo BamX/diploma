@@ -1,6 +1,6 @@
 #!/usr/local/bin/gnuplot -persist
 set encoding utf8
-set terminal gif animate delay 20 size 800,400
+set terminal gif animate delay 20 size 900,800
 set output 'matrix.gif'
 stats 'matrix.csv' nooutput
 

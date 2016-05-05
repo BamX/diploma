@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-//#define DEBUG_PRINT
+#define DEBUG_PRINT
 //#define DEBUG_WAIT
 
 void Field::debug(const char *name) {
@@ -53,9 +53,9 @@ void Field::calculateNBS() {
     height = newHeight;
 
 #ifdef DEBUG_WAIT
+    printf("I'm %d(%d)\n", myId, ::getpid());
     int waiter = myId;
     while (waiter == WAITER) sleep(5);
-    printf("GO\n");
 #endif
 }
 
@@ -101,3 +101,22 @@ void Field::printMatrix() {
         }
     }
 }
+
+#pragma mark - Balancing
+
+void Field::cleanWeights() {
+    memset(weights, 0, sizeof(double) * std::max(width, height));
+}
+
+void Field::syncWeights() {
+    
+}
+
+bool Field::balanceNeeded() {
+    return false;
+}
+
+void Field::balance() {
+
+}
+

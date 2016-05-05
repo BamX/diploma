@@ -11,10 +11,10 @@ namespace balancing {
 
     std::vector<double> sums;
 
-    void formatSums(const std::vector<double> &weights) {
-        sums.resize(weights.size());
+    void formatSums(double *weights, size_t size) {
+        sums.resize(size);
         double prev = sums[0] = weights[0];
-        for (size_t i = 1, len = weights.size(); i < len; ++i) {
+        for (size_t i = 1; i < size; ++i) {
             prev = sums[i] = prev + weights[i];
         }
     }
@@ -75,13 +75,11 @@ namespace balancing {
      *  @param weights job weights for partitioning
      *  @param lengths result intervals length
      */
-    std::vector<size_t> partition(const std::vector<double> &weights, size_t count) {
-        size_t size = weights.size();
-
+    std::vector<size_t> partition(double *weights, size_t size, size_t count) {
         int i = 0, j = 0, iB = 0, jB = 0;
         double SB = __DBL_MAX__;
 
-        formatSums(weights);
+        formatSums(weights, size);
 
         while (i < size && j < size) {
             double S = sums[j] - (i > 0 ? sums[i - 1] : 0);
@@ -109,6 +107,12 @@ namespace balancing {
         }
 
         return parts;
+    }
+
+    std::vector<size_t> partition(std::vector<double> &weights, size_t count) {
+        size_t size = weights.size();
+        double *weightsAr = &weights[0];
+        return partition(weightsAr, size, count);
     }
     
 }

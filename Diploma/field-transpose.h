@@ -14,14 +14,24 @@ class FieldTranspose : public Field {
     void transpose(double *arr);
     void transpose() override;
 
+    void calculateNBS() override;
+
     size_t solveRows() override;
 
     void printConsole() override;
+    void printMatrix() override;
+
+#pragma mark - Balancing MPI
+
+    void syncWeights() override;
+    bool balanceNeeded() override;
+    void balance() override;
 
 public:
     ~FieldTranspose();
 
     void init() override;
+    double view(double x1, double x2) override;
 };
 
 #endif /* field_transpose_h */

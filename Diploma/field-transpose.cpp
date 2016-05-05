@@ -15,12 +15,24 @@ void FieldTranspose::init() {
     MPI_Type_free(&mpi_all_unaligned_t);
     MPI_Type_commit(&mpiAllType);
 
-    printf("I'm %d(%d)\twith w:%zu\th:%zu.\tTop:%d\tbottom:%d\n",
-           myId, ::getpid(), width, height, topN, bottomN);
+    printf("I'm %d(%d)\twith w:%zu\th:%zu w:%zu\th:%zu.\tTop:%d\tbottom:%d\n",
+           myId, ::getpid(), width, height, mySX, mySY, topN, bottomN);
 }
 
 FieldTranspose::~FieldTranspose() {
     MPI_Type_free(&mpiAllType);
+}
+
+void FieldTranspose::calculateNBS() {
+    Field::calculateNBS();
+
+    height = ceil((double)width / numProcs);
+    width = height * numProcs;
+    hX = algo::ftr().X1() / (width - 1);
+    hY = algo::ftr().X2() / (height * numProcs - 1);
+
+    mySY = height * myCoord;
+    mySX = 0;
 }
 
 #pragma mark - Logic
@@ -73,13 +85,72 @@ void FieldTranspose::transpose(double *arr) {
 
 #pragma mark - Print
 
+double FieldTranspose::view(double x1, double x2) {
+    ssize_t x1index = floor(x1 / hX) - mySX;
+    ssize_t x2index = floor(x2 / hY) - mySY;
+
+    bool notInMyX1 = x1index < 0 || x1index >= width;
+    bool notInMyX2 = x2index < 0 || x2index >= height;
+    if (notInMyX1 || notInMyX2) {
+        return NOTHING;
+    }
+
+    return curr[x2index * width + x1index];
+}
+
 void FieldTranspose::printConsole() {
     if (algo::ftr().EnableConsole()) {
-        double viewValue = view(algo::ftr().DebugView());
+        double viewValue = Field::view(algo::ftr().DebugView());
 
         if (fabs(viewValue - NOTHING) > __DBL_EPSILON__) {
             printf("Field[%d] (itrs: %zu, time: %.5f)\tview: %.7f\n",
                    myId, lastIterrationsCount, t, viewValue);
         }
     }
+}
+
+void FieldTranspose::printMatrix() {
+    if (algo::ftr().EnableMatrix()) {
+        for (int p = 0; p < numProcs; ++p) {
+            if (p == myCoord) {
+                if (mfout != NULL) {
+                    mfout->close();
+                }
+                mfout = new std::ofstream("matrix.csv", std::ios::app);
+
+                size_t index = 0;
+                for (size_t row = 0; row < height; ++row) {
+                    for (size_t col = 0; col < width; ++col, ++index) {
+                        *mfout << curr[index];
+                        if (col < width - 1) {
+                            *mfout << " ";
+                        }
+                    }
+                    *mfout << "\n";
+                }
+                if (myCoord == numProcs - 1) {
+                    *mfout << "\n";
+                }
+
+                mfout->close();
+                mfout = NULL;
+            }
+            MPI_Barrier(comm);
+        }
+    }
+}
+
+#pragma mark - Balancing
+
+void FieldTranspose::syncWeights() {
+    MPI_Allgather(weights + myId * height, (int)height, MPI_DOUBLE,
+                  weights, (int)(numProcs * height), MPI_DOUBLE, comm);
+}
+
+bool FieldTranspose::balanceNeeded() {
+    return true;
+}
+
+void FieldTranspose::balance() {
+
 }
