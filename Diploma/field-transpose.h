@@ -9,7 +9,7 @@
 
 class FieldTranspose : public Field {
 
-    MPI_Datatype mpiAllType;
+    MPI_Datatype mpiVertType, mpiHorizType;
     MPI_Comm balanceComm;
 
     void transpose(double *arr);
