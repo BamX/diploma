@@ -10,6 +10,7 @@
 class FieldTranspose : public Field {
 
     MPI_Datatype mpiAllType;
+    MPI_Comm balanceComm;
 
     void transpose(double *arr);
     void transpose() override;

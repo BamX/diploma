@@ -39,6 +39,7 @@ void Field::enablePlotOutput() {
 
     if (fout != NULL) {
         fout->close();
+        delete fout;
     }
     fout = new std::ofstream("view.csv");
 }
@@ -46,8 +47,28 @@ void Field::enablePlotOutput() {
 void Field::enableMatrixOutput() {
     if (mfout != NULL) {
         mfout->close();
+        delete mfout;
     }
     mfout = new std::ofstream("matrix.csv", std::ios::trunc);
+}
+
+void Field::enableBucketsOutput() {
+    if (myId != MASTER) {
+        return;
+    }
+    
+    if (bfout != NULL) {
+        bfout->close();
+        delete bfout;
+    }
+    bfout = new std::ofstream("buckets.csv");
+    for (size_t i = 0; i < numProcs; ++i) {
+        *bfout << "n" << i;
+        if (i < numProcs - 1) {
+             *bfout << ",";
+        }
+    }
+    *bfout << "\n";
 }
 
 void Field::printAll() {

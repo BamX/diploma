@@ -11,7 +11,7 @@ namespace ftr {
     static double const TLik = 1738; // К
     static double const TSol = 1679; // К
 
-    static double const L = 272000; // кДж/кг
+    static double const L = 272000; // Дж/кг
     static double const cLik = 710; // Дж/(кг * К)
     static double const x = 0.7;
 
@@ -97,6 +97,7 @@ void Factors::initFactors(Config config) {
     _enableConsole = config.value("EnableConsole") > 0;
     _enablePlot = config.value("EnablePlot") > 0;
     _enableMatrix = config.value("EnableMatrix") > 0;
+    _enableBuckets = config.value("EnableBuckets") > 0;
 
     _viewCount = config.value("ViewCount");
     _debugView = config.value("DebugView");
@@ -237,6 +238,10 @@ bool Factors::EnablePlot() const {
 
 bool Factors::EnableMatrix() const {
     return _enableMatrix;
+}
+
+bool Factors::EnableBuckets() const {
+    return _enableBuckets;
 }
 
 size_t Factors::ViewCount() const {

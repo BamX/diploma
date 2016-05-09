@@ -48,6 +48,7 @@ DerivedData
 *.x86_64
 *.hex
 
+buckets.csv
 view.csv
 plot.png
 matrix.csv

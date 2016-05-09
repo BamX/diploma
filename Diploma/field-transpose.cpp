@@ -4,6 +4,7 @@
 
 #include "field-transpose.h"
 #include "algo.h"
+#include "balancing.h"
 #include <cmath>
 
 void FieldTranspose::init() {
@@ -21,6 +22,7 @@ void FieldTranspose::init() {
 
 FieldTranspose::~FieldTranspose() {
     MPI_Type_free(&mpiAllType);
+    MPI_Comm_free(&balanceComm);
 }
 
 void FieldTranspose::calculateNBS() {
@@ -33,6 +35,8 @@ void FieldTranspose::calculateNBS() {
 
     mySY = height * myCoord;
     mySX = 0;
+
+    MPI_Comm_dup(comm, &balanceComm);
 }
 
 #pragma mark - Logic
@@ -62,6 +66,7 @@ size_t FieldTranspose::solveRows() {
                 break;
             }
         }
+        weights[myCoord * height + row] = iterationsCount;
         maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
     }
 
@@ -143,12 +148,23 @@ void FieldTranspose::printMatrix() {
 #pragma mark - Balancing
 
 void FieldTranspose::syncWeights() {
-    MPI_Allgather(weights + myId * height, (int)height, MPI_DOUBLE,
-                  weights, (int)(numProcs * height), MPI_DOUBLE, comm);
+    MPI_Allgather(weights + myCoord * height, (int)height, MPI_DOUBLE,
+                  weights, (int)height, MPI_DOUBLE, balanceComm);
 }
 
 bool FieldTranspose::balanceNeeded() {
-    return true;
+    std::vector<size_t> buckets = balancing::partition(weights, height * numProcs, numProcs);
+    if (bfout != NULL) {
+        for (size_t i = 0; i < numProcs; ++i) {
+            *bfout << buckets[i];
+            if (i < numProcs - 1) {
+                *bfout << ",";
+            }
+        }
+        *bfout << "\n";
+        bfout->flush();
+    }
+    return false;
 }
 
 void FieldTranspose::balance() {

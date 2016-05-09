@@ -7,33 +7,7 @@
 
 #include "field-static.h"
 #include "field-transpose.h"
-#include "balancing.h"
 #include "factors.h"
-
-int ___main(int argc, char * argv[]) {
-    std::vector<double> ww = {
-        3.0, 40.0, 17.0, //  60
-        10.0, 5.0, 17.0, 11.0, 11.0, 3.0, 1.0, // 58
-        15.0, 17.0, 23.0, 6.0, 5.0, // 66
-        66, // 66
-        1.0, 1.0, 1.0, 1.0, 1.0, 62 // 67
-    };
-
-    size_t count = 5;
-    auto parts = balancing::partition(ww, count);
-
-    size_t i = 0;
-    for (auto &part : parts) {
-        double sum = 0;
-        for (int j = 0; j < part; ++j) {
-            std::cerr << ww[j + i] << " ";
-            sum += ww[j + i];
-        }
-        i += part;
-        std::cerr << "= " << sum << std::endl;
-    }
-    return 0;
-}
 
 int main(int argc, char * argv[]) {
     MPI_Init(&argc, &argv);

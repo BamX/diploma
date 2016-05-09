@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <mpi.h>
+#include <vector>
 
 extern int const MASTER;
 extern int const WAITER;
@@ -17,7 +18,7 @@ extern size_t const MAX_ITTERATIONS_COUNT;
 
 class Field {
 protected:
-    std::ofstream *fout, *mfout;
+    std::ofstream *fout, *mfout, *bfout;
     double nextFrameTime;
 
     double *prev, *curr, *buff, *views;
@@ -52,6 +53,7 @@ protected:
 
     void enablePlotOutput();
     void enableMatrixOutput();
+    void enableBucketsOutput();
 
     void printAll();
     virtual void printConsole();
@@ -64,7 +66,7 @@ protected:
 #pragma mark - Balancing MPI
 
     double *weights;
-    size_t *balanceBuckets;
+    std::vector<size_t> balanceBuckets;
 
     void cleanWeights();
     virtual void syncWeights();
