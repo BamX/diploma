@@ -16,9 +16,13 @@ extern int const NOTHING;
 extern int const SEND_PACK_SIZE;
 extern size_t const MAX_ITTERATIONS_COUNT;
 
+typedef std::chrono::high_resolution_clock bx_clock_t;
+typedef bx_clock_t::time_point bx_time_t;
+
 class Field {
 protected:
     std::ofstream *fout, *mfout, *bfout;
+    bx_time_t startSyncTime;
     double nextFrameTime;
 
     double *prev, *curr, *buff, *views;
@@ -59,14 +63,15 @@ protected:
     virtual void printConsole();
     virtual void printMatrix();
     void printViews();
-    void debug(const char *name);
+
+    unsigned long long picosecFromStart();
+    std::ostream &debug(bool info = true);
 
     void reduceViews();
 
 #pragma mark - Balancing MPI
 
     double *weights;
-    std::vector<size_t> balanceBuckets;
 
     void cleanWeights();
     virtual void syncWeights();

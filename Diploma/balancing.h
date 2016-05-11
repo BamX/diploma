@@ -57,16 +57,45 @@ namespace balancing {
         return partsCount;
     }
 
-    bool buckets(size_t start, size_t end, double S, std::vector<size_t> &parts) {
+    bool buckets(size_t start, size_t end, double S, std::vector<int> &parts) {
         while (start < end) {
             size_t pos = binSearch(start, end, S);
             //if (start == pos) {
             //    return false;
             //}
-            parts.push_back(pos - start);
+            parts.push_back((int)(pos - start));
             start = pos;
         }
         return true;
+    }
+
+    void fillNA(std::vector<int> &parts) {
+        bool fixed = false;
+        while (fixed == false) {
+            fixed = true;
+            bool better = false;
+            for (size_t i = 0; i < parts.size(); ++i) {
+                if (parts[i] == 0) {
+                    if (i <= 1) {
+                        if (parts[i + 1] > 1) {
+                            parts[i + 1] -= 1;
+                            parts[i] += 1;
+                            better = true;
+                        }
+                    } else {
+                        if (parts[i - 1] > 1) {
+                            parts[i - 1] -= 1;
+                            parts[i] += 1;
+                            better = true;
+                        }
+                    }
+                    fixed = false;
+                }
+            }
+            if (fixed || (fixed == false && better == false)) {
+                return;
+            }
+        }
     }
 
     /**
@@ -75,7 +104,7 @@ namespace balancing {
      *  @param weights job weights for partitioning
      *  @param lengths result intervals length
      */
-    std::vector<size_t> partition(double *weights, size_t size, size_t count) {
+    std::vector<int> partition(double *weights, size_t size, size_t count) {
         int i = 0, j = 0, iB = 0, jB = 0;
         double SB = __DBL_MAX__;
 
@@ -98,7 +127,7 @@ namespace balancing {
             }
         }
 
-        std::vector<size_t> parts;
+        std::vector<int> parts;
         if (SB < __DBL_MAX__ - __DBL_EPSILON__) {
             parts.reserve(count);
             buckets(0, iB, SB, parts);
@@ -106,10 +135,15 @@ namespace balancing {
             buckets(jB + 1, size, SB, parts);
         }
 
+        while (parts.size() < count) {
+            parts.push_back(0);
+        }
+        fillNA(parts);
+
         return parts;
     }
 
-    std::vector<size_t> partition(std::vector<double> &weights, size_t count) {
+    std::vector<int> partition(std::vector<double> &weights, size_t count) {
         size_t size = weights.size();
         double *weightsAr = &weights[0];
         return partition(weightsAr, size, count);

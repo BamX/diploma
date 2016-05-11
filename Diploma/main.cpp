@@ -9,6 +9,101 @@
 #include "field-transpose.h"
 #include "factors.h"
 
+void createVType(size_t width, size_t height, size_t bWidth, MPI_Datatype *type) {
+    MPI_Datatype mpi_col_type, mpi_tmp_type;
+    MPI_Type_vector((int)height, (int)1, (int)width, MPI_DOUBLE, &mpi_tmp_type);
+    MPI_Type_create_resized(mpi_tmp_type, 0, (int)1 * sizeof(double), &mpi_col_type);
+    MPI_Type_free(&mpi_tmp_type);
+
+    MPI_Type_contiguous((int)bWidth, mpi_col_type, type);
+    MPI_Type_free(&mpi_col_type);
+    MPI_Type_commit(type);
+}
+
+void createHType(size_t width, size_t height, size_t bWidth, MPI_Datatype *type) {
+    MPI_Datatype mpi_tmp_type;
+    MPI_Type_vector((int)height, (int)bWidth, (int)width, MPI_DOUBLE, &mpi_tmp_type);
+    MPI_Type_create_resized(mpi_tmp_type, 0, (int)height * sizeof(double), type);
+    MPI_Type_free(&mpi_tmp_type);
+    MPI_Type_commit(type);
+}
+
+int __main(int argc, char * argv[]) {
+    MPI_Init(&argc, &argv);
+
+    const int numProc = 3;
+    const int width = 9;
+    const int height = width / numProc;
+
+    int myId = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myId);
+
+    double arr[width * width * 100] = {0}, barr[width * width * 100] = {0};
+    for (int i = 0; i < height * width; ++i) {
+        arr[i] = height * width * myId + i;
+    }
+
+    int sendcounts[numProc] = {1};
+    int recvcounts[numProc] = {1};
+    int senddispls[numProc] = {1};
+    int recvdispls[numProc] = {1};
+    MPI_Datatype sendtypes[numProc], recvtypes[numProc];
+
+    int hBuckets[numProc] = { 3, 2, 4 };
+    int vBuckets[numProc] = { 3, 3, 3 };
+
+    for (size_t i = 0; i < numProc; ++i) {
+        sendcounts[i] = recvcounts[i] = 1;
+        senddispls[i] = i == 0 ? 0 : (int)(senddispls[i - 1] + hBuckets[i - 1] * sizeof(double));
+        recvdispls[i] = i == 0 ? 0 : (int)(recvdispls[i - 1] + vBuckets[i - 1] * sizeof(double));
+        createVType(width, vBuckets[myId], hBuckets[i], sendtypes + i);
+        createHType(width, hBuckets[myId], vBuckets[i], recvtypes + i);
+        std::cerr << "PROC " << myId << " V:" << vBuckets[myId] << "x" << hBuckets[i] << " H:" << vBuckets[myId] << "x" << hBuckets[i] << "\n";
+    }
+    usleep(100);
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    for (int k = 0; k < numProc; ++k) {
+        if (k == myId) {
+            for (int i = 0; i < height; ++i) {
+                for (int j = 0; j < width; ++j) {
+                    std::cout << arr[i * width + j] << "\t";
+                }
+                std::cout << "\n";
+            }
+            std::cout << "\n";
+        }
+        usleep(100);
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+    if (myId == 0) {
+        std::cout << "\n\n";
+    }
+
+    memcpy(barr, arr, width * height * sizeof(double));
+    MPI_Alltoallw(barr, sendcounts, senddispls, sendtypes, arr, recvcounts, recvdispls, recvtypes, MPI_COMM_WORLD);
+
+    for (int k = 0; k < numProc; ++k) {
+        if (k == myId) {
+            for (int i = 0; i < hBuckets[k]; ++i) {
+                for (int j = 0; j < width; ++j) {
+                    std::cout << arr[i * width + j] << "\t";
+                }
+                std::cout << "\n";
+            }
+            std::cout << "\n";
+        }
+        usleep(100);
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+    if (myId == 0) {
+        std::cout << "\n\n";
+    }
+
+    MPI_Finalize();
+    return 0;
+}
+
 int main(int argc, char * argv[]) {
     MPI_Init(&argc, &argv);
 

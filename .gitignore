@@ -53,5 +53,6 @@ view.csv
 plot.png
 matrix.csv
 matrix.gif
+log.*.txt
 output/debug
 output/release

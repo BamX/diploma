@@ -7,14 +7,51 @@
 #include <cmath>
 #include <sys/types.h>
 #include <unistd.h>
+#include <fstream>
+#include <limits>
 
-#define DEBUG_PRINT
+//#define DEBUG_PRINT
 //#define DEBUG_WAIT
 
-void Field::debug(const char *name) {
+template<typename Ch, typename Traits = std::char_traits<Ch> >
+struct basic_nullbuf : std::basic_streambuf<Ch, Traits> {
+    typedef std::basic_streambuf<Ch, Traits> base_type;
+    typedef typename base_type::int_type int_type;
+    typedef typename base_type::traits_type traits_type;
+
+    virtual int_type overflow(int_type c) {
+        return traits_type::not_eof(c);
+    }
+};
+
+std::ostream &debugStream(int myId) {
 #ifdef DEBUG_PRINT
-    printf("I'm %d before %s\n", myId, name);
+    return std::cerr;
+#else
+    /*char buf[255] = {0};
+    sprintf(buf, "log.%d.txt", myId);
+    static std::ofstream f(buf);
+    return f;*/
+    static basic_nullbuf<char> nullbuf;
+    static std::ostream cnull(&nullbuf);
+    return cnull;
 #endif
+}
+
+unsigned long long Field::picosecFromStart() {
+    return std::chrono::duration<unsigned long long, std::pico>(bx_clock_t::now() - startSyncTime).count();
+}
+
+std::ostream &Field::debug(bool info) {
+    std::ostream &out = debugStream(myId);
+    if (info == false) {
+        return out;
+    }
+
+    out.precision(15);
+    out << "N[" << myId << " " << std::fixed << picosecFromStart() * 1e-12 << std::defaultfloat << "] ";
+    out.precision(7);
+    return out;
 }
 
 void Field::initFactors() {
@@ -30,6 +67,9 @@ void Field::initFactors() {
 }
 
 void Field::calculateNBS() {
+    MPI_Barrier(MPI_COMM_WORLD);
+    startSyncTime = bx_clock_t::now();
+
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
     int dims[] = { numProcs };
@@ -56,6 +96,7 @@ void Field::calculateNBS() {
     printf("I'm %d(%d)\n", myId, ::getpid());
     int waiter = myId;
     while (waiter == WAITER) sleep(5);
+    MPI_Barrier(MPI_COMM_WORLD);
 #endif
 }
 

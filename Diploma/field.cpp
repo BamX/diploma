@@ -60,15 +60,15 @@ void Field::init() {
 
     calculateNBS();
 
-    prev = new double[height * width];
-    curr = new double[height * width];
-    buff = new double[height * width];
+    prev = new double[width * width];
+    curr = new double[width * width];
+    buff = new double[width * width];
     views = new double[algo::ftr().ViewCount()];
 
-    maF = new double[height * width];
-    mbF = new double[height * width];
-    mcF = new double[height * width];
-    mfF = new double[height * width];
+    maF = new double[width * width];
+    mbF = new double[width * width];
+    mcF = new double[width * width];
+    mfF = new double[width * width];
 
     fillInitial();
 
