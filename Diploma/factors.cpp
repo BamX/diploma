@@ -30,10 +30,13 @@ namespace ftr {
         7631.934, 7572.359, 7512.151, 7453.459, 7398.322, 7190.562, 7000.0, 7000.0,
     };
 
+    #define likely_if(x) if(__builtin_expect(x,1))
+    #define unlikely_if(x) if(__builtin_expect(x,0))
+
     inline double alphaForT(double T, size_t &index) {
-        if (T < 1473) {
+        likely_if (T < 1473) {
             index = ((size_t)(T - Temps[0]) / 100) + 1;
-            return (T - Temps[index - 1]) / 100;
+            return (T - Temps[index - 1]) / 100.0;
         } else {
             index = 13;
             while (Temps[index] < T) ++index;
@@ -62,18 +65,28 @@ namespace ftr {
         4.5141 * (14775  + 154544 * x * x - 142489 * x) / dTi[3]
     };
 
+    inline double pow_2(double x) {
+        return x * x;
+    }
+
+    inline double fast_exp(double x) {
+        x = 1.0 + x / 4096.0;
+        x *= x; x *= x; x *= x; x *= x;
+        x *= x; x *= x; x *= x; x *= x;
+        x *= x; x *= x; x *= x; x *= x;
+        return x;
+    }
+
     inline double cSol(double T) {
-        double result = 469 + 0.16 * (T - 323);
-        for (unsigned short i = 0; i < 4; ++i) {
-            double tC = (Ti[i] - T) / dTi[i];
-            result += Li[i] * exp(-16 * tC * tC);
-        }
-        return result;
+        return 469 + 0.16 * (T - 323)
+            + Li[0] * fast_exp(-16 * pow_2((Ti[0] - T) / dTi[0]))
+            + Li[1] * fast_exp(-16 * pow_2((Ti[1] - T) / dTi[1]))
+            + Li[2] * fast_exp(-16 * pow_2((Ti[2] - T) / dTi[2]))
+            + Li[3] * fast_exp(-16 * pow_2((Ti[3] - T) / dTi[3]));
     }
 
     inline double ksiFunc(double T) { // k = 0.7
-        double z = 1.8691e6 - (2843.51 + T) * T;
-        return (1.31914e9 - (1.51221e6 + 444.52 * T) * T) / (z * z);
+        return (1.31914e9 - (1.51221e6 + 444.52 * T) * T) / pow_2(1.8691e6 - (2843.51 + T) * T);
     }
 }
 
