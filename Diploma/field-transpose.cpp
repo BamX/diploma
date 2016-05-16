@@ -33,6 +33,9 @@ void FieldTranspose::calculateNBS() {
     recvcounts = new int[numProcs];
     recvdispls = new int[numProcs];
 
+    sendtypes = new MPI_Datatype[numProcs];
+    recvtypes = new MPI_Datatype[numProcs];
+
     height = ceil((double)width / numProcs);
     width = height * numProcs;
     hX = algo::ftr().X1() / (width - 1);
@@ -81,49 +84,12 @@ size_t FieldTranspose::solveRows() {
                 break;
             }
         }
+        debug() << "Write to " << mySY + row << " of " << width << "\n";
         weights[mySY + row] = iterationsCount + (picosecFromStart() - startTime) * 1e-12;
-        debug() << "SR " << myId << " " << mySY << "+" << row << "  " << iterationsCount << "\n";
         maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
     }
 
     return maxIterationsCount;
-}
-
-#pragma mark - MPI
-
-void FieldTranspose::transpose(double *arr) {
-    if (myCoord == 0) {
-        debug() << "=================\n";
-    }
-    sendtypes = new MPI_Datatype[numProcs];
-    recvtypes = new MPI_Datatype[numProcs];
-    mySY = 0;
-    for (size_t i = 0; i < numProcs; ++i) {
-        sendcounts[i] = recvcounts[i] = 1;
-        senddispls[i] = i == 0 ? 0 : (int)(senddispls[i - 1] + hBuckets[i - 1] * sizeof(double));
-        recvdispls[i] = i == 0 ? 0 : (int)(recvdispls[i - 1] + vBuckets[i - 1] * sizeof(double));
-        createVType(width, vBuckets[myCoord], hBuckets[i], sendtypes + i);
-        createHType(width, hBuckets[myCoord], vBuckets[i], recvtypes + i);
-        if (i < myCoord) {
-            mySY += vBuckets[i];
-        }
-        debug() << "PROC " << myCoord << " V:" << vBuckets[myCoord] << "x" << hBuckets[i] << " H:" << hBuckets[myCoord] << "x" << vBuckets[i] << "  " << mySY << "\n";
-    }
-
-    //resize(hBuckets[myCoord]);
-    memcpy(buff, arr, width * height * sizeof(double));
-    height = hBuckets[myCoord];
-    MPI_Alltoallw(buff, sendcounts, senddispls, sendtypes, arr, recvcounts, recvdispls, recvtypes, comm);
-
-    for (size_t i = 0; i < numProcs; ++i) {
-        MPI_Type_free(sendtypes + i);
-        MPI_Type_free(recvtypes + i);
-        vBuckets[i] = nextBuckets[i];
-    }
-    delete[] sendtypes;
-    delete[] recvtypes;
-
-    debug() << "OK\n";
 }
 
 #pragma mark - Print
@@ -176,11 +142,50 @@ void FieldTranspose::printMatrix() {
                 }
 
                 mfout->close();
+                delete mfout;
                 mfout = NULL;
             }
             MPI_Barrier(comm);
         }
     }
+}
+
+#pragma mark - MPI
+
+void FieldTranspose::transpose(double *arr) {
+    if (myCoord == 0) {
+        debug() << "=================\n";
+    }
+
+    mySY = 0;
+    for (size_t i = 0; i < numProcs; ++i) {
+        sendcounts[i] = recvcounts[i] = 1;
+        senddispls[i] = i == 0 ? 0 : (int)(senddispls[i - 1] + hBuckets[i - 1] * sizeof(double));
+        recvdispls[i] = i == 0 ? 0 : (int)(recvdispls[i - 1] + vBuckets[i - 1] * sizeof(double));
+        createVType(width, vBuckets[myCoord], hBuckets[i], sendtypes + i);
+        createHType(width, hBuckets[myCoord], vBuckets[i], recvtypes + i);
+        if (i < myCoord) {
+            mySY += hBuckets[i];
+        }
+        debug() << "PROC " << myCoord << " V:" << vBuckets[myCoord] << "x" << hBuckets[i] << " H:" << hBuckets[myCoord] << "x" << vBuckets[i] << "  " << mySY << "\n";
+    }
+
+    //resize(hBuckets[myCoord]);
+    memcpy(buff, arr, width * width * sizeof(double));
+    height = hBuckets[myCoord];
+    MPI_Alltoallw(buff, sendcounts, senddispls, sendtypes, arr, recvcounts, recvdispls, recvtypes, comm);
+
+    MPI_Barrier(comm);
+
+    for (size_t i = 0; i < numProcs; ++i) {
+        MPI_Type_free(sendtypes + i);
+        MPI_Type_free(recvtypes + i);
+        vBuckets[i] = nextBuckets[i];
+    }
+
+    MPI_Barrier(comm);
+
+    debug() << "OK\n";
 }
 
 #pragma mark - Balancing
@@ -221,46 +226,44 @@ void FieldTranspose::resize(size_t newHeight) {
 }
 
 void FieldTranspose::createVType(size_t width, size_t height, size_t bWidth, MPI_Datatype *type) {
-    MPI_Datatype mpi_col_type, mpi_tmp_type;
-    MPI_Type_vector((int)height, (int)1, (int)width, MPI_DOUBLE, &mpi_tmp_type);
-    MPI_Type_create_resized(mpi_tmp_type, 0, (int)1 * sizeof(double), &mpi_col_type);
-    MPI_Type_free(&mpi_tmp_type);
+    MPI_Datatype mpi_retmp_type;
+    MPI_Datatype mpi_col_type;
+
+    MPI_Type_vector((int)height, (int)1, (int)width, MPI_DOUBLE, &mpi_retmp_type);
+
+    MPI_Type_create_resized(mpi_retmp_type, 0, (int)1 * sizeof(double), &mpi_col_type);
+    MPI_Type_free(&mpi_retmp_type);
 
     MPI_Type_contiguous((int)bWidth, mpi_col_type, type);
-    MPI_Type_free(&mpi_col_type);
     MPI_Type_commit(type);
+    MPI_Type_free(&mpi_col_type);
 }
 
 void FieldTranspose::createHType(size_t width, size_t height, size_t bWidth, MPI_Datatype *type) {
     MPI_Datatype mpi_tmp_type;
+
     MPI_Type_vector((int)height, (int)bWidth, (int)width, MPI_DOUBLE, &mpi_tmp_type);
+
     MPI_Type_create_resized(mpi_tmp_type, 0, (int)height * sizeof(double), type);
-    MPI_Type_free(&mpi_tmp_type);
     MPI_Type_commit(type);
+    MPI_Type_free(&mpi_tmp_type);
 }
 
 void FieldTranspose::syncWeights() {
+#if BALANCING_ENABLED
     debug() << "SW ..." << " " << myId << " " << mySY << " " << height << "\n";
     for (size_t i = 0; i < numProcs; ++i) {
         recvcounts[i] = (int)vBuckets[i];
         recvdispls[i] = i == 0 ? 0 : (int)(recvdispls[i - 1] + recvcounts[i - 1]);
         debug() << "SWW ..." << " " << myId << " " << i << " " << height << " " << recvcounts[i] << " " << recvdispls[i] << "\n";
     }
-
+    
     MPI_Gatherv(weights + mySY, (int)height, MPI_DOUBLE, weights, recvcounts, recvdispls, MPI_DOUBLE, MASTER, balanceComm);
 
     if (myId == MASTER) {
-#if BALANCING_ENABLED
         nextBuckets = balancing::partition(weights, width, numProcs);
-#else
-        nextBuckets.resize(numProcs);
-        for (size_t i = 0; i < numProcs; ++i) {
-            nextBuckets[i] = (int)(width / numProcs);
-        }
-#endif
-    } else {
-        nextBuckets.resize(numProcs);
     }
+    nextBuckets.resize(numProcs);
     MPI_Bcast(&nextBuckets[0], (int)numProcs, MPI_INT, MASTER, balanceComm);
 
     debug() << "weights: ";
@@ -275,6 +278,12 @@ void FieldTranspose::syncWeights() {
     }
     debug(0) << "\n";
     debug() << "SW OK\n";
+#else
+    nextBuckets.resize(numProcs);
+    for (size_t i = 0; i < numProcs; ++i) {
+        nextBuckets[i] = (int)(width / numProcs);
+    }
+#endif
 }
 
 bool FieldTranspose::balanceNeeded() {

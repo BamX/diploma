@@ -205,7 +205,6 @@ size_t FieldStatic::solveRows() {
             std::swap(nextCalculatingRows, calculatingRows);
             ++maxIterationsCount;
             if (maxIterationsCount >= MAX_ITTERATIONS_COUNT) {
-                solving = false;
                 break;
             }
         }

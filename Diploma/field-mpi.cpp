@@ -26,12 +26,11 @@ struct basic_nullbuf : std::basic_streambuf<Ch, Traits> {
 
 std::ostream &debugStream(int myId) {
 #ifdef DEBUG_PRINT
-    return std::cerr;
-#else
-    /*char buf[255] = {0};
+    char buf[255] = {0};
     sprintf(buf, "log.%d.txt", myId);
     static std::ofstream f(buf);
-    return f;*/
+    return f;
+#else
     static basic_nullbuf<char> nullbuf;
     static std::ostream cnull(&nullbuf);
     return cnull;
@@ -136,6 +135,7 @@ void Field::printMatrix() {
                 }
 
                 mfout->close();
+                delete mfout;
                 mfout = NULL;
             }
             MPI_Barrier(comm);

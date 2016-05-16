@@ -56,3 +56,5 @@ matrix.gif
 log.*.txt
 output/debug
 output/release
+
+*.trace/
