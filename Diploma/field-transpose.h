@@ -11,11 +11,14 @@ class FieldTranspose : public Field {
 
     MPI_Comm balanceComm;
 
+    int balancingCounter;
+
+    size_t mySYT;
     size_t *hBuckets, *vBuckets;
-    std::vector<int> nextBuckets;
+    std::vector<int> nextBuckets, nextBucketsT;
 
     MPI_Datatype *sendtypes, *recvtypes;
-    int *sendcounts, *senddispls, *recvcounts, *recvdispls;
+    int *sendcounts, *senddispls, *recvcounts, *recvdispls, *gathercounts, *gatherdispls;
 
     void transpose(double *arr);
     void transpose() override;
@@ -28,6 +31,8 @@ class FieldTranspose : public Field {
     void printMatrix() override;
 
 #pragma mark - Balancing MPI
+
+    double *weights, *weightsT;
 
     size_t heightCapacity;
     void resize(size_t newHeight);

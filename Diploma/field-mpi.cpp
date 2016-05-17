@@ -145,10 +145,6 @@ void Field::printMatrix() {
 
 #pragma mark - Balancing
 
-void Field::cleanWeights() {
-    memset(weights, 0, sizeof(double) * std::max(width, height));
-}
-
 void Field::syncWeights() {
     
 }

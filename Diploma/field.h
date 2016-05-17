@@ -71,9 +71,6 @@ protected:
 
 #pragma mark - Balancing MPI
 
-    double *weights;
-
-    void cleanWeights();
     virtual void syncWeights();
     virtual bool balanceNeeded();
     virtual void balance();

@@ -12,7 +12,7 @@ int const NOBODY = MPI_PROC_NULL;
 int const NOTHING = -1;
 int const SEND_PACK_SIZE = 6;
 
-size_t const MAX_ITTERATIONS_COUNT = 50;
+size_t const MAX_ITTERATIONS_COUNT = 100;
 
 Field::Field() {
     fout = NULL;
@@ -42,8 +42,6 @@ Field::~Field() {
     delete[] mbF;
     delete[] mcF;
     delete[] mfF;
-
-    delete[] weights;
 }
 
 void Field::init() {
@@ -81,8 +79,6 @@ void Field::init() {
     if (algo::ftr().EnableBuckets()) {
         enableBucketsOutput();
     }
-
-    weights = new double[std::max(height, width)];
 }
 
 void Field::fillInitial() {
@@ -167,16 +163,16 @@ void Field::solve() {
 
     nextTimeLayer();
     lastIterrationsCount += solveRows();
-    syncWeights();
     if (balanceNeeded()) {
+        syncWeights();
         balance();
     }
 
     nextTimeLayer();
     transpose();
     lastIterrationsCount += solveRows();
-    syncWeights();
     if (balanceNeeded()) {
+        syncWeights();
         balance();
     }
 

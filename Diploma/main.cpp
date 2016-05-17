@@ -10,29 +10,34 @@
 #include "factors.h"
 
 void createVType(size_t width, size_t height, size_t bWidth, MPI_Datatype *type) {
-    MPI_Datatype mpi_col_type, mpi_tmp_type;
-    MPI_Type_vector((int)height, (int)1, (int)width, MPI_DOUBLE, &mpi_tmp_type);
-    MPI_Type_create_resized(mpi_tmp_type, 0, (int)1 * sizeof(double), &mpi_col_type);
-    MPI_Type_free(&mpi_tmp_type);
+    MPI_Datatype mpi_retmp_type;
+    MPI_Datatype mpi_col_type;
+
+    MPI_Type_vector((int)height, (int)1, (int)width, MPI_DOUBLE, &mpi_retmp_type);
+
+    MPI_Type_create_resized(mpi_retmp_type, 0, (int)1 * sizeof(double), &mpi_col_type);
+    MPI_Type_free(&mpi_retmp_type);
 
     MPI_Type_contiguous((int)bWidth, mpi_col_type, type);
-    MPI_Type_free(&mpi_col_type);
     MPI_Type_commit(type);
+    MPI_Type_free(&mpi_col_type);
 }
 
 void createHType(size_t width, size_t height, size_t bWidth, MPI_Datatype *type) {
     MPI_Datatype mpi_tmp_type;
+
     MPI_Type_vector((int)height, (int)bWidth, (int)width, MPI_DOUBLE, &mpi_tmp_type);
+
     MPI_Type_create_resized(mpi_tmp_type, 0, (int)height * sizeof(double), type);
-    MPI_Type_free(&mpi_tmp_type);
     MPI_Type_commit(type);
+    MPI_Type_free(&mpi_tmp_type);
 }
 
 int __main(int argc, char * argv[]) {
     MPI_Init(&argc, &argv);
 
-    const int numProc = 3;
-    const int width = 9;
+    const int numProc = 4;
+    const int width = 12;
     const int height = width / numProc;
 
     int myId = 0;
@@ -49,8 +54,8 @@ int __main(int argc, char * argv[]) {
     int recvdispls[numProc] = {1};
     MPI_Datatype sendtypes[numProc], recvtypes[numProc];
 
-    int hBuckets[numProc] = { 3, 2, 4 };
-    int vBuckets[numProc] = { 3, 3, 3 };
+    int hBuckets[numProc] = { 3, 2, 4, 3 };
+    int vBuckets[numProc] = { 3, 3, 3, 3 };
 
     for (size_t i = 0; i < numProc; ++i) {
         sendcounts[i] = recvcounts[i] = 1;
@@ -73,7 +78,7 @@ int __main(int argc, char * argv[]) {
             }
             std::cout << "\n";
         }
-        usleep(100);
+        std::cout.flush();
         MPI_Barrier(MPI_COMM_WORLD);
     }
     if (myId == 0) {
@@ -93,7 +98,7 @@ int __main(int argc, char * argv[]) {
             }
             std::cout << "\n";
         }
-        usleep(100);
+        std::cout.flush();
         MPI_Barrier(MPI_COMM_WORLD);
     }
     if (myId == 0) {
