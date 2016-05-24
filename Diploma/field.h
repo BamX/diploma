@@ -8,6 +8,7 @@
 #include <fstream>
 #include <mpi.h>
 #include <vector>
+#include <chrono>
 
 extern int const MASTER;
 extern int const WAITER;

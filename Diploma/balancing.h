@@ -6,6 +6,8 @@
 #define __Diploma__balancing__
 
 #include <vector>
+#include <cstring>
+#include <iostream>
 
 namespace balancing {
 
@@ -44,8 +46,8 @@ namespace balancing {
         }
     }
 
-    ssize_t bucketsCount(size_t start, size_t end, double S) {
-        ssize_t partsCount = 0;
+    long bucketsCount(size_t start, size_t end, double S) {
+        long partsCount = 0;
         while (start < end) {
             size_t pos = binSearch(start, end, S);
             if (pos == start) {
@@ -112,8 +114,8 @@ namespace balancing {
 
         while (i < size && j < size) {
             double S = sums[j] - (i > 0 ? sums[i - 1] : 0);
-            ssize_t leftParts = bucketsCount(0, i, S);
-            ssize_t rigthParts = bucketsCount(j + 1, size, S);
+            long leftParts = bucketsCount(0, i, S);
+            long rigthParts = bucketsCount(j + 1, size, S);
             if (leftParts < 0 || rigthParts < 0 || leftParts + rigthParts > count - 1) {
                 ++j;
             } else {

@@ -7,6 +7,9 @@
 #include "balancing.h"
 #include <cmath>
 
+#include <sys/types.h>
+#include <unistd.h>
+
 #define BALANCING_ENABLED 1
 
 static int const kDefaultBalancingCounter = 16;
@@ -91,7 +94,6 @@ void FieldTranspose::calculateNBS() {
 
 void FieldTranspose::transpose() {
     transpose(transposed ? curr : prev);
-    //transpose(prev);
 
     std::swap(hX, hY);
     std::swap(mySY, mySYT);
@@ -133,8 +135,8 @@ size_t FieldTranspose::solveRows() {
 #pragma mark - Print
 
 double FieldTranspose::view(double x1, double x2) {
-    ssize_t x1index = floor(x1 / hX) - mySX;
-    ssize_t x2index = floor(x2 / hY) - mySY;
+    long x1index = floor(x1 / hX) - mySX;
+    long x2index = floor(x2 / hY) - mySY;
 
     bool notInMyX1 = x1index < 0 || x1index >= width;
     bool notInMyX2 = x2index < 0 || x2index >= height;

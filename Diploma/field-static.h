@@ -21,7 +21,7 @@ class FieldStatic : public Field {
     size_t firstPasses(size_t fromRow, bool first, bool async);
     size_t secondPasses(size_t fromRow, bool first, bool async);
 
-    void transpose(double *arr);
+    void transpose(double **arr);
     void transpose() override;
 
     size_t solveRows() override;

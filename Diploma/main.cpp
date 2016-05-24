@@ -65,7 +65,6 @@ int __main(int argc, char * argv[]) {
         createHType(width, hBuckets[myId], vBuckets[i], recvtypes + i);
         std::cerr << "PROC " << myId << " V:" << vBuckets[myId] << "x" << hBuckets[i] << " H:" << vBuckets[myId] << "x" << hBuckets[i] << "\n";
     }
-    usleep(100);
     MPI_Barrier(MPI_COMM_WORLD);
 
     for (int k = 0; k < numProc; ++k) {

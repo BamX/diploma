@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <fstream>
 #include <limits>
+#include <ios>
+#include <iostream>
 
 //#define DEBUG_PRINT
 //#define DEBUG_WAIT
@@ -48,7 +50,8 @@ std::ostream &Field::debug(bool info) {
     }
 
     out.precision(15);
-    out << "N[" << myId << " " << std::fixed << picosecFromStart() * 1e-12 << std::defaultfloat << "] ";
+    out << "N[" << myId << " " << std::fixed << picosecFromStart() * 1e-12 << "] ";
+    out.unsetf(std::ios_base::floatfield);
     out.precision(7);
     return out;
 }

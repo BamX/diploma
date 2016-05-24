@@ -76,7 +76,7 @@ namespace algo {
             brw[size - 1] = newValue;
         }
 
-        for (ssize_t i = size - 2; i >= 0; --i) {
+        for (long i = size - 2; i >= 0; --i) {
             newValue = (fF[i] - bF[i] * brw[i + 1]) / cF[i];
 
             double newDelta = fabs(newValue - rw[i]);

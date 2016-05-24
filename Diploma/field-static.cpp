@@ -6,6 +6,9 @@
 #include "algo.h"
 #include <cmath>
 
+#include <sys/types.h>
+#include <unistd.h>
+
 void FieldStatic::init() {
     Field::init();
     
@@ -47,18 +50,16 @@ void FieldStatic::calculateNBS() {
 
 #pragma mark - Logic
 
-void FieldStatic::transpose(double *arr) {
+void FieldStatic::transpose(double **arr) {
     for (size_t index = 0, len = width * height; index < len; ++index) {
         size_t newIndex = (index % width) * height + index / width;
-        buff[newIndex] = arr[index];
+        buff[newIndex] = *arr[index];
     }
-    for (size_t index = 0, len = width * height; index < len; ++index) {
-        arr[index] = buff[index];
-    }
+    std::swap(*arr, buff);
 }
 
 void FieldStatic::transpose() {
-    transpose(transposed ? curr : prev);
+    transpose(transposed ? &curr : &prev);
 
     std::swap(hX, hY);
     std::swap(mySX, mySY);
