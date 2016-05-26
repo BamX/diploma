@@ -9,6 +9,10 @@
 #include "field-transpose.h"
 #include "factors.h"
 
+#ifndef ALGV
+#define ALGV 0
+#endif
+
 void createVType(size_t width, size_t height, size_t bWidth, MPI_Datatype *type) {
     MPI_Datatype mpi_retmp_type;
     MPI_Datatype mpi_col_type;
@@ -112,8 +116,11 @@ int main(int argc, char * argv[]) {
     MPI_Init(&argc, &argv);
 
     {
+#if ALGV == 0
         FieldTranspose field;
-        //FieldStatic field;
+#else
+        FieldStatic field;
+#endif
         
         field.init();
 
