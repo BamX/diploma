@@ -118,18 +118,14 @@ int main(int argc, char * argv[]) {
         field.init();
 
         {
-            const auto startTime = std::clock();
-
             while (field.done() == false) {
                 field.solve();
             }
 
-            const auto endTime = std::clock();
-
             int rank = 0;
             MPI_Comm_rank(MPI_COMM_WORLD, &rank);
             if (rank == 0) {
-                std::cerr << "time: " << double(endTime - startTime) / CLOCKS_PER_SEC << '\n';
+                std::cerr << "time: " << field.calculationTime() << '\n';
             }
         }
 

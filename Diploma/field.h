@@ -24,6 +24,7 @@ class Field {
 protected:
     std::ofstream *fout, *mfout, *bfout;
     bx_time_t startSyncTime;
+    double fullCalculationTime;
     double nextFrameTime;
 
     double *prev, *curr, *buff, *views;
@@ -88,6 +89,8 @@ public:
     void solve();
     double time();
     bool done();
+
+    double calculationTime();
 
     virtual double view(double x1, double x2);
     double view(size_t index);

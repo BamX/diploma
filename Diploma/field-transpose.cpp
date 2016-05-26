@@ -107,6 +107,8 @@ void FieldTranspose::transpose() {
 }
 
 size_t FieldTranspose::solveRows() {
+    debug(0).flush();
+    
     size_t maxIterationsCount = 0;
 
     for (size_t row = 0; row < height; ++row) {
@@ -152,8 +154,8 @@ void FieldTranspose::printConsole() {
         double viewValue = Field::view(algo::ftr().DebugView());
 
         if (fabs(viewValue - NOTHING) > __DBL_EPSILON__) {
-            printf("Field[%d] (itrs: %zu, time: %.5f)\tview: %.7f\n",
-                   myId, lastIterrationsCount, t, viewValue);
+            printf("Field[%d] (itrs: %zu, time: %.5f) ctime: %.1f\tview: %.7f\n",
+                   myId, lastIterrationsCount, t, picosecFromStart() * 1e-12, viewValue);
         }
     }
 }
@@ -355,11 +357,12 @@ void FieldTranspose::balance() {
     hBuckets[myCoord] = nextBuckets[myCoord];
     mySYT = 0;
     for (size_t i = 0; i < numProcs; ++i) {
+        hBuckets[i] = nextBuckets[i];
+
         if (i < myCoord) {
             mySYT += hBuckets[i];
         }
-
-        hBuckets[i] = nextBuckets[i];
+        
         senddispls[i] = i == 0 ? 0 : (int)(senddispls[i - 1] + hBuckets[i - 1] * sizeof(double));
         recvdispls[i] = i == 0 ? 0 : (int)(recvdispls[i - 1] + vBuckets[i - 1] * sizeof(double));
 

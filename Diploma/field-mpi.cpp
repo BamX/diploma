@@ -12,8 +12,10 @@
 #include <ios>
 #include <iostream>
 
-//#define DEBUG_PRINT
+#ifdef DEBUG
+#define DEBUG_PRINT
 //#define DEBUG_WAIT
+#endif
 
 template<typename Ch, typename Traits = std::char_traits<Ch> >
 struct basic_nullbuf : std::basic_streambuf<Ch, Traits> {

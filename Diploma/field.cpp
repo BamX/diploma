@@ -84,6 +84,7 @@ void Field::init() {
 void Field::fillInitial() {
     t = 0;
     lastIterrationsCount = 0;
+    fullCalculationTime = 0;
     if (transposed) {
         transpose();
     }
@@ -159,6 +160,8 @@ void Field::solve() {
         return;
     }
 
+    auto start = picosecFromStart();
+
     lastIterrationsCount = 0;
 
     nextTimeLayer();
@@ -179,6 +182,8 @@ void Field::solve() {
     transpose();
 
     printAll();
+
+    fullCalculationTime += (picosecFromStart() - start) * 1e-12;
 }
 
 double Field::time() {
@@ -187,4 +192,9 @@ double Field::time() {
 
 bool Field::done() {
     return t >= algo::ftr().TMax();
+}
+
+double Field::calculationTime()
+{
+    return fullCalculationTime;
 }
