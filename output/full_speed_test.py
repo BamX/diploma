@@ -71,14 +71,14 @@ def taskStatus(taskId):
             wallTime = parseTime(data[key_walltime])
             cpuTime = parseTime(data[key_cputime])
             exitCode = data[key_exit_status]
-        
-    return { 
-        'state': jobState, 
-        'time': wallTime, 
-        'cpu': cpuTime, 
-        'nodes': nodes, 
-        'ppn': procs, 
-        'code': exitCode 
+
+    return {
+        'state': jobState,
+        'time': wallTime,
+        'cpu': cpuTime,
+        'nodes': nodes,
+        'ppn': procs,
+        'code': exitCode
     }
 
 def taskTrace(taskId, np):
@@ -105,13 +105,13 @@ def taskTrace(taskId, np):
                 match = traceCpuRegex.search(out)
                 if match:
                     cpuTime = parseTime(match.group(1))
-    return { 
-        'state': jobState, 
-        'time': wallTime, 
-        'cpu': cpuTime, 
-        'nodes': nodes, 
-        'ppn': procs, 
-        'code': exitCode 
+    return {
+        'state': jobState,
+        'time': wallTime,
+        'cpu': cpuTime,
+        'nodes': nodes,
+        'ppn': procs,
+        'code': exitCode
     }
 
 def createOutputFolder():
@@ -211,13 +211,15 @@ def processTasks(tasksParams):
 
             print '%s(x%s)\t: [%s:%s] w: %s\tc: %s\tnodes=%s:ppn=%s' % (t, result['nodes'] * result['ppn'], result['state'], result['code'], result['time'], result['cpu'], result['nodes'], result['ppn'])
         if runningJobs < MAXRUNNINGJOBS and len(tasks) < len(tasksParams):
-            for (nodes, ppn) in tasksParams[jobsRun:]:
+            exJobsRun = jobsRun
+            for (nodes, ppn) in tasksParams[exJobsRun:]:
                 taskId = runTask(nodes, ppn)
                 tasks.append(taskId)
                 taskParamsDict[taskId] = (nodes, ppn)
                 print "Run %s" % (nodes * ppn)
-                time.sleep(3)
+                time.sleep(2)
                 runningJobs += 1
+                jobsRun += 1
                 if runningJobs >= MAXRUNNINGJOBS:
                     break
 
@@ -246,10 +248,10 @@ def printResults(times):
 #print runTask(4, 4)
 #print taskStatus('186314')
 
-times = processTasks([(5, 6), (3, 7)])
+#times = processTasks([(5, 6), (3, 7)])
 #print taskTrace('188032', (3, 4))
 #times = processTasks([(1, 1), (1, 2), (1, 4), (2, 4), (3, 4), (3, 5), (3, 6), (3, 7)])
-#times = processTasks([(1, 1), (1, 2), (2, 2), (2, 4), (3, 4), (3, 5), (3, 6), (3, 7), (4, 6), (4, 7), (5, 6), (5, 7), (6, 7), (7, 7), (8, 7), (9, 7)])
+times = processTasks([(1, 1), (1, 2), (2, 2), (2, 4), (3, 4), (3, 5), (3, 6), (3, 7), (4, 6), (4, 7), (5, 6), (5, 7), (6, 7), (7, 7), (8, 7), (9, 7)])
 #times = processTasks([(1, 1), (1, 2), (1, 3), (1, 4), (2, 1), (2, 2), (2, 3), (2, 4), (3, 1), (3, 2), (3, 3), (3, 4)])
 # 6 8 10 12 16 20 24 28 30 36 42
 #times = processTasks([(2, 3), (2, 4), (2, 5), (3, 4), (4, 4), (4, 5), (4, 6), (4, 7), (5, 6), (6, 6), (6, 7)])
