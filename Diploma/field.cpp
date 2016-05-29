@@ -14,12 +14,12 @@ int const SEND_PACK_SIZE = 6;
 
 size_t const MAX_ITTERATIONS_COUNT = 100;
 
-Field::Field() {
+Field::Field(const char *filename) {
     fout = NULL;
     mfout = NULL;
     bfout = NULL;
     
-    initFactors();
+    initFactors(filename);
 }
 
 Field::~Field() {
@@ -83,6 +83,7 @@ void Field::init() {
 
 void Field::fillInitial() {
     t = 0;
+    nextFrameTime = 0;
     lastIterrationsCount = 0;
     fullCalculationTime = 0;
     if (transposed) {

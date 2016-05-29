@@ -99,6 +99,7 @@ void Factors::initFactors(Config config) {
     _timeSplitCount = config.value("TimeSplitCount");
     _epsilon = config.value("Epsilon");
     _tMax = config.value("TMax");
+    _repeats = config.value("Repeats");
 
     _minimumBundle = config.value("MinimumBundle");
     _balanceFactor = config.value("BalanceFactor");
@@ -111,6 +112,9 @@ void Factors::initFactors(Config config) {
     _enablePlot = config.value("EnablePlot") > 0;
     _enableMatrix = config.value("EnableMatrix") > 0;
     _enableBuckets = config.value("EnableBuckets") > 0;
+
+    _plotFilename = config.str_value("PlotFilename");
+    _plotFilename = config.str_value("PlotFilename");
 
     _viewCount = config.value("ViewCount");
     _debugView = config.value("DebugView");
@@ -130,8 +134,8 @@ Factors::~Factors() {
     delete _config;
 }
 
-void Factors::initFactors() {
-    _config = new Config();
+void Factors::initFactors(const char *filename) {
+    _config = new Config(filename);
     initFactors(*_config);
 }
 
@@ -221,6 +225,10 @@ double Factors::TMax() const {
     return _tMax;
 }
 
+size_t Factors::Repeats() const {
+    return _repeats;
+}
+
 size_t Factors::MinimumBundle() const {
     return _minimumBundle;
 }
@@ -255,6 +263,14 @@ bool Factors::EnableMatrix() const {
 
 bool Factors::EnableBuckets() const {
     return _enableBuckets;
+}
+
+std::string Factors::PlotFilename() const {
+    return _plotFilename;
+}
+
+std::string Factors::BucketsFilename() const {
+    return _bucketsFilename;
 }
 
 size_t Factors::ViewCount() const {

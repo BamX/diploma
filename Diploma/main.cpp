@@ -8,6 +8,7 @@
 #include "field-static.h"
 #include "field-transpose.h"
 #include "factors.h"
+#include "algo.h"
 
 #ifndef ALGV
 #define ALGV 0
@@ -115,30 +116,40 @@ int __main(int argc, char * argv[]) {
 int main(int argc, char * argv[]) {
     MPI_Init(&argc, &argv);
 
+    auto startTime = bx_clock_t::now();
     {
-#if ALGV == 0
-        FieldTranspose field;
-#else
-        FieldStatic field;
-#endif
-        
-        field.init();
+        char configFilename[100] = {0};
+        if (argc >= 2) {
+            strcpy(configFilename, argv[1]);
+        } else {
+            strcpy(configFilename, "config.ini");
+        }
 
-        {
+#if ALGV == 0
+        FieldTranspose field(configFilename);
+#else
+        FieldStatic field(configFilename);
+#endif
+
+        for (size_t k = 0; k < algo::ftr().Repeats(); ++k) {
+            field.init();
+
             while (field.done() == false) {
                 field.solve();
             }
 
-            int rank = 0;
-            MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-            if (rank == 0) {
-                std::cerr << "time: " << field.calculationTime() << '\n';
-            }
+            field.finalize();
         }
-
-        field.finalize();
     }
-    
+
+    int myRank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+    MPI_Barrier(MPI_COMM_WORLD);
+    auto picosecCount = std::chrono::duration<unsigned long long, std::pico>(bx_clock_t::now() - startTime).count();
+    if (myRank == 0) {
+        std::cerr << picosecCount * 1.e-12 << "\n";
+    }
+
     MPI_Finalize();
     return 0;
 }

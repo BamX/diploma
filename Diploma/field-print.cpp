@@ -41,13 +41,7 @@ void Field::enablePlotOutput() {
         fout->close();
         delete fout;
     }
-    char buff[50];
-#ifdef DEBUG
-    sprintf(buff, "view.csv");
-#else
-    sprintf(buff, "view-%d.csv", numProcs);
-#endif
-    fout = new std::ofstream(buff);
+    fout = new std::ofstream(algo::ftr().PlotFilename());
 }
 
 void Field::enableMatrixOutput() {
@@ -67,13 +61,7 @@ void Field::enableBucketsOutput() {
         bfout->close();
         delete bfout;
     }
-    char buff[50];
-#ifdef DEBUG
-    sprintf(buff, "buckets.csv");
-#else
-    sprintf(buff, "buckets-%d.csv", numProcs);
-#endif
-    bfout = new std::ofstream(buff);
+    bfout = new std::ofstream(algo::ftr().BucketsFilename());
     for (size_t i = 0; i < numProcs; ++i) {
         *bfout << "n" << i;
         if (i < numProcs - 1) {

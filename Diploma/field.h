@@ -44,7 +44,7 @@ protected:
     int topN, bottomN, leftN, rightN;
 
     void fillInitial();
-    void initFactors();
+    void initFactors(const char *filename);
     virtual void calculateNBS();
 
     void fillFactors(size_t row, bool first);
@@ -78,7 +78,7 @@ protected:
     virtual void balance();
 
 public:
-    Field();
+    Field(const char *filename);
     ~Field();
     void finalize();
 

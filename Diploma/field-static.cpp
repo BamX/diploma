@@ -9,6 +9,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+FieldStatic::FieldStatic(const char *filename) : Field(filename) {
+}
+
 void FieldStatic::init() {
     Field::init();
     

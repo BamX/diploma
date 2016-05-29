@@ -58,13 +58,13 @@ std::ostream &Field::debug(bool info) {
     return out;
 }
 
-void Field::initFactors() {
+void Field::initFactors(const char *filename) {
     int procs, id;
     MPI_Comm_size(MPI_COMM_WORLD, &procs);
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
     for (size_t p = 0; p < procs; ++p) {
         if (p == id) {
-            algo::ftr().initFactors();
+            algo::ftr().initFactors(filename);
         }
         MPI_Barrier(MPI_COMM_WORLD);
     }

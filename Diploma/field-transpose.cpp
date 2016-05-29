@@ -14,6 +14,9 @@
 
 static int const kDefaultBalancingCounter = 16;
 
+FieldTranspose::FieldTranspose(const char *filename) : Field(filename) {
+}
+
 void FieldTranspose::init() {
     Field::init();
 

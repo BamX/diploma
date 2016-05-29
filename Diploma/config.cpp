@@ -6,11 +6,11 @@
 
 #include <fstream>
 
-Config::Config() {
-    std::ifstream fin("config.ini");
+Config::Config(const char *filename) {
+    std::ifstream fin(filename ?: "config.ini");
 
     std::string name;
-    double value;
+    std::string value;
 
     while (fin.good()) {
         fin >> name >> value;
@@ -23,5 +23,9 @@ Config::Config() {
 }
 
 double Config::value(std::string name) const {
+    return atof(values.at(name).data());
+}
+
+std::string Config::str_value(std::string name) const {
     return values.at(name);
 }
