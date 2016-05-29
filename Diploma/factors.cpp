@@ -114,7 +114,7 @@ void Factors::initFactors(Config config) {
     _enableBuckets = config.value("EnableBuckets") > 0;
 
     _plotFilename = config.str_value("PlotFilename");
-    _plotFilename = config.str_value("PlotFilename");
+    _bucketsFilename = config.str_value("BucketsFilename");
 
     _viewCount = config.value("ViewCount");
     _debugView = config.value("DebugView");

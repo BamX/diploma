@@ -1,0 +1,152 @@
+{
+    "cases": [
+        {
+            "nodes": 1,
+            "ppn": 1,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 1
+        },
+        {
+            "nodes": 1,
+            "ppn": 2,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 1
+        },
+        {
+            "nodes": 1,
+            "ppn": 3,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 1
+        },
+        {
+            "nodes": 1,
+            "ppn": 4,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 2
+        },
+        {
+            "nodes": 1,
+            "ppn": 5,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 2
+        },
+        {
+            "nodes": 2,
+            "ppn": 3,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 2
+        },
+        {
+            "nodes": 2,
+            "ppn": 4,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 2
+        },
+        {
+            "nodes": 3,
+            "ppn": 3,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 2
+        },
+        {
+            "nodes": 3,
+            "ppn": 4,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 2
+        },
+        {
+            "nodes": 3,
+            "ppn": 5,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 3
+        },
+        {
+            "nodes": 5,
+            "ppn": 4,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 4
+        },
+        {
+            "nodes": 5,
+            "ppn": 5,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 4
+        },
+        {
+            "nodes": 6,
+            "ppn": 5,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 4
+        },
+        {
+            "nodes": 7,
+            "ppn": 5,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 5
+        },
+        {
+            "nodes": 8,
+            "ppn": 5,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 6
+        },
+        {
+            "nodes": 9,
+            "ppn": 5,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 7
+        },
+        {
+            "nodes": 9,
+            "ppn": 6,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 7
+        },
+        {
+            "nodes": 9,
+            "ppn": 7,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 8
+        },
+        {
+            "nodes": 9,
+            "ppn": 8,
+            "time_max": 40,
+            "x_split_count": 1000,
+            "repeats": 8
+        }
+    ],
+    "default": {
+        "balance_factor": 0.3,
+        "bundle_min": 5,
+        "enable_buckets": true,
+        "enable_console": false,
+        "enable_matrix": false,
+        "enable_plot": false,
+        "epsilon": 1e-05,
+        "nodes": 3,
+        "ppn": 3,
+        "repeats": 1,
+        "time_max": 600,
+        "time_split_count": 10000,
+        "x_split_count": 100
+    }
+}
