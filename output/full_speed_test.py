@@ -317,7 +317,7 @@ def processTasks(testCases):
     while runningJobs > 0:
         runningJobs = 0
         sys.stderr.write("\x1b[2J\x1b[H")
-        print 'Status(%d/%d):' % (jobsRun, len(testCases))
+        print 'Status:'
 
         for t in tasks:
             if not t in results or waitState(results[t]['result_state']):
@@ -346,6 +346,7 @@ def processTasks(testCases):
                     break
 
         if runningJobs > 0:
+            print 'Progress: %d/%d' % (jobsRun, len(testCases))
             time.sleep(SLEEPINTERVAL)
 
     times = [results[t] for t in tasks]
