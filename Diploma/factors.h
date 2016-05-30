@@ -8,14 +8,17 @@
 #include "config.h"
 #include <vector>
 
+extern size_t const kAlgorithmTranspose;
+extern size_t const kAlgorithmStatic;
+
 class Factors {
     Config *_config;
 
     double _x1, _x2, _totalTime,
         _x1SplitCount, _x2SplitCount, _timeSplitCount, _epsilon, _tMax,
         _TStart, _TEnv, _TEnv4, _balanceFactor;
-    bool _enableConsole, _enablePlot, _enableMatrix, _enableBuckets;
-    size_t _minimumBundle, _viewCount, _debugView, _framesCount, _repeats;
+    bool _balancing, _enableConsole, _enablePlot, _enableMatrix, _enableBuckets;
+    size_t _minimumBundle, _viewCount, _debugView, _framesCount, _repeats, _algorithm;
     std::vector<double> _x1View, _x2View;
     std::string _plotFilename, _bucketsFilename;
 
@@ -47,6 +50,8 @@ public:
 
     size_t MinimumBundle() const;
     double BalanceFactor() const;
+    bool Balancing() const;
+    size_t Algorithm() const;
 
     double TStart() const;
     double TEnv() const;

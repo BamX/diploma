@@ -14,7 +14,7 @@ Config::Config(const char *filename) {
 
     while (fin.good()) {
         fin >> name >> value;
-        if (name.length() > 0) {
+        if (name.length() > 0 && name[0] != '#') {
             values[name] = value;
         }
     }

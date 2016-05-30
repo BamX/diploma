@@ -58,18 +58,6 @@ std::ostream &Field::debug(bool info) {
     return out;
 }
 
-void Field::initFactors(const char *filename) {
-    int procs, id;
-    MPI_Comm_size(MPI_COMM_WORLD, &procs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &id);
-    for (size_t p = 0; p < procs; ++p) {
-        if (p == id) {
-            algo::ftr().initFactors(filename);
-        }
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-}
-
 void Field::calculateNBS() {
     MPI_Barrier(MPI_COMM_WORLD);
     startSyncTime = bx_clock_t::now();

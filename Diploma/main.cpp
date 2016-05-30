@@ -113,33 +113,50 @@ int __main(int argc, char * argv[]) {
     return 0;
 }
 
+void initConfig(int argc, char * argv[]) {
+    char configFilename[100] = {0};
+    if (argc >= 2) {
+        strcpy(configFilename, argv[1]);
+    } else {
+        strcpy(configFilename, "config.ini");
+    }
+
+    int procs, id;
+    MPI_Comm_size(MPI_COMM_WORLD, &procs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &id);
+    for (size_t p = 0; p < procs; ++p) {
+        if (p == id) {
+            algo::ftr().initFactors(configFilename);
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+}
+
 int main(int argc, char * argv[]) {
     MPI_Init(&argc, &argv);
 
+    initConfig(argc, argv);
+
     auto startTime = bx_clock_t::now();
     {
-        char configFilename[100] = {0};
-        if (argc >= 2) {
-            strcpy(configFilename, argv[1]);
-        } else {
-            strcpy(configFilename, "config.ini");
+        Field *field = NULL;
+        if (algo::ftr().Algorithm() == kAlgorithmTranspose) {
+            field = new FieldTranspose;
+        } else if (algo::ftr().Algorithm() == kAlgorithmStatic) {
+            field = new FieldStatic;
         }
-
-#if ALGV == 0
-        FieldTranspose field(configFilename);
-#else
-        FieldStatic field(configFilename);
-#endif
 
         for (size_t k = 0; k < algo::ftr().Repeats(); ++k) {
-            field.init();
+            field->init();
 
-            while (field.done() == false) {
-                field.solve();
+            while (field->done() == false) {
+                field->solve();
             }
 
-            field.finalize();
+            field->finalize();
         }
+
+        delete field;
     }
 
     int myRank;

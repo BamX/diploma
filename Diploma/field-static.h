@@ -41,7 +41,6 @@ class FieldStatic : public Field {
     void printConsole() override;
     
 public:
-    FieldStatic(const char *filename);
     ~FieldStatic();
 
     void init() override;

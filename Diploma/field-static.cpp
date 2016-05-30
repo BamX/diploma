@@ -9,9 +9,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-FieldStatic::FieldStatic(const char *filename) : Field(filename) {
-}
-
 void FieldStatic::init() {
     Field::init();
     
@@ -56,7 +53,7 @@ void FieldStatic::calculateNBS() {
 void FieldStatic::transpose(double **arr) {
     for (size_t index = 0, len = width * height; index < len; ++index) {
         size_t newIndex = (index % width) * height + index / width;
-        buff[newIndex] = *arr[index];
+        buff[newIndex] = (*arr)[index];
     }
     std::swap(*arr, buff);
 }

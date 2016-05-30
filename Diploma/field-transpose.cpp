@@ -10,12 +10,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define BALANCING_ENABLED 1
-
 static int const kDefaultBalancingCounter = 16;
-
-FieldTranspose::FieldTranspose(const char *filename) : Field(filename) {
-}
 
 void FieldTranspose::init() {
     Field::init();
@@ -202,7 +197,7 @@ void FieldTranspose::transpose(double *arr) {
     memcpy(buff, arr, height * width * sizeof(double));
     height = hBuckets[myCoord];
 
-    debug() << "Alltoallw\n";
+    //debug() << "Alltoallw\n";
 
     /*for (size_t i = 0; i < numProcs; ++i) {
         int sendsize, recvsize;
@@ -218,7 +213,7 @@ void FieldTranspose::transpose(double *arr) {
 
     MPI_Alltoallw(buff, sendcounts, senddispls, sendtypes, arr, recvcounts, recvdispls, recvtypes, comm);
 
-    debug() << "OK height: " << height << "\n";
+    //debug() << "OK height: " << height << "\n";
 }
 
 #pragma mark - Balancing
@@ -255,7 +250,7 @@ void FieldTranspose::resize(size_t newHeight) {
     mcF = new double[heightCapacity * width];
     mfF = new double[heightCapacity * width];
 
-    debug() << "NEW HEIGHT " << heightCapacity << "\n";
+    //debug() << "NEW HEIGHT " << heightCapacity << "\n";
 }
 
 void FieldTranspose::createVType(size_t width, size_t height, size_t bWidth, MPI_Datatype *type) {
@@ -285,77 +280,77 @@ void FieldTranspose::createHType(size_t width, size_t height, size_t bWidth, MPI
 }
 
 void FieldTranspose::syncWeights() {
-#if BALANCING_ENABLED
-    debug() << "SW ..." << " " << myId << " " << mySY << " " << height << "\n";
-    for (size_t i = 0; i < numProcs; ++i) {
-        gathercounts[i] = (int)vBuckets[i];
-        gatherdispls[i] = i == 0 ? 0 : (int)(gatherdispls[i - 1] + gathercounts[i - 1]);
-        debug() << "SWW ..." << " " << myId << " " << i << " " << height << " " << gathercounts[i] << " " << gatherdispls[i] << "\n";
-    }
-    
-    MPI_Gatherv(weights + mySY, (int)height, MPI_DOUBLE, weights, gathercounts, gatherdispls, MPI_DOUBLE, MASTER, balanceComm);
+    if (algo::ftr().Balancing()) {
+        //debug() << "SW ..." << " " << myId << " " << mySY << " " << height << "\n";
+        for (size_t i = 0; i < numProcs; ++i) {
+            gathercounts[i] = (int)vBuckets[i];
+            gatherdispls[i] = i == 0 ? 0 : (int)(gatherdispls[i - 1] + gathercounts[i - 1]);
+            //debug() << "SWW ..." << " " << myId << " " << i << " " << height << " " << gathercounts[i] << " " << gatherdispls[i] << "\n";
+        }
+        
+        MPI_Gatherv(weights + mySY, (int)height, MPI_DOUBLE, weights, gathercounts, gatherdispls, MPI_DOUBLE, MASTER, balanceComm);
 
-    if (myId == MASTER) {
-        nextBucketsT = balancing::partition(weights, width, numProcs);
-    }
+        if (myId == MASTER) {
+            nextBucketsT = balancing::partition(weights, width, numProcs);
+        }
 
-    MPI_Bcast(&nextBucketsT[0], (int)numProcs, MPI_INT, MASTER, balanceComm);
+        MPI_Bcast(&nextBucketsT[0], (int)numProcs, MPI_INT, MASTER, balanceComm);
 
-    debug() << "weights: ";
-    for (int i = 0; i < width; ++i) {
-        debug(0) << weights[i] << " ";
-    }
-    debug(0) << "\n";
+        //debug() << "weights: ";
+        for (int i = 0; i < width; ++i) {
+            debug(0) << weights[i] << " ";
+        }
+        //debug(0) << "\n";
 
-    debug() << "buckets: ";
-    for (int i = 0; i < numProcs; ++i) {
-        debug(0) << nextBucketsT[i] << " ";
-    }
-    debug(0) << "\n";
-    debug() << "SW OK\n";
+        //debug() << "buckets: ";
+        for (int i = 0; i < numProcs; ++i) {
+            debug(0) << nextBucketsT[i] << " ";
+        }
+        //debug(0) << "\n";
+        //debug() << "SW OK\n";
 
-    memset(weights, 0, std::max(height, width) * sizeof(double));
-#else
-    for (size_t i = 0; i < numProcs; ++i) {
-        nextBucketsT[i] = (int)(width / numProcs);
+        memset(weights, 0, std::max(height, width) * sizeof(double));
+    } else {
+        for (size_t i = 0; i < numProcs; ++i) {
+            nextBucketsT[i] = (int)(width / numProcs);
+        }
     }
-#endif
 }
 
 bool FieldTranspose::balanceNeeded() {
-#if BALANCING_ENABLED
-    if (bfout != NULL) {
-        for (size_t i = 0; i < numProcs; ++i) {
-            *bfout << nextBuckets[i];
-            if (i < numProcs - 1) {
-                *bfout << ",";
+    if (algo::ftr().Balancing()) {
+        if (bfout != NULL) {
+            for (size_t i = 0; i < numProcs; ++i) {
+                *bfout << nextBuckets[i];
+                if (i < numProcs - 1) {
+                    *bfout << ",";
+                }
             }
+            *bfout << "\n";
+            bfout->flush();
         }
-        *bfout << "\n";
-        bfout->flush();
-    }
 
-    balancingCounter -= 1;
-    if (balancingCounter < 0) {
-       balancingCounter = kDefaultBalancingCounter;
+        balancingCounter -= 1;
+        if (balancingCounter < 0) {
+           balancingCounter = kDefaultBalancingCounter;
+        }
+        return balancingCounter <= 1;
+    } else {
+        return false;
     }
-    return balancingCounter <= 1;
-#else
-    return false;
-#endif
 }
 
 void FieldTranspose::balance() {
     if (myCoord == 0) {
-        debug() << "=================\n";
+        //debug() << "=================\n";
     }
 
-    debug() << "set-buckets: ";
+    //debug() << "set-buckets: ";
     for (int i = 0; i < numProcs; ++i) {
-        debug(0) << nextBuckets[i] << " ";
+        //debug(0) << nextBuckets[i] << " ";
     }
-    debug(0) << "\n";
-    debug() << "SW OK\n";
+    //debug(0) << "\n";
+    //debug() << "SW OK\n";
 
     hBuckets[myCoord] = nextBuckets[myCoord];
     mySYT = 0;
@@ -375,8 +370,9 @@ void FieldTranspose::balance() {
         createVType(width, vBuckets[myCoord], hBuckets[i], sendtypes + i);
         createHType(width, hBuckets[myCoord], vBuckets[i], recvtypes + i);
 
-        debug() << "PROC " << myCoord << " V:" << vBuckets[myCoord] << "x" << hBuckets[i]
+        /*debug() << "PROC " << myCoord << " V:" << vBuckets[myCoord] << "x" << hBuckets[i]
                                       << " H:" << hBuckets[myCoord] << "x" << vBuckets[i]
                                       << "  " << mySYT << "\n";
+         */
     }
 }

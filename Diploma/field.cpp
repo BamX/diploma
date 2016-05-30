@@ -14,12 +14,10 @@ int const SEND_PACK_SIZE = 6;
 
 size_t const MAX_ITTERATIONS_COUNT = 100;
 
-Field::Field(const char *filename) {
+Field::Field() {
     fout = NULL;
     mfout = NULL;
     bfout = NULL;
-    
-    initFactors(filename);
 }
 
 Field::~Field() {

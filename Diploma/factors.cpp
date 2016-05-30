@@ -5,6 +5,9 @@
 #include "factors.h"
 #include <cmath>
 
+size_t const kAlgorithmTranspose = 0;
+size_t const kAlgorithmStatic = 1;
+
 namespace ftr {
     static double const moveVelocity = 0.75 / 60; // м/с
 
@@ -103,6 +106,9 @@ void Factors::initFactors(Config config) {
 
     _minimumBundle = config.value("MinimumBundle");
     _balanceFactor = config.value("BalanceFactor");
+    _balancing = config.value("EnableBalancing") > 0;
+
+    _algorithm = config.value("Algorithm");
 
     _TStart = config.value("InitT");
     _TEnv = config.value("EnvT");
@@ -235,6 +241,14 @@ size_t Factors::MinimumBundle() const {
 
 double Factors::BalanceFactor() const {
     return _balanceFactor;
+}
+
+bool Factors::Balancing() const {
+    return _balancing;
+}
+
+size_t Factors::Algorithm() const {
+    return _algorithm;
 }
 
 double Factors::TStart() const {

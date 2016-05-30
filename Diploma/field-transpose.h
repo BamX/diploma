@@ -45,7 +45,6 @@ class FieldTranspose : public Field {
     void balance() override;
 
 public:
-    FieldTranspose(const char *filename);
     ~FieldTranspose();
 
     void init() override;

@@ -236,7 +236,7 @@ def saveResults(cases, workingDir):
     with open('%s/results.txt' % workingDir, 'w') as fresults:
         zeroTime = -1
         for result in cases:
-            time = result['result_time'] / results['repeats']
+            time = result['result_time'] / result['repeats']
             procs = result['nodes'] * result['ppn']
             if zeroTime == -1:
                 zeroTime = time
@@ -293,7 +293,7 @@ def processTasks(testCases):
     while runningJobs > 0:
         runningJobs = 0
         sys.stderr.write("\x1b[2J\x1b[H")
-        print 'Status:'
+        print 'Status(%d/%d):' % (jobsRun, len(testCases))
 
         for t in tasks:
             if not t in results or waitState(results[t]['result_state']):
@@ -332,7 +332,7 @@ def printResults(results):
     zeroTime = -1
     zeroProcs = 0
     for result in results:
-        time = result['result_time'] / results['repeats']
+        time = result['result_time'] / result['repeats']
         procs = result['nodes'] * result['ppn']
         if zeroTime == -1:
             zeroTime = time
