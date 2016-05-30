@@ -1,142 +1,122 @@
 {
-    "cases": [
-        {
-            "nodes": 1,
-            "ppn": 1,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 1
+    "cases": {
+        "static:imbalanced:100": {
+            "casesTemplate": "1to72",
+            "default": {
+                "algorithm": 1,
+                "enable_balancing": 0,
+                "time_max": 600,
+                "x_split_count": 100
+            }
         },
-        {
-            "nodes": 1,
-            "ppn": 2,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 1
+        "static:imbalanced:1000": {
+            "casesTemplate": "1to72",
+            "default": {
+                "algorithm": 1,
+                "enable_balancing": 0,
+                "time_max": 40,
+                "x_split_count": 1000
+            }
         },
-        {
-            "nodes": 1,
-            "ppn": 3,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 1
+        "static:imbalanced:200": {
+            "casesTemplate": "1to72",
+            "default": {
+                "algorithm": 1,
+                "enable_balancing": 0,
+                "time_max": 300,
+                "x_split_count": 200
+            }
         },
-        {
-            "nodes": 1,
-            "ppn": 4,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 2
+        "static:imbalanced:400": {
+            "casesTemplate": "1to72",
+            "default": {
+                "algorithm": 1,
+                "enable_balancing": 0,
+                "time_max": 100,
+                "x_split_count": 400
+            }
         },
-        {
-            "nodes": 1,
-            "ppn": 5,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 2
+        "transpose:balanced:100": {
+            "casesTemplate": "1to72",
+            "default": {
+                "algorithm": 0,
+                "enable_balancing": 1,
+                "time_max": 600,
+                "x_split_count": 100
+            }
         },
-        {
-            "nodes": 2,
-            "ppn": 3,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 2
+        "transpose:balanced:1000": {
+            "casesTemplate": "1to72",
+            "default": {
+                "algorithm": 0,
+                "enable_balancing": 1,
+                "time_max": 40,
+                "x_split_count": 1000
+            }
         },
-        {
-            "nodes": 2,
-            "ppn": 4,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 2
+        "transpose:balanced:200": {
+            "casesTemplate": "1to72",
+            "default": {
+                "algorithm": 0,
+                "enable_balancing": 1,
+                "time_max": 300,
+                "x_split_count": 200
+            }
         },
-        {
-            "nodes": 3,
-            "ppn": 3,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 2
+        "transpose:balanced:400": {
+            "casesTemplate": "1to72",
+            "default": {
+                "algorithm": 0,
+                "enable_balancing": 1,
+                "time_max": 100,
+                "x_split_count": 400
+            }
         },
-        {
-            "nodes": 3,
-            "ppn": 4,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 2
+        "transpose:imbalanced:100": {
+            "casesTemplate": "1to72",
+            "default": {
+                "algorithm": 0,
+                "enable_balancing": 0,
+                "time_max": 600,
+                "x_split_count": 100
+            }
         },
-        {
-            "nodes": 3,
-            "ppn": 5,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 3
+        "transpose:imbalanced:1000": {
+            "casesTemplate": "1to72",
+            "default": {
+                "algorithm": 0,
+                "enable_balancing": 0,
+                "time_max": 40,
+                "x_split_count": 1000
+            }
         },
-        {
-            "nodes": 5,
-            "ppn": 4,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 4
+        "transpose:imbalanced:200": {
+            "casesTemplate": "1to72",
+            "default": {
+                "algorithm": 0,
+                "enable_balancing": 0,
+                "time_max": 300,
+                "x_split_count": 200
+            }
         },
-        {
-            "nodes": 5,
-            "ppn": 5,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 4
-        },
-        {
-            "nodes": 6,
-            "ppn": 5,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 4
-        },
-        {
-            "nodes": 7,
-            "ppn": 5,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 5
-        },
-        {
-            "nodes": 8,
-            "ppn": 5,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 6
-        },
-        {
-            "nodes": 9,
-            "ppn": 5,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 7
-        },
-        {
-            "nodes": 9,
-            "ppn": 6,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 7
-        },
-        {
-            "nodes": 9,
-            "ppn": 7,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 8
-        },
-        {
-            "nodes": 9,
-            "ppn": 8,
-            "time_max": 40,
-            "x_split_count": 1000,
-            "repeats": 8
+        "transpose:imbalanced:400": {
+            "casesTemplate": "1to72",
+            "default": {
+                "algorithm": 0,
+                "enable_balancing": 0,
+                "time_max": 100,
+                "x_split_count": 400
+            }
         }
-    ],
+    },
+    "configuration": {
+        "cases_repeats": 3
+    },
     "default": {
+        "algorithm": 0,
         "balance_factor": 0.3,
         "bundle_min": 5,
+        "enable_balancing": true,
         "enable_buckets": true,
         "enable_console": false,
         "enable_matrix": false,
@@ -148,5 +128,104 @@
         "time_max": 600,
         "time_split_count": 10000,
         "x_split_count": 100
+    },
+    "templates": {
+        "1to72": [
+            {
+                "nodes": 1,
+                "ppn": 1,
+                "repeats": 1
+            },
+            {
+                "nodes": 1,
+                "ppn": 2,
+                "repeats": 1
+            },
+            {
+                "nodes": 1,
+                "ppn": 3,
+                "repeats": 1
+            },
+            {
+                "nodes": 1,
+                "ppn": 4,
+                "repeats": 2
+            },
+            {
+                "nodes": 1,
+                "ppn": 5,
+                "repeats": 2
+            },
+            {
+                "nodes": 2,
+                "ppn": 3,
+                "repeats": 2
+            },
+            {
+                "nodes": 2,
+                "ppn": 4,
+                "repeats": 2
+            },
+            {
+                "nodes": 3,
+                "ppn": 3,
+                "repeats": 2
+            },
+            {
+                "nodes": 3,
+                "ppn": 4,
+                "repeats": 2
+            },
+            {
+                "nodes": 3,
+                "ppn": 5,
+                "repeats": 3
+            },
+            {
+                "nodes": 5,
+                "ppn": 4,
+                "repeats": 4
+            },
+            {
+                "nodes": 5,
+                "ppn": 5,
+                "repeats": 4
+            },
+            {
+                "nodes": 6,
+                "ppn": 5,
+                "repeats": 4
+            },
+            {
+                "nodes": 7,
+                "ppn": 5,
+                "repeats": 5
+            },
+            {
+                "nodes": 8,
+                "ppn": 5,
+                "repeats": 6
+            },
+            {
+                "nodes": 9,
+                "ppn": 5,
+                "repeats": 7
+            },
+            {
+                "nodes": 9,
+                "ppn": 6,
+                "repeats": 7
+            },
+            {
+                "nodes": 9,
+                "ppn": 7,
+                "repeats": 8
+            },
+            {
+                "nodes": 9,
+                "ppn": 8,
+                "repeats": 8
+            }
+        ]
     }
 }

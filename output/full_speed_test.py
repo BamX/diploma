@@ -45,6 +45,11 @@ Repeats %d
 
 MinimumBundle %d
 BalanceFactor %f
+EnableBalancing %d
+
+# 0 for transpose
+# 1 for static
+Algorithm %d
 
 EnableConsole %d
 EnablePlot %d
@@ -92,6 +97,8 @@ def formatConfig(params, taskName, workingDir):
             params.get('repeats', 1),
             params.get('bundle_min', 5),
             params.get('balance_factor', 0.3),
+            (0, 1)[params.get('enable_balancing', True)],
+            params.get('algorithm', 0),
             (0, 1)[params.get('enable_console', False)],
             (0, 1)[params.get('enable_plot', False)],
             (0, 1)[params.get('enable_matrix', False)],
@@ -253,24 +260,41 @@ def readTestCases(filename):
     with open(filename, 'r') as fin:
         plain = fin.read()
         data = json.loads(plain)
+        configuration = data['configuration']
+        templates = data['templates']
         defaults = data['default']
-        for case in data['cases']:
-            testCase = dict()
-            for key in defaults:
-                if key in case:
-                    testCase[key] = case[key]
-                else:
-                    testCase[key] = defaults[key]
-            testCase['name'] = 'n%d-p%d-x%d-r%d-%d' % (testCase['nodes'], testCase['ppn'], testCase['x_split_count'], testCase['repeats'], taskNum)
-            testCases += [testCase]
-            taskNum += 1
+        for caseTag in data['cases']:
+            caseData = data['cases'][caseTag]
+            caseDefaults = dict()
+            if 'default' in caseData:
+                caseDefaults = caseData['default']
+            cases = []
+            if 'casesTemplate' in caseData:
+                cases = templates[caseData['casesTemplate']]
+            elif 'cases' in caseData:
+                cases = caseData['cases']
+            for case in cases:
+                for repeatNum in xrange(configuration['cases_repeats']):
+                    testCase = dict()
+                    for key in defaults:
+                        if key in case:
+                            testCase[key] = case[key]
+                        elif key in caseDefaults:
+                            testCase[key] = caseDefaults[key]
+                        else:
+                            testCase[key] = defaults[key]
+                    testCase['case_tag'] = caseTag
+                    testCase['name'] = 'n%d-p%d-x%d-r%d-%d' % \
+                        (testCase['nodes'], testCase['ppn'], testCase['x_split_count'], testCase['repeats'], taskNum)
+                    testCases += [testCase]
+                    taskNum += 1
     return testCases
 
 def processTasks(testCases):
-    #buildResult = run(BUILDSCRIPT)
-    #if len(buildResult) > 0:
-    #    print buildResult
-    #    return []
+    buildResult = run(BUILDSCRIPT)
+    if len(buildResult) > 0:
+        print buildResult
+        return []
 
     workingDir = createWorkingDirectory()
 
