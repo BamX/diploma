@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <cstring>
+#include <cmath>
 #include <iostream>
 
 namespace balancing {
@@ -150,10 +151,73 @@ namespace balancing {
         double *weightsAr = &weights[0];
         return partition(weightsAr, size, count);
     }
+
+    double costParts(std::vector<int> parts) {
+        double SB = 0;
+        double beginSum = 0;
+        size_t beginIndex = 0;
+        for (size_t i = 0; i < parts.size(); ++i) {
+            double weightParts = 0;
+            if (parts[i] > 0) {
+                weightParts = sums[beginIndex + parts[i] - 1] - beginSum;
+                beginSum += weightParts;
+                beginIndex += parts[i];
+            }
+            if (weightParts > SB) {
+                SB = weightParts;
+            }
+        }
+        return SB;
+    }
+
+    std::vector<int> fastPartition(double *weights, size_t size, size_t *current_parts, size_t count) {
+        double SB = __DBL_MAX__;
+
+        formatSums(weights, size);
+
+        std::vector<int> parts(current_parts, current_parts + count);
+
+        size_t iterations = 0;
+        size_t iterationsLimit = log(size);
+        while (iterations < iterationsLimit) {
+            double newSB = costParts(parts);
+            if (fabs(SB - newSB) < 0.00001) {
+                break;
+            }
+            ++iterations;
+            SB = newSB;
+            double S = 0;
+            size_t idx = 0;
+            for (size_t i = 0; i < count - 1; ++i) {
+                double s1 = sums[idx + parts[i] - 1] - S;
+                double s2 = sums[idx + parts[i] + parts[i + 1] - 1] - sums[idx + parts[i] - 1];
+                double z1 = weights[idx + parts[i] - 1];
+                double z2 = weights[idx + parts[i]];
+                if (s1 + z2 < SB && s1 < s2) {
+                    parts[i] += 1;
+                    parts[i + 1] -= 1;
+                } else if (s2 + z1 < SB && s1 > s2) {
+                    parts[i + 1] += 1;
+                    parts[i] -= 1;
+                }
+
+                S = sums[idx + parts[i] - 1];
+                idx += parts[i];
+            }
+        }
+
+        return parts;
+    }
+
+    std::vector<int> fastPartition(std::vector<double> &weights, size_t *current_parts, size_t count) {
+        size_t size = weights.size();
+        double *weightsAr = &weights[0];
+        return fastPartition(weightsAr, size, current_parts, count);
+    }
     
 }
 
-void test() {
+int test_main() {
     std::vector<double> ww = {
         3.0, 40.0, 17.0, //  60
         10.0, 5.0, 17.0, 11.0, 11.0, 3.0, 1.0, // 58
@@ -161,9 +225,10 @@ void test() {
         66, // 66
         1.0, 1.0, 1.0, 1.0, 1.0, 62 // 67
     };
+    size_t lastParts[] = { 4, 4, 5, 5, 4 };
 
     size_t count = 5;
-    auto parts = balancing::partition(ww, count);
+    auto parts = balancing::fastPartition(ww, lastParts, count);
 
     size_t i = 0;
     for (auto &part : parts) {
@@ -175,6 +240,8 @@ void test() {
         i += part;
         std::cerr << "= " << sum << std::endl;
     }
+
+    return 0;
 }
 
 #endif /* defined(__Diploma__balancing__)  */

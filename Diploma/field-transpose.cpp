@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-static int const kDefaultBalancingCounter = 16;
+static int const kDefaultBalancingCounter = 24;
 
 void FieldTranspose::init() {
     Field::init();
@@ -291,7 +291,7 @@ void FieldTranspose::syncWeights() {
         MPI_Gatherv(weights + mySY, (int)height, MPI_DOUBLE, weights, gathercounts, gatherdispls, MPI_DOUBLE, MASTER, balanceComm);
 
         if (myId == MASTER) {
-            nextBucketsT = balancing::partition(weights, width, numProcs);
+            nextBucketsT = balancing::fastPartition(weights, width, hBuckets, numProcs);
         }
 
         MPI_Bcast(&nextBucketsT[0], (int)numProcs, MPI_INT, MASTER, balanceComm);
