@@ -7,13 +7,18 @@ import shutil
 import os
 import os.path
 import json
+from random import shuffle
 
 BUILDSCRIPT = './build.sh'
 BINARYNAME = 'debug'
 SLEEPINTERVAL = 10
-MAXRUNNINGJOBS = 5
+MAXRUNNINGJOBS = 10
+PBSQUEUE = "max"
+QSUBALLOWED = True
 
 lineRegex = re.compile('([^ ]+) = (.*)')
+additionalLineRegex = re.compile('\t(.*)')
+nodesListRegex = re.compile('hadoop2-(\d+)/(\d+)')
 traceExitCodeRegex = re.compile('Exit_status=([^ ]*)')
 traceTimeRegex = re.compile('resources_used.walltime=(\d+:\d+:\d+)')
 traceCpuRegex = re.compile('resources_used.cput=(\d+:\d+:\d+)')
@@ -22,7 +27,11 @@ key_walltime = 'resources_used.walltime'
 key_cputime = 'resources_used.cput'
 key_jobstate = 'job_state'
 key_nodes = 'Resource_List.nodes'
+key_nodes_list = 'exec_host'
 key_exit_status = 'exit_status'
+key_mem = 'resources_used.mem'
+key_vmem = 'resources_used.vmem'
+key_start_time = 'start_time'
 value_jobstate_done = 'C'
 value_jobstate_queued = 'Q'
 value_jobstate_running = 'R'
@@ -84,6 +93,7 @@ PBSScriptTemplate = ''':
 #PBS -d %s
 #PBS -e %s
 #PBS -o %s
+#PBS -q %s
 #
 mpirun %s %s
 '''
@@ -104,8 +114,8 @@ def formatConfig(params, taskName, workingDir):
             (0, 1)[params.get('enable_matrix', False)],
             (0, 1)[params.get('enable_buckets', True)],
             params.get('frames_count', 200),
-            'view-%s.csv' % taskName,
-            'buckets-%s.csv' % taskName
+            '%s/view-%s.csv' % (workingDir, taskName),
+            '%s/buckets-%s.csv' % (workingDir, taskName)
         )
 
 def saveConfig(params, taskName, workingDir):
@@ -120,6 +130,7 @@ def formatPBSScript(params, taskName, workingDir):
             workingDir,
             'error-%s.txt' % taskName,
             'output-%s.txt' % taskName,
+            PBSQUEUE,
             '../' + BINARYNAME, saveConfig(params, taskName, workingDir)
         )
 
@@ -142,11 +153,17 @@ def runTask(params, taskName, workingDir):
 def monitorTask(taskId):
     out = run(['qstat', '-f', taskId])
     params = dict()
+    lastKey = None
     if len(out) > 0:
         for line in out:
-            match = lineRegex.search(line)
-            if match:
-                params[match.group(1)] = match.group(2)
+            additional = additionalLineRegex.search(line)
+            if additional and lastKey:
+                params[lastKey] += additional.group(1)
+            else:
+                match = lineRegex.search(line)
+                if match:
+                    lastKey = match.group(1)
+                    params[lastKey] = match.group(2)
     return params
 
 def parseTime(timeStr):
@@ -157,31 +174,46 @@ def parseNodes(nodes):
     splits = [int(s.strip('=')) for s in nodes.split(':ppn')]
     return ( splits[0], splits[1] )
 
+def parseNodesList(nodesList):
+    nodes = nodesListRegex.findall(nodesList)
+    return [ {'node': int(node), 'process': int(process)} for (node, process) in nodes ]
+
 def taskStatus(taskId):
-    data = monitorTask(taskId)
-    jobState = value_jobstate_none
     wallTime = 0
     cpuTime = 0
-    nodes = 0
-    procs = 0
-    exitCode = ''
+    memUsed = 0
+    vmemUsed = 0
+    startTime = None
+    nodesList = []
 
-    if key_jobstate in data:
-        jobState = data[key_jobstate]
-        (nodes, procs) = parseNodes(data[key_nodes])
-        if jobState == value_jobstate_done:
+    try:
+        data = monitorTask(taskId)
+        if key_start_time in data:
+            startTime = datetime.datetime.strptime(data[key_start_time], '%a %b %d %H:%M:%S %Y').isoformat()
+        if key_nodes_list in data:
+            nodesList = parseNodesList(data[key_nodes_list])
+        if key_walltime in data:
             wallTime = parseTime(data[key_walltime])
+        if key_cputime in data:
             cpuTime = parseTime(data[key_cputime])
-            exitCode = data[key_exit_status]
+        if key_mem in data:
+            memUsed = int(data[key_mem][:-2]) * 1024
+        if key_vmem in data:
+            vmemUsed = int(data[key_vmem][:-2]) * 1024
+    except Exception, e:
+        pass
 
     return {
-        'state': jobState,
         'time': wallTime,
         'cpu': cpuTime,
-        'nodes': nodes,
-        'ppn': procs,
-        'code': exitCode
+        'nodes_list': nodesList,
+        'mem': memUsed,
+        'vmem': vmemUsed,
+        'start_time': startTime
     }
+
+def waitState(state):
+    return state != value_jobstate_done
 
 def taskTrace(taskId, case):
     out = str(subprocess.Popen(['tracejob', '-q', taskId], stdout=subprocess.PIPE).stdout.read())
@@ -190,27 +222,34 @@ def taskTrace(taskId, case):
     wallTime = 0
     cpuTime = 0
     exitCode = ''
+    case = case.copy()
 
     if 'Job Queued' in out:
         jobState = value_jobstate_queued
-        if 'Job Run' in out:
-            jobState = value_jobstate_running
-            if 'Exit_status' in out:
-                jobState = value_jobstate_done
-                match = traceExitCodeRegex.search(out)
-                if match:
-                    exitCode = match.group(1)
-                match = traceTimeRegex.search(out)
-                if match:
-                    wallTime = parseTime(match.group(1))
-                match = traceCpuRegex.search(out)
-                if match:
-                    cpuTime = parseTime(match.group(1))
+    if 'Job Run' in out:
+        jobState = value_jobstate_running
+    if 'Exit_status' in out:
+        jobState = value_jobstate_done
+        match = traceExitCodeRegex.search(out)
+        if match:
+            exitCode = match.group(1)
+        match = traceTimeRegex.search(out)
+        if match:
+            wallTime = parseTime(match.group(1))
+        match = traceCpuRegex.search(out)
+        if match:
+            cpuTime = parseTime(match.group(1))
 
-    case = case.copy()
+    if QSUBALLOWED and waitState(case.get('result_state', 'Q')):
+        status = taskStatus(taskId)
+        for key in status:
+            if status[key]:
+                case['result_' + key] = status[key]
+
     case['result_state'] = jobState
-    case['result_time'] = wallTime
-    case['result_cpu'] = cpuTime
+    if not waitState(jobState) or not 'result_time' in case or not 'result_cpu' in case:
+        case['result_time'] = wallTime
+        case['result_cpu'] = cpuTime
     case['result_code'] = exitCode
     return case
 
@@ -220,9 +259,6 @@ def createWorkingDirectory():
     if not os.path.exists(folderName):
         os.makedirs(folderName)
     return os.getcwd() + '/' + folderName
-
-def waitState(state):
-    return state == value_jobstate_queued or state == value_jobstate_running
 
 def saveTaskStatus(taskId, taskName, workingDir):
     with open('%s/status-%s.txt' % (workingDir, taskName), 'w') as ftaskStatus:
@@ -256,7 +292,6 @@ def saveResults(cases, workingDir):
 
 def readTestCases(filename):
     testCases = []
-    taskNum = 0
     with open(filename, 'r') as fin:
         plain = fin.read()
         data = json.loads(plain)
@@ -284,13 +319,50 @@ def readTestCases(filename):
                         else:
                             testCase[key] = defaults[key]
                     testCase['case_tag'] = caseTag
-                    testCase['name'] = 'n%d-p%d-x%d-r%d-%d' % \
-                        (testCase['nodes'], testCase['ppn'], testCase['x_split_count'], testCase['repeats'], taskNum)
+                    testCase['name'] = 'n%d-p%d-x%d-r%d' % \
+                        (testCase['nodes'], testCase['ppn'], testCase['x_split_count'], testCase['repeats'])
                     testCases += [testCase]
-                    taskNum += 1
     return testCases
 
+def caseProcesses(case):
+    return case['nodes'] * case['ppn']
+
+def reorderCases(cases):
+    newCases = cases[:]
+    shuffle(newCases)
+    newCases.sort(key=caseProcesses)
+    buckets = []
+    limitBucket = 13
+    while len(newCases) > 0:
+        bucket = []
+        bSum = 0
+        while len(newCases) > 0 and bSum + newCases[-1]['nodes'] < limitBucket:
+            bucket += [newCases[-1]]
+            bSum += newCases[-1]['nodes']
+            newCases = newCases[:-1]
+        while len(newCases) > 0 and bSum + newCases[0]['nodes'] < limitBucket:
+            bucket += [newCases[0]]
+            bSum += newCases[0]['nodes']
+            newCases = newCases[1:]
+        buckets += [bucket]
+    shuffle(buckets)
+    return [case for bucket in buckets for case in bucket]
+
+def tagCasesNumbers(cases):
+    caseNum = 0
+    for case in cases:
+        case['name'] = '%s-%s' % (str(caseNum).zfill(5), case['name'])
+        caseNum += 1
+
+def dumpResultCases(keys, cases, workingDir):
+    results = [cases[t] for t in keys if t in cases]
+    saveResults(results, workingDir)
+    return results
+
 def processTasks(testCases):
+    testCases = reorderCases(testCases)
+    tagCasesNumbers(testCases)
+
     buildResult = run(BUILDSCRIPT)
     if len(buildResult) > 0:
         print buildResult
@@ -305,10 +377,11 @@ def processTasks(testCases):
         taskName = case['name']
         taskId = runTask(case, taskName, workingDir)
         case['id'] = taskId
+        case['result_start_time'] = datetime.datetime.now().isoformat()
         tasks += [taskId]
         taskParamsDict[taskId] = case
         print "Run %s" % taskName
-        time.sleep(2)
+        time.sleep(3)
         jobsRun += 1
 
     results = dict()
@@ -336,10 +409,11 @@ def processTasks(testCases):
                 taskName = case['name']
                 taskId = runTask(case, taskName, workingDir)
                 case['id'] = taskId
+                case['result_start_time'] = datetime.datetime.now().isoformat()
                 tasks += [taskId]
                 taskParamsDict[taskId] = case
                 print "Run %s" % taskName
-                time.sleep(2)
+                time.sleep(3)
                 runningJobs += 1
                 jobsRun += 1
                 if runningJobs >= MAXRUNNINGJOBS:
@@ -347,11 +421,10 @@ def processTasks(testCases):
 
         if runningJobs > 0:
             print 'Progress: %d/%d' % (jobsRun, len(testCases))
+            dumpResultCases(tasks, results, workingDir)
             time.sleep(SLEEPINTERVAL)
 
-    times = [results[t] for t in tasks]
-    saveResults(times, workingDir)
-    return times
+    return dumpResultCases(tasks, results, workingDir)
 
 def printResults(results):
     zeroTime = -1
@@ -369,5 +442,6 @@ def printResults(results):
             eff = float(time) / zeroTime / (procs / zeroProcs)
         print "%s\t%s\t%s\t%s" % (procs, time, speedUp, eff)
 
+#print [caseProcesses(case) for case in reorderCases(readTestCases('test_cases.json'))]
 results = processTasks(readTestCases('test_cases.json'))
-printResults(results)
+#printResults(results)
