@@ -1,16 +1,9 @@
 {
     "cases": {
-        "f99:i10:1200": {
+        "f88:i10:1200": {
             "casesTemplate": "16to40",
             "default": {
-                "transpose_balance_factor": 0.99,
-                "transpose_balance_interval": 10
-            }
-        },
-        "f96:i10:1200": {
-            "casesTemplate": "16to40",
-            "default": {
-                "transpose_balance_factor": 0.96,
+                "transpose_balance_factor": 0.88,
                 "transpose_balance_interval": 10
             }
         },
@@ -21,10 +14,17 @@
                 "transpose_balance_interval": 10
             }
         },
-        "f88:i10:1200": {
+        "f96:i07:1200": {
             "casesTemplate": "16to40",
             "default": {
-                "transpose_balance_factor": 0.88,
+                "transpose_balance_factor": 0.96,
+                "transpose_balance_interval": 7
+            }
+        },
+        "f96:i10:1200": {
+            "casesTemplate": "16to40",
+            "default": {
+                "transpose_balance_factor": 0.96,
                 "transpose_balance_interval": 10
             }
         },
@@ -35,13 +35,13 @@
                 "transpose_balance_interval": 15
             }
         },
-        "f96:i07:1200": {
+        "f99:i10:1200": {
             "casesTemplate": "16to40",
             "default": {
-                "transpose_balance_factor": 0.96,
-                "transpose_balance_interval": 7
+                "transpose_balance_factor": 0.99,
+                "transpose_balance_interval": 10
             }
-        },
+        }
     },
     "configuration": {
         "cases_repeats": 2
