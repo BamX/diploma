@@ -125,7 +125,7 @@ size_t FieldTranspose::solveRows() {
             }
         }
         //debug() << "Write to " << mySY + row << " of " << width << "\n";
-        weights[mySY + row] += iterationsCount;// + (picosecFromStart() - startTime) * 1e-12 / iterationsCount;
+        weights[mySY + row] = weights[mySY + row] * 0.85 + iterationsCount;// + (picosecFromStart() - startTime) * 1e-12 / iterationsCount;
         maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
     }
 

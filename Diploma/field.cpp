@@ -12,7 +12,7 @@ int const NOBODY = MPI_PROC_NULL;
 int const NOTHING = -1;
 int const SEND_PACK_SIZE = 6;
 
-size_t const MAX_ITTERATIONS_COUNT = 100;
+size_t const MAX_ITTERATIONS_COUNT = 50;
 
 Field::Field() {
     fout = NULL;
