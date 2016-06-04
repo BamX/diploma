@@ -107,6 +107,8 @@ void Factors::initFactors(Config config) {
     _minimumBundle = config.value("MinimumBundle");
     _balanceFactor = config.value("BalanceFactor");
     _balancing = config.value("EnableBalancing") > 0;
+    _transposeBalancingFactor = config.value("TransposeBalanceFactor");
+    _transposeIterations = config.value("TransposeBalanceIterationsInterval");
 
     _algorithm = config.value("Algorithm");
 
@@ -245,6 +247,14 @@ double Factors::BalanceFactor() const {
 
 bool Factors::Balancing() const {
     return _balancing;
+}
+
+double Factors::TransposeBalanceFactor() const {
+    return _transposeBalancingFactor;
+}
+
+size_t Factors::TransposeBalanceIterationsInterval() const {
+    return _transposeIterations;
 }
 
 size_t Factors::Algorithm() const {

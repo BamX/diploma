@@ -10,12 +10,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-static int const kDefaultBalancingCounter = 24;
-
 void FieldTranspose::init() {
     Field::init();
 
-    balancingCounter = kDefaultBalancingCounter;
+    balancingCounter = (int)(algo::ftr().TransposeBalanceIterationsInterval() * 2);
 
     printf("I'm %d(%d)\twith w:%zu\th:%zu w:%zu\th:%zu.\tTop:%d\tbottom:%d\n",
            myId, ::getpid(), width, height, mySX, mySY, topN, bottomN);
@@ -125,7 +123,7 @@ size_t FieldTranspose::solveRows() {
             }
         }
         //debug() << "Write to " << mySY + row << " of " << width << "\n";
-        weights[mySY + row] = weights[mySY + row] * 0.85 + iterationsCount;// + (picosecFromStart() - startTime) * 1e-12 / iterationsCount;
+        weights[mySY + row] = weights[mySY + row] * algo::ftr().TransposeBalanceFactor() + iterationsCount;// + (picosecFromStart() - startTime) * 1e-12 / iterationsCount;
         maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
     }
 
@@ -309,7 +307,7 @@ void FieldTranspose::syncWeights() {
         //debug(0) << "\n";
         //debug() << "SW OK\n";
 
-        memset(weights, 0, std::max(height, width) * sizeof(double));
+        memset(weights, 0, width * sizeof(double));
     } else {
         for (size_t i = 0; i < numProcs; ++i) {
             nextBucketsT[i] = (int)(width / numProcs);
@@ -332,7 +330,7 @@ bool FieldTranspose::balanceNeeded() {
 
         balancingCounter -= 1;
         if (balancingCounter < 0) {
-           balancingCounter = kDefaultBalancingCounter;
+           balancingCounter = (int)(algo::ftr().TransposeBalanceIterationsInterval() * 2);
         }
         return balancingCounter <= 1;
     } else {
