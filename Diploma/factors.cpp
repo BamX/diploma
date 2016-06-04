@@ -109,6 +109,7 @@ void Factors::initFactors(Config config) {
     _balancing = config.value("EnableBalancing") > 0;
     _transposeBalancingFactor = config.value("TransposeBalanceFactor");
     _transposeIterations = config.value("TransposeBalanceIterationsInterval");
+    _transposeBalancingTimeFactor = config.value("TransposeBalanceTimeFactor");
 
     _algorithm = config.value("Algorithm");
 
@@ -255,6 +256,10 @@ double Factors::TransposeBalanceFactor() const {
 
 size_t Factors::TransposeBalanceIterationsInterval() const {
     return _transposeIterations;
+}
+
+double Factors::TransposeBalanceTimeFactor() const {
+    return _transposeBalancingTimeFactor;
 }
 
 size_t Factors::Algorithm() const {

@@ -123,7 +123,9 @@ size_t FieldTranspose::solveRows() {
             }
         }
         //debug() << "Write to " << mySY + row << " of " << width << "\n";
-        weights[mySY + row] = weights[mySY + row] * algo::ftr().TransposeBalanceFactor() + iterationsCount;// + (picosecFromStart() - startTime) * 1e-12 / iterationsCount;
+        weights[mySY + row] = weights[mySY + row] * algo::ftr().TransposeBalanceFactor()
+                + iterationsCount * (1.0 - algo::ftr().TransposeBalanceTimeFactor())
+                + (picosecFromStart() - startTime) * 1e-12 * algo::ftr().TransposeBalanceTimeFactor();
         maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
     }
 

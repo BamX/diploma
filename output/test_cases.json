@@ -1,45 +1,105 @@
 {
     "cases": {
-        "f88:i10:1200": {
-            "casesTemplate": "16to40",
+        "imbalanced:1200": {
+            "casesTemplate": "12to32",
+            "default": {
+                "enable_balancing": 0
+            }
+        },
+        "f88:i10:iterations": {
+            "casesTemplate": "12to32",
             "default": {
                 "transpose_balance_factor": 0.88,
-                "transpose_balance_interval": 10
+                "transpose_balance_interval": 10,
+                "transpose_balance_time_factor": 0.0
             }
         },
-        "f92:i10:1200": {
-            "casesTemplate": "16to40",
+        "f92:i10:iterations": {
+            "casesTemplate": "12to32",
             "default": {
                 "transpose_balance_factor": 0.92,
-                "transpose_balance_interval": 10
+                "transpose_balance_interval": 10,
+                "transpose_balance_time_factor": 0.0
             }
         },
-        "f96:i07:1200": {
-            "casesTemplate": "16to40",
+        "f96:i07:iterations": {
+            "casesTemplate": "12to32",
             "default": {
                 "transpose_balance_factor": 0.96,
-                "transpose_balance_interval": 7
+                "transpose_balance_interval": 7,
+                "transpose_balance_time_factor": 0.0
             }
         },
-        "f96:i10:1200": {
-            "casesTemplate": "16to40",
+        "f96:i10:iterations": {
+            "casesTemplate": "12to32",
             "default": {
                 "transpose_balance_factor": 0.96,
-                "transpose_balance_interval": 10
+                "transpose_balance_interval": 10,
+                "transpose_balance_time_factor": 0.0
             }
         },
-        "f96:i15:1200": {
-            "casesTemplate": "16to40",
+        "f96:i15:iterations": {
+            "casesTemplate": "12to32",
             "default": {
                 "transpose_balance_factor": 0.96,
-                "transpose_balance_interval": 15
+                "transpose_balance_interval": 15,
+                "transpose_balance_time_factor": 0.0
             }
         },
-        "f99:i10:1200": {
-            "casesTemplate": "16to40",
+        "f99:i10:iterations": {
+            "casesTemplate": "12to32",
             "default": {
                 "transpose_balance_factor": 0.99,
-                "transpose_balance_interval": 10
+                "transpose_balance_interval": 10,
+                "transpose_balance_time_factor": 0.0
+            }
+        },
+        "f88:i10:time": {
+            "casesTemplate": "12to32",
+            "default": {
+                "transpose_balance_factor": 0.88,
+                "transpose_balance_interval": 10,
+                "transpose_balance_time_factor": 1.0
+            }
+        },
+        "f92:i10:time": {
+            "casesTemplate": "12to32",
+            "default": {
+                "transpose_balance_factor": 0.92,
+                "transpose_balance_interval": 10,
+                "transpose_balance_time_factor": 1.0
+            }
+        },
+        "f96:i07:time": {
+            "casesTemplate": "12to32",
+            "default": {
+                "transpose_balance_factor": 0.96,
+                "transpose_balance_interval": 7,
+                "transpose_balance_time_factor": 1.0
+            }
+        },
+        "f96:i10:time": {
+            "casesTemplate": "12to32",
+            "default": {
+                "transpose_balance_factor": 0.96,
+                "transpose_balance_interval": 10,
+                "transpose_balance_time_factor": 1.0
+            }
+        },
+        "f96:i15:time": {
+            "casesTemplate": "12to32",
+            "default": {
+                "transpose_balance_factor": 0.96,
+                "transpose_balance_interval": 15,
+                "transpose_balance_time_factor": 1.0
+            }
+        },
+        "f99:i10:time": {
+            "casesTemplate": "12to32",
+            "default": {
+                "transpose_balance_factor": 0.99,
+                "transpose_balance_interval": 10,
+                "transpose_balance_time_factor": 1.0
             }
         }
     },
@@ -55,18 +115,24 @@
         "enable_console": false,
         "enable_matrix": false,
         "enable_plot": false,
-        "epsilon": 1e-06,
+        "epsilon": 1e-03,
         "nodes": 3,
         "ppn": 3,
         "repeats": 1,
-        "time_max": 500,
+        "time_max": 450,
         "time_split_count": 20000,
         "transpose_balance_factor": 0.96,
         "transpose_balance_interval": 10,
-        "x_split_count": 1200
+        "transpose_balance_time_factor": 0.0,
+        "x_split_count": 800
     },
     "templates": {
-        "16to40": [
+        "12to32": [
+            {
+                "__count": 12,
+                "nodes": 3,
+                "ppn": 4
+            },
             {
                 "__count": 16,
                 "nodes": 4,
@@ -91,16 +157,6 @@
                 "__count": 32,
                 "nodes": 4,
                 "ppn": 8
-            },
-            {
-                "__count": 36,
-                "nodes": 4,
-                "ppn": 9
-            },
-            {
-                "__count": 40,
-                "nodes": 4,
-                "ppn": 10
             }
         ]
     }

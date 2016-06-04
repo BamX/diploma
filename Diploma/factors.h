@@ -16,7 +16,8 @@ class Factors {
 
     double _x1, _x2, _totalTime,
         _x1SplitCount, _x2SplitCount, _timeSplitCount, _epsilon, _tMax,
-        _TStart, _TEnv, _TEnv4, _balanceFactor, _transposeBalancingFactor;
+        _TStart, _TEnv, _TEnv4, _balanceFactor, _transposeBalancingFactor,
+        _transposeBalancingTimeFactor;
     bool _balancing, _enableConsole, _enablePlot, _enableMatrix, _enableBuckets;
     size_t _minimumBundle, _viewCount, _debugView, _framesCount, _repeats, _transposeIterations, _algorithm;
     std::vector<double> _x1View, _x2View;
@@ -53,6 +54,7 @@ public:
     bool Balancing() const;
     double TransposeBalanceFactor() const;
     size_t TransposeBalanceIterationsInterval() const;
+    double TransposeBalanceTimeFactor() const;
 
     size_t Algorithm() const;
 
