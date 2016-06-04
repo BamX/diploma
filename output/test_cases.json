@@ -1,0 +1,107 @@
+{
+    "cases": {
+        "f99:i10:1200": {
+            "casesTemplate": "16to40",
+            "default": {
+                "transpose_balance_factor": 0.99,
+                "transpose_balance_interval": 10
+            }
+        },
+        "f96:i10:1200": {
+            "casesTemplate": "16to40",
+            "default": {
+                "transpose_balance_factor": 0.96,
+                "transpose_balance_interval": 10
+            }
+        },
+        "f92:i10:1200": {
+            "casesTemplate": "16to40",
+            "default": {
+                "transpose_balance_factor": 0.92,
+                "transpose_balance_interval": 10
+            }
+        },
+        "f88:i10:1200": {
+            "casesTemplate": "16to40",
+            "default": {
+                "transpose_balance_factor": 0.88,
+                "transpose_balance_interval": 10
+            }
+        },
+        "f96:i15:1200": {
+            "casesTemplate": "16to40",
+            "default": {
+                "transpose_balance_factor": 0.96,
+                "transpose_balance_interval": 15
+            }
+        },
+        "f96:i07:1200": {
+            "casesTemplate": "16to40",
+            "default": {
+                "transpose_balance_factor": 0.96,
+                "transpose_balance_interval": 7
+            }
+        },
+    },
+    "configuration": {
+        "cases_repeats": 2
+    },
+    "default": {
+        "algorithm": 0,
+        "balance_factor": 0.3,
+        "bundle_min": 10,
+        "enable_balancing": true,
+        "enable_buckets": true,
+        "enable_console": false,
+        "enable_matrix": false,
+        "enable_plot": false,
+        "epsilon": 1e-06,
+        "nodes": 3,
+        "ppn": 3,
+        "repeats": 1,
+        "time_max": 500,
+        "time_split_count": 20000,
+        "transpose_balance_factor": 0.96,
+        "transpose_balance_interval": 10,
+        "x_split_count": 1200
+    },
+    "templates": {
+        "16to40": [
+            {
+                "__count": 16,
+                "nodes": 4,
+                "ppn": 4
+            },
+            {
+                "__count": 20,
+                "nodes": 4,
+                "ppn": 5
+            },
+            {
+                "__count": 24,
+                "nodes": 4,
+                "ppn": 6
+            },
+            {
+                "__count": 28,
+                "nodes": 4,
+                "ppn": 7
+            },
+            {
+                "__count": 32,
+                "nodes": 4,
+                "ppn": 8
+            },
+            {
+                "__count": 36,
+                "nodes": 4,
+                "ppn": 9
+            },
+            {
+                "__count": 40,
+                "nodes": 4,
+                "ppn": 10
+            }
+        ]
+    }
+}
