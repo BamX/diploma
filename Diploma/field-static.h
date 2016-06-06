@@ -13,7 +13,6 @@ class FieldStatic : public Field {
 
     bool *calculatingRows, *nextCalculatingRows;
     double *sendBuff, *receiveBuff;
-    bool *boolSendBuff;
 
     void calculateNBS() override;
     void resetCalculatingRows();
@@ -31,9 +30,10 @@ class FieldStatic : public Field {
 
     MPI_Comm firstPassComm, secondPassComm, calculatingRowsComm;
 
-    void sendFistPass(size_t fromRow);
+    void sendFirstPass(size_t fromRow);
     bool checkIncomingFirstPass(size_t fromRow);
     void recieveFirstPass(size_t fromRow, bool first);
+    
     void sendSecondPass(size_t fromRow);
     bool checkIncomingSecondPass(size_t fromRow);
     void recieveSecondPass(size_t fromRow);
@@ -44,6 +44,7 @@ public:
     ~FieldStatic();
 
     void init() override;
+    void finalize() override;
 };
 
 #endif /* field_static_h */

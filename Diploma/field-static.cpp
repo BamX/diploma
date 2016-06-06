@@ -16,7 +16,6 @@ void FieldStatic::init() {
     nextCalculatingRows = new bool[width];
 
     sendBuff = new double[width * SEND_PACK_SIZE];
-    boolSendBuff = new bool[width];
     receiveBuff = new double[width * SEND_PACK_SIZE];
 
     lastIterationsCount = lastWaitingCount = 0;
@@ -35,12 +34,15 @@ FieldStatic::~FieldStatic() {
     delete[] nextCalculatingRows;
 
     delete[] sendBuff;
-    delete[] boolSendBuff;
     delete[] receiveBuff;
     
     MPI_Comm_free(&firstPassComm);
     MPI_Comm_free(&secondPassComm);
     MPI_Comm_free(&calculatingRowsComm);
+}
+
+void FieldStatic::finalize() {
+    MPI_Barrier(MPI_COMM_WORLD);
 }
 
 void FieldStatic::calculateNBS() {
@@ -82,14 +84,16 @@ size_t FieldStatic::firstPasses(size_t fromRow, bool first, bool async) {
 
     recieveFirstPass(fromRow, first); // calculatingRows x [prevCalculatingRows] + (b + c + f) x [calculatingRows]
     size_t row = fromRow;
-    for (size_t bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
+    for (size_t bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row) {
         if (calculatingRows[row] == false) {
             continue;
         }
 
+        fillFactors(row, first);
         firstPass(row);
+        ++bundleSize;
     }
-    sendFistPass(fromRow); // calculatingRows x [prevCalculatingRows] + (b + c + f) x [calculatingRows]
+    sendFirstPass(fromRow); // calculatingRows x [prevCalculatingRows] + (b + c + f) x [calculatingRows]
 
     return row;
 }
@@ -111,7 +115,7 @@ size_t FieldStatic::secondPasses(size_t fromRow, bool first, bool async) {
     recieveSecondPass(fromRow); // (nextCalculatingRows + y) x [prevCalculatingRows]
 
     size_t row = fromRow;
-    for (size_t bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
+    for (size_t bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row) {
         if (calculatingRows[row] == false) {
             nextCalculatingRows[row] = false;
             continue;
@@ -120,6 +124,8 @@ size_t FieldStatic::secondPasses(size_t fromRow, bool first, bool async) {
         double delta = secondPass(row, first);
 
         nextCalculatingRows[row] = (rightN == NOBODY ? false : nextCalculatingRows[row]) || delta > epsilon;
+
+        ++bundleSize;
     }
     sendSecondPass(fromRow); // (nextCalculatingRows + y) x [prevCalculatingRows]
 
@@ -151,26 +157,6 @@ size_t FieldStatic::solveRows() {
 
         bool solving = true;
         while (solving) {
-            sendRecieveCalculatingRows();
-            if (first == false) {
-                solving = false;
-                for (size_t row = 0; row < height; ++row) {
-                    if (calculatingRows[row]) {
-                        solving = true;
-                        break;
-                    }
-                }
-                if (solving == false) {
-                    break;
-                }
-            }
-
-            for (size_t row = 0; row < height; ++row) {
-                if (calculatingRows[row]) {
-                    fillFactors(row, first);
-                }
-            }
-
             size_t fromFirstPassRow = 0;
             size_t fromSecondPassRow = 0;
 
@@ -199,6 +185,14 @@ size_t FieldStatic::solveRows() {
                 }
                 if (nextSecondPassRow > 0) {
                     fromSecondPassRow = nextSecondPassRow;
+                }
+            }
+
+            solving = false;
+            for (size_t row = 0; row < height; ++row) {
+                if (calculatingRows[row]) {
+                    solving = true;
+                    break;
                 }
             }
 
@@ -234,27 +228,25 @@ size_t FieldStatic::solveRows() {
 
 #pragma mark - MPI
 
-void FieldStatic::sendRecieveCalculatingRows() {
-    MPI_Recv(calculatingRows, (int)height, MPI::BOOL, leftN, 0, calculatingRowsComm, MPI_STATUS_IGNORE);
-    MPI_Request request;
-    MPI_Isend(calculatingRows, (int)height, MPI::BOOL, rightN, 0, calculatingRowsComm, &request);
-}
-
-void FieldStatic::sendFistPass(size_t fromRow) {
+void FieldStatic::sendFirstPass(size_t fromRow) {
     // calculatingRows x [prevCalculatingRows] + (y + b + c + f) x [calculatingRows]
     if (rightN != NOBODY) {
         double *sBuff = sendBuff + fromRow * SEND_PACK_SIZE;
 
         int sSize = 0;
-        for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
+        sBuff[sSize++] = bundleSizeLimit;
+
+        for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row) {
             if (calculatingRows[row] == false) {
                 continue;
             }
 
             size_t index = row * width + width - 2;
+            sBuff[sSize++] = row;
             sBuff[sSize++] = mbF[index];
             sBuff[sSize++] = mcF[index];
             sBuff[sSize++] = mfF[index];
+            ++bundleSize;
         }
 
         MPI_Request request;
@@ -280,22 +272,30 @@ void FieldStatic::recieveFirstPass(size_t fromRow, bool first) {
         int sSize;
         MPI_Get_count(&status, MPI_DOUBLE, &sSize);
 
-        if (fromRow == 0 && first) {
-            bundleSizeLimit = sSize / 3;
-        }
-
         MPI_Recv(receiveBuff, sSize, MPI_DOUBLE, leftN, (int)fromRow, firstPassComm, MPI_STATUS_IGNORE);
 
-        sSize = 0;
-        for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
-            if (calculatingRows[row] == false) {
-                continue;
+        size_t idxBuffer = 0;
+        bundleSizeLimit = receiveBuff[idxBuffer++];
+
+        size_t lastRow = fromRow;
+        for (; idxBuffer < sSize;) {
+            size_t row = receiveBuff[idxBuffer++];
+
+            while (lastRow < row) {
+                calculatingRows[lastRow++] = false;
             }
+            calculatingRows[lastRow++] = true;
 
             size_t index = row * width;
-            mbF[index] = receiveBuff[sSize++];
-            mcF[index] = receiveBuff[sSize++];
-            mfF[index] = receiveBuff[sSize++];
+            mbF[index] = receiveBuff[idxBuffer++];
+            mcF[index] = receiveBuff[idxBuffer++];
+            mfF[index] = receiveBuff[idxBuffer++];
+        }
+
+        if ((sSize - 1) / 4 < bundleSizeLimit) {
+            while (lastRow < height) {
+                calculatingRows[lastRow++] = false;
+            }
         }
     }
 }
@@ -305,11 +305,13 @@ void FieldStatic::sendSecondPass(size_t fromRow) {
     if (leftN != NOBODY) {
         double *sBuff = sendBuff + fromRow * SEND_PACK_SIZE;
         int sSize = 0;
-        for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
+        for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row) {
             if (calculatingRows[row] == false) {
                 continue;
             }
             sBuff[sSize++] = (nextCalculatingRows[row] ? 1 : -1) * curr[row * width + 1];
+
+            ++bundleSize;
         }
 
         MPI_Request request;
@@ -338,7 +340,7 @@ void FieldStatic::recieveSecondPass(size_t fromRow) {
         MPI_Recv(receiveBuff, sSize, MPI_DOUBLE, rightN, (int)fromRow, secondPassComm, MPI_STATUS_IGNORE);
 
         sSize = 0;
-        for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row, ++bundleSize) {
+        for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row) {
             if (calculatingRows[row] == false) {
                 continue;
             }
@@ -346,6 +348,8 @@ void FieldStatic::recieveSecondPass(size_t fromRow) {
             double value = receiveBuff[sSize++];
             nextCalculatingRows[row] = value > 0;
             curr[(row + 1) * width - 1] = nextCalculatingRows[row] ? value : -value;
+
+            ++bundleSize;
         }
     }
 }

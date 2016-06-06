@@ -79,7 +79,7 @@ protected:
 public:
     Field();
     ~Field();
-    void finalize();
+    virtual void finalize();
 
     void test();
     void testPrint();
