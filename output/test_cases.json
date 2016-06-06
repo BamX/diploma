@@ -1,162 +1,187 @@
 {
     "cases": {
-        "imbalanced:1200": {
-            "casesTemplate": "12to32",
+        "static:800": {
+            "casesTemplate": "1to99",
             "default": {
-                "enable_balancing": 0
+                "algorithm": 1,
+                "x_split_count": 800
             }
         },
-        "f88:i10:iterations": {
-            "casesTemplate": "12to32",
+        "transpose:800": {
+            "casesTemplate": "1to99",
             "default": {
-                "transpose_balance_factor": 0.88,
-                "transpose_balance_interval": 10,
-                "transpose_balance_time_factor": 0.0
+                "algorithm": 0,
+                "x_split_count": 800
             }
         },
-        "f92:i10:iterations": {
-            "casesTemplate": "12to32",
+        "static:1000": {
+            "casesTemplate": "1to99",
             "default": {
-                "transpose_balance_factor": 0.92,
-                "transpose_balance_interval": 10,
-                "transpose_balance_time_factor": 0.0
+                "algorithm": 1,
+                "x_split_count": 1000
             }
         },
-        "f96:i07:iterations": {
-            "casesTemplate": "12to32",
+        "transpose:1000": {
+            "casesTemplate": "1to99",
             "default": {
-                "transpose_balance_factor": 0.96,
-                "transpose_balance_interval": 7,
-                "transpose_balance_time_factor": 0.0
+                "algorithm": 0,
+                "x_split_count": 1000
             }
         },
-        "f96:i10:iterations": {
-            "casesTemplate": "12to32",
+        "static:1400": {
+            "casesTemplate": "1to99",
             "default": {
-                "transpose_balance_factor": 0.96,
-                "transpose_balance_interval": 10,
-                "transpose_balance_time_factor": 0.0
+                "algorithm": 1,
+                "x_split_count": 1400
             }
         },
-        "f96:i15:iterations": {
-            "casesTemplate": "12to32",
+        "transpose:1400": {
+            "casesTemplate": "1to99",
             "default": {
-                "transpose_balance_factor": 0.96,
-                "transpose_balance_interval": 15,
-                "transpose_balance_time_factor": 0.0
-            }
-        },
-        "f99:i10:iterations": {
-            "casesTemplate": "12to32",
-            "default": {
-                "transpose_balance_factor": 0.99,
-                "transpose_balance_interval": 10,
-                "transpose_balance_time_factor": 0.0
-            }
-        },
-        "f88:i10:time": {
-            "casesTemplate": "12to32",
-            "default": {
-                "transpose_balance_factor": 0.88,
-                "transpose_balance_interval": 10,
-                "transpose_balance_time_factor": 1.0
-            }
-        },
-        "f92:i10:time": {
-            "casesTemplate": "12to32",
-            "default": {
-                "transpose_balance_factor": 0.92,
-                "transpose_balance_interval": 10,
-                "transpose_balance_time_factor": 1.0
-            }
-        },
-        "f96:i07:time": {
-            "casesTemplate": "12to32",
-            "default": {
-                "transpose_balance_factor": 0.96,
-                "transpose_balance_interval": 7,
-                "transpose_balance_time_factor": 1.0
-            }
-        },
-        "f96:i10:time": {
-            "casesTemplate": "12to32",
-            "default": {
-                "transpose_balance_factor": 0.96,
-                "transpose_balance_interval": 10,
-                "transpose_balance_time_factor": 1.0
-            }
-        },
-        "f96:i15:time": {
-            "casesTemplate": "12to32",
-            "default": {
-                "transpose_balance_factor": 0.96,
-                "transpose_balance_interval": 15,
-                "transpose_balance_time_factor": 1.0
-            }
-        },
-        "f99:i10:time": {
-            "casesTemplate": "12to32",
-            "default": {
-                "transpose_balance_factor": 0.99,
-                "transpose_balance_interval": 10,
-                "transpose_balance_time_factor": 1.0
+                "algorithm": 0,
+                "x_split_count": 1400
             }
         }
     },
     "configuration": {
-        "cases_repeats": 2
+        "cases_repeats": 3
     },
     "default": {
         "algorithm": 0,
-        "balance_factor": 0.3,
+        "balance_factor": 0.4,
         "bundle_min": 10,
         "enable_balancing": true,
         "enable_buckets": true,
         "enable_console": false,
         "enable_matrix": false,
         "enable_plot": false,
-        "epsilon": 1e-03,
+        "epsilon": 1e-04,
         "nodes": 3,
         "ppn": 3,
         "repeats": 1,
         "time_max": 450,
-        "time_split_count": 20000,
-        "transpose_balance_factor": 0.96,
-        "transpose_balance_interval": 10,
-        "transpose_balance_time_factor": 0.0,
-        "x_split_count": 800
+        "time_split_count": 10000,
+        "transpose_balance_factor": 0.92,
+        "transpose_balance_interval": 15,
+        "transpose_balance_time_factor": 1.0,
+        "x_split_count": 100
     },
     "templates": {
-        "12to32": [
+        "1to99": [
             {
-                "__count": 12,
+                "nodes": 1,
+                "ppn": 1,
+                "repeats": 1
+            },
+            {
+                "nodes": 1,
+                "ppn": 2,
+                "repeats": 1
+            },
+            {
+                "nodes": 1,
+                "ppn": 3,
+                "repeats": 1
+            },
+            {
+                "nodes": 1,
+                "ppn": 4,
+                "repeats": 2
+            },
+            {
+                "nodes": 1,
+                "ppn": 5,
+                "repeats": 2
+            },
+            {
+                "nodes": 2,
+                "ppn": 3,
+                "repeats": 2
+            },
+            {
+                "nodes": 2,
+                "ppn": 4,
+                "repeats": 2
+            },
+            {
                 "nodes": 3,
-                "ppn": 4
+                "ppn": 3,
+                "repeats": 2
             },
             {
-                "__count": 16,
-                "nodes": 4,
-                "ppn": 4
+                "nodes": 3,
+                "ppn": 4,
+                "repeats": 2
             },
             {
-                "__count": 20,
-                "nodes": 4,
-                "ppn": 5
+                "nodes": 3,
+                "ppn": 5,
+                "repeats": 3
             },
             {
-                "__count": 24,
                 "nodes": 4,
-                "ppn": 6
+                "ppn": 5,
+                "repeats": 3
             },
             {
-                "__count": 28,
-                "nodes": 4,
-                "ppn": 7
+                "nodes": 5,
+                "ppn": 5,
+                "repeats": 4
             },
             {
-                "__count": 32,
-                "nodes": 4,
-                "ppn": 8
+                "nodes": 6,
+                "ppn": 5,
+                "repeats": 4
+            },
+            {
+                "nodes": 7,
+                "ppn": 5,
+                "repeats": 5
+            },
+            {
+                "nodes": 8,
+                "ppn": 5,
+                "repeats": 6
+            },
+            {
+                "nodes": 9,
+                "ppn": 5,
+                "repeats": 7
+            },
+            {
+                "nodes": 9,
+                "ppn": 6,
+                "repeats": 7
+            },
+            {
+                "nodes": 9,
+                "ppn": 7,
+                "repeats": 8
+            },
+            {
+                "nodes": 9,
+                "ppn": 8,
+                "repeats": 8
+            },
+            {
+                "nodes": 10,
+                "ppn": 8,
+                "repeats": 9
+            },
+            {
+                "nodes": 11,
+                "ppn": 9,
+                "repeats": 9
+            },
+            {
+                "nodes": 12,
+                "ppn": 9,
+                "repeats": 9
+            },
+            {
+                "nodes": 12,
+                "ppn": 10,
+                "repeats": 10
             }
         ]
     }
