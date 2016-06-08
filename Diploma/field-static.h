@@ -11,6 +11,9 @@ class FieldStatic : public Field {
     size_t bundleSizeLimit;
     size_t lastWaitingCount, lastIterationsCount;
 
+    size_t fullHeight;
+    int balancingCounter;
+
     bool *calculatingRows, *nextCalculatingRows;
     double *sendBuff, *receiveBuff;
 
@@ -40,6 +43,16 @@ class FieldStatic : public Field {
     void recieveSecondPass(size_t fromRow);
 
     void printConsole() override;
+
+#pragma makr - Balancing
+
+    double *weights;
+    size_t *nowBuckets, *nextBuckets;
+    bool shouldSendWeights, shouldBalanceNext;
+
+    void partitionAndCheck();
+    bool balanceNeeded() override;
+    void balance() override;
     
 public:
     ~FieldStatic();

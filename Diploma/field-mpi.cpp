@@ -73,16 +73,10 @@ void Field::calculateNBS() {
     MPI_Cart_shift(comm, 0, 1, &topN, &bottomN);
     rightN = leftN = NOBODY;
 
-    size_t newHeight = height / numProcs;
+    height /= numProcs;
 
-    mySY = newHeight * myCoord;
+    mySY = height * myCoord;
     mySX = 0;
-
-    if (bottomN == NOBODY) {
-        newHeight = height - newHeight * (numProcs - 1);
-    }
-
-    height = newHeight;
 
 #ifdef DEBUG_WAIT
     printf("I'm %d(%d)\n", myId, ::getpid());

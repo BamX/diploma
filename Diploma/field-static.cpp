@@ -4,6 +4,7 @@
 
 #include "field-static.h"
 #include "algo.h"
+#include "balancing.h"
 #include <cmath>
 
 #include <sys/types.h>
@@ -11,7 +12,51 @@
 
 void FieldStatic::init() {
     Field::init();
+}
+
+FieldStatic::~FieldStatic() {
+    delete[] calculatingRows;
+    delete[] nextCalculatingRows;
+
+    delete[] sendBuff;
+    delete[] receiveBuff;
+
+    delete[] weights;
+
+    delete[] nowBuckets;
+    delete[] nextBuckets;
     
+    MPI_Comm_free(&firstPassComm);
+    MPI_Comm_free(&secondPassComm);
+    MPI_Comm_free(&calculatingRowsComm);
+}
+
+void FieldStatic::finalize() {
+    MPI_Barrier(MPI_COMM_WORLD);
+}
+
+void FieldStatic::calculateNBS() {
+    Field::calculateNBS();
+
+    fullHeight = algo::ftr().X2SplitCount();
+
+    nowBuckets = new size_t[numProcs];
+    nextBuckets = new size_t[numProcs];
+    for (size_t i = 0; i < numProcs - 1; ++i) {
+        nowBuckets[i] = height;
+    }
+    nowBuckets[numProcs - 1] = fullHeight - height * (numProcs - 1);
+
+    shouldBalanceNext = false;
+    shouldSendWeights = false;
+    balancingCounter = (int)algo::ftr().TransposeBalanceIterationsInterval();
+
+    if (bottomN == NOBODY) {
+        height = fullHeight - height * (numProcs - 1);
+    }
+
+    height += (topN != NOBODY ? 1 : 0) + (bottomN != NOBODY ? 1 : 0);
+
     calculatingRows = new bool[width];
     nextCalculatingRows = new bool[width];
 
@@ -27,27 +72,9 @@ void FieldStatic::init() {
     bundleSizeLimit = std::max(ceil((double)width / numProcs / 2), 15.0);
     printf("I'm %d(%d)\twith w:%zu\th:%zu\tbs:%zu.\tTop:%d\tbottom:%d\n",
            myId, ::getpid(), width, height, bundleSizeLimit, topN, bottomN);
-}
 
-FieldStatic::~FieldStatic() {
-    delete[] calculatingRows;
-    delete[] nextCalculatingRows;
-
-    delete[] sendBuff;
-    delete[] receiveBuff;
-    
-    MPI_Comm_free(&firstPassComm);
-    MPI_Comm_free(&secondPassComm);
-    MPI_Comm_free(&calculatingRowsComm);
-}
-
-void FieldStatic::finalize() {
-    MPI_Barrier(MPI_COMM_WORLD);
-}
-
-void FieldStatic::calculateNBS() {
-    Field::calculateNBS();
-    height += (topN != NOBODY ? 1 : 0) + (bottomN != NOBODY ? 1 : 0);
+    weights = new double[fullHeight];
+    memset(weights, 0, fullHeight * sizeof(double));
 }
 
 #pragma mark - Logic
@@ -154,6 +181,12 @@ size_t FieldStatic::solveRows() {
     size_t maxIterationsCount = 0;
 
     if (transposed) {
+        --balancingCounter;
+        if (balancingCounter == 0) {
+            shouldSendWeights = true;
+            balancingCounter = (int)algo::ftr().TransposeBalanceIterationsInterval();
+        }
+
         resetCalculatingRows();
         bool first = true;
 
@@ -225,10 +258,18 @@ size_t FieldStatic::solveRows() {
         }
     }
     else {
+        if (shouldBalanceNext) {
+            balance();
+            shouldBalanceNext = false;
+        }
+
+        size_t firstRealRow = (topN == NOBODY ? 0 : 1);
+        size_t lastRealRow = height - firstRealRow - (bottomN ? 0 : 1);
         for (size_t row = 0; row < height; ++row) {
             fillFactors(row, true);
             double delta = solve(row, true);
             size_t iterationsCount = 1;
+            auto startTime = picosecFromStart();
 
             while (delta > epsilon) {
                 fillFactors(row, false);
@@ -240,6 +281,13 @@ size_t FieldStatic::solveRows() {
                 }
             }
             maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
+
+            if (firstRealRow <= row && row <= lastRealRow) {
+                weights[mySY + row - firstRealRow] =
+                        weights[mySY + row - firstRealRow] * algo::ftr().TransposeBalanceFactor()
+                        + iterationsCount * (1.0 - algo::ftr().TransposeBalanceTimeFactor())
+                        + (picosecFromStart() - startTime) * 1e-12 * algo::ftr().TransposeBalanceTimeFactor();
+            }
         }
     }
     
@@ -254,7 +302,14 @@ void FieldStatic::sendFirstPass(size_t fromRow) {
         double *sBuff = sendBuff + fromRow * SEND_PACK_SIZE;
 
         int sSize = 0;
-        sBuff[sSize++] = bundleSizeLimit;
+        sBuff[sSize++] = (shouldSendWeights ? -1 : 1) * (int)bundleSizeLimit;
+
+        if (shouldSendWeights) {
+            for (size_t i = 0; i < mySX + width - (rightN == NOBODY ? 0 : 1) - (leftN == NOBODY ? 0 : 1); ++i) {
+                sBuff[sSize++] = weights[i];
+            }
+            shouldSendWeights = false;
+        }
 
         for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row) {
             if (calculatingRows[row] == false) {
@@ -310,7 +365,20 @@ bool FieldStatic::recieveFirstPass(size_t fromRow, bool first) {
         }
 
         size_t idxBuffer = 0;
-        bundleSizeLimit = receiveBuff[idxBuffer++];
+        double bsFlag = receiveBuff[idxBuffer++];
+        bool receiveWeights = bsFlag < 0;
+        bundleSizeLimit = (receiveWeights ? -1 : 1) * bsFlag;
+
+        if (receiveWeights) {
+            for (size_t i = 0; i < mySX; ++i) {
+                weights[i] = receiveBuff[idxBuffer++];
+            }
+            shouldSendWeights = true;
+
+            if (rightN == NOBODY) {
+                partitionAndCheck();
+            }
+        }
 
         size_t lastRow = fromRow;
         for (; idxBuffer < sSize;) {
@@ -337,11 +405,36 @@ bool FieldStatic::recieveFirstPass(size_t fromRow, bool first) {
     return true;
 }
 
+void FieldStatic::partitionAndCheck() {
+    /*debug() << "NB ";
+    for (size_t i = 0; i < numProcs; ++i) {
+        debug(0) << nowBuckets[i] << " ";
+    }
+    (debug(0) << "\n").flush();*/
+
+    auto buckets = balancing::fastPartition(weights, fullHeight, nowBuckets, numProcs);
+    size_t deltaSum = 0;
+    for (size_t i = 0; i < numProcs; ++i) {
+        nextBuckets[i] = (size_t)buckets[i];
+        deltaSum += std::abs((long)nextBuckets[i] - (long)nowBuckets);
+    }
+    // TODO: Add config parameter
+    shouldBalanceNext = deltaSum > 3;
+}
+
 void FieldStatic::sendSecondPass(size_t fromRow) {
     // (nextCalculatingRows + y) x [prevCalculatingRows]
     if (leftN != NOBODY) {
         double *sBuff = sendBuff + fromRow * SEND_PACK_SIZE;
         int sSize = 0;
+
+        sBuff[sSize++] = shouldBalanceNext ? 1 : 0;
+        if (shouldBalanceNext) {
+            for (size_t i = 0; i < numProcs; ++i) {
+                sBuff[sSize++] = nextBuckets[i];
+            }
+        }
+
         for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row) {
             if (calculatingRows[row] == false) {
                 continue;
@@ -377,6 +470,14 @@ void FieldStatic::recieveSecondPass(size_t fromRow) {
         MPI_Recv(receiveBuff, sSize, MPI_DOUBLE, rightN, (int)fromRow, secondPassComm, MPI_STATUS_IGNORE);
 
         sSize = 0;
+        bool shouldReceiveBuckets = receiveBuff[sSize++] > 0;
+        if (shouldReceiveBuckets) {
+            for (size_t i = 0; i < numProcs; ++i) {
+                nextBuckets[i] = receiveBuff[sSize++];
+            }
+            shouldBalanceNext = true;
+        }
+
         for (size_t row = fromRow, bundleSize = 0; row < height && bundleSize < bundleSizeLimit; ++row) {
             if (calculatingRows[row] == false) {
                 continue;
@@ -389,6 +490,18 @@ void FieldStatic::recieveSecondPass(size_t fromRow) {
             ++bundleSize;
         }
     }
+}
+
+#pragma mark - Balancing
+
+bool FieldStatic::balanceNeeded() {
+    // Balance in solving
+    return false;
+}
+
+void FieldStatic::balance() {
+    debug() << "Balancing " << t << "\n";
+    debug(0).flush();
 }
 
 #pragma mark - Print

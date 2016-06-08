@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		410CCDB21D08AC0B0039C773 /* balancing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 410CCDB11D08AC0B0039C773 /* balancing.cpp */; };
 		412688681AE113E600E54667 /* config.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 412688661AE113E600E54667 /* config.cpp */; };
 		41359F7A1AD68008009C2DD0 /* factors.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41359F781AD68008009C2DD0 /* factors.cpp */; };
 		41BB05E01AFFBCFC001A9883 /* field-mpi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 41BB05DF1AFFBCFC001A9883 /* field-mpi.cpp */; };
@@ -31,6 +32,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		410CCDB11D08AC0B0039C773 /* balancing.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = balancing.cpp; sourceTree = "<group>"; };
 		412688661AE113E600E54667 /* config.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = config.cpp; sourceTree = "<group>"; };
 		412688671AE113E600E54667 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		41359F781AD68008009C2DD0 /* factors.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = factors.cpp; sourceTree = "<group>"; };
@@ -97,6 +99,7 @@
 				41DE06E41CCCE2EF00AB2F5A /* field-static.h */,
 				41DE06E31CCCE2EF00AB2F5A /* field-static.cpp */,
 				417C4F6B1C70C89F008FDCFA /* balancing.h */,
+				410CCDB11D08AC0B0039C773 /* balancing.cpp */,
 				41D42E181ACAC9E100989E03 /* main.cpp */,
 			);
 			path = Diploma;
@@ -163,6 +166,7 @@
 				41359F7A1AD68008009C2DD0 /* factors.cpp in Sources */,
 				41DE06DF1CCCCE1800AB2F5A /* algo.cpp in Sources */,
 				41DE06E21CCCE26F00AB2F5A /* field-transpose.cpp in Sources */,
+				410CCDB21D08AC0B0039C773 /* balancing.cpp in Sources */,
 				41D42E191ACAC9E100989E03 /* main.cpp in Sources */,
 				41DE06E51CCCE2EF00AB2F5A /* field-static.cpp in Sources */,
 				41BB05E21AFFBE8B001A9883 /* field-print.cpp in Sources */,
