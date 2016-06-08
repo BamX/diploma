@@ -31,8 +31,9 @@ class FieldStatic : public Field {
     MPI_Comm firstPassComm, secondPassComm, calculatingRowsComm;
 
     void sendFirstPass(size_t fromRow);
+    void sendDoneAsFirstPass();
     bool checkIncomingFirstPass(size_t fromRow);
-    void recieveFirstPass(size_t fromRow, bool first);
+    bool recieveFirstPass(size_t fromRow, bool first);
     
     void sendSecondPass(size_t fromRow);
     bool checkIncomingSecondPass(size_t fromRow);
