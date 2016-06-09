@@ -63,8 +63,9 @@ void FieldStatic::calculateNBS() {
     calculatingRows = new bool[width];
     nextCalculatingRows = new bool[width];
 
-    sendBuff = new double[width * SEND_PACK_SIZE];
-    receiveBuff = new double[width * SEND_PACK_SIZE];
+    sendBucketSize = width + numProcs;
+    sendBuff = new double[width * sendBucketSize];
+    receiveBuff = new double[width * sendBucketSize];
 
     lastIterationsCount = lastWaitingCount = 0;
 
@@ -307,7 +308,7 @@ size_t FieldStatic::solveRows() {
 void FieldStatic::sendFirstPass(size_t fromRow) {
     // (crf + b + c + f) x [calculatingRows]
     if (rightN != NOBODY) {
-        double *sBuff = sendBuff + fromRow * SEND_PACK_SIZE;
+        double *sBuff = sendBuff + fromRow * sendBucketSize;
 
         int sSize = 0;
         sBuff[sSize++] = (shouldSendWeights ? -1 : 1) * (int)bundleSizeLimit;
@@ -444,7 +445,7 @@ void FieldStatic::partitionAndCheck() {
 void FieldStatic::sendSecondPass(size_t fromRow) {
     // (nextCalculatingRows + y) x [prevCalculatingRows]
     if (leftN != NOBODY) {
-        double *sBuff = sendBuff + fromRow * SEND_PACK_SIZE;
+        double *sBuff = sendBuff + fromRow * sendBucketSize;
         int sSize = 0;
         
         sBuff[sSize++] = shouldBalanceNext ? 1 : 0;

@@ -11,7 +11,7 @@ class FieldStatic : public Field {
     size_t bundleSizeLimit;
     size_t lastWaitingCount, lastIterationsCount;
 
-    size_t fullHeight;
+    size_t fullHeight, sendBucketSize;
     int balancingCounter;
 
     bool *calculatingRows, *nextCalculatingRows;

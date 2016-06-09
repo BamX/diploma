@@ -14,7 +14,6 @@ extern int const MASTER;
 extern int const WAITER;
 extern int const NOBODY;
 extern int const NOTHING;
-extern int const SEND_PACK_SIZE;
 extern size_t const MAX_ITTERATIONS_COUNT;
 
 typedef std::chrono::high_resolution_clock bx_clock_t;
