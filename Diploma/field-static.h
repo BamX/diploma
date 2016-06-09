@@ -46,6 +46,9 @@ class FieldStatic : public Field {
 
 #pragma makr - Balancing
 
+    MPI_Comm balanceComm;
+    MPI_Request *balanceRequests;
+
     double *weights;
     size_t *nowBuckets, *nextBuckets;
     bool shouldSendWeights, shouldBalanceNext;

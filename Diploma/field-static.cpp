@@ -25,10 +25,13 @@ FieldStatic::~FieldStatic() {
 
     delete[] nowBuckets;
     delete[] nextBuckets;
+
+    delete[] balanceRequests;
     
     MPI_Comm_free(&firstPassComm);
     MPI_Comm_free(&secondPassComm);
     MPI_Comm_free(&calculatingRowsComm);
+    MPI_Comm_free(&balanceComm);
 }
 
 void FieldStatic::finalize() {
@@ -68,6 +71,9 @@ void FieldStatic::calculateNBS() {
     MPI_Comm_dup(comm, &firstPassComm);
     MPI_Comm_dup(comm, &secondPassComm);
     MPI_Comm_dup(comm, &calculatingRowsComm);
+    MPI_Comm_dup(comm, &balanceComm);
+
+    balanceRequests = new MPI_Request[numProcs];
 
     bundleSizeLimit = std::max(ceil((double)width / numProcs / 2), 15.0);
     printf("I'm %d(%d)\twith w:%zu\th:%zu\tbs:%zu.\tTop:%d\tbottom:%d\n",
@@ -181,10 +187,12 @@ size_t FieldStatic::solveRows() {
     size_t maxIterationsCount = 0;
 
     if (transposed) {
-        --balancingCounter;
-        if (balancingCounter == 0) {
-            shouldSendWeights = true;
-            balancingCounter = (int)algo::ftr().TransposeBalanceIterationsInterval();
+        if (algo::ftr().Balancing()) {
+            --balancingCounter;
+            if (balancingCounter == 0) {
+                shouldSendWeights = true;
+                balancingCounter = (int)algo::ftr().TransposeBalanceIterationsInterval();
+            }
         }
 
         resetCalculatingRows();
@@ -500,8 +508,136 @@ bool FieldStatic::balanceNeeded() {
 }
 
 void FieldStatic::balance() {
-    debug() << "Balancing " << t << "\n";
-    debug(0).flush();
+    /*debug() << "=============\nBalancing " << t << "\n";debug(0).flush();
+
+    debug() << "NB ";
+    for (size_t i = 0; i < numProcs; ++i) {
+        debug(0) << nowBuckets[i] << " ";
+    }
+    (debug(0) << "\n").flush();
+
+    debug() << "BB ";
+    for (size_t i = 0; i < numProcs; ++i) {
+        debug(0) << nextBuckets[i] << " ";
+    }
+    (debug(0) << "\n").flush();*/
+
+    //  21 32
+    //1112223333
+    //1111112233
+    //     2132
+
+    //debug() << "! " << height << " " << width << " " << mySY << "\n"; debug(0).flush();
+
+    if (bfout != NULL) {
+        for (size_t i = 0; i < numProcs; ++i) {
+            *bfout << nextBuckets[i];
+            if (i < numProcs - 1) {
+                *bfout << ",";
+            }
+        }
+        *bfout << "\n";
+        bfout->flush();
+    }
+
+    size_t sy = 0, nextSY = 0;
+    size_t topShift = (topN == NOBODY ? 0 : 1);
+    size_t bottomShift = (bottomN == NOBODY ? 0 : 1);
+    size_t subheight = height - topShift - bottomShift;
+    size_t myBucketStart = mySY;
+    size_t myBucketEnd = mySY + subheight;
+    size_t selfSendFrom = 0;
+    //debug() << "> " << subheight << "  " << myBucketStart << " " << myBucketEnd << "\n"; debug(0).flush();
+
+    // SEND
+    for (size_t i = 0; i < numProcs; ++i) {
+        if (i == myCoord) {
+            nextSY = sy;
+        }
+
+        size_t bucketStart = sy - (i == 0 ? 0 : 1);
+        size_t bucketEnd = sy + nextBuckets[i] + (i == numProcs - 1 ? 0 : 1);
+        size_t fromRow = 0, toRow = 0;
+
+        //debug() << "        " << i << " " << bucketStart << " " << bucketEnd << " vs " << myBucketStart << " " << myBucketEnd << "\n"; debug(0).flush();
+
+        if (bucketStart <= myBucketStart && myBucketEnd <= bucketEnd) {
+            fromRow = topShift;
+            toRow = subheight + topShift;
+            //debug() << "SF " << i << "   " << fromRow << " " << toRow << " " << toRow - fromRow << "\n"; debug(0).flush();
+        }
+        else if (myBucketStart <= bucketStart && bucketStart < myBucketEnd) {
+            fromRow = (bucketStart - myBucketStart) + topShift;
+            toRow = std::min(bucketEnd - myBucketStart, subheight) + topShift;
+            //debug() << "SU " << i << "   " << fromRow << " " << toRow << " " << toRow - fromRow << "\n"; debug(0).flush();
+        }
+        else if (myBucketStart < bucketEnd && bucketEnd <= myBucketEnd) {
+            fromRow = topShift;
+            toRow = (bucketEnd - myBucketStart) + topShift;
+            //debug() << "SB " << i << "   " << fromRow << " " << toRow << " " << toRow - fromRow << "\n"; debug(0).flush();
+        }
+
+        if (fromRow != toRow) {
+            if (i == myCoord) {
+                selfSendFrom = fromRow;
+            } else {
+                MPI_Request request;
+                MPI_Isend(prev + fromRow * width, (int)((toRow - fromRow) * width),
+                          MPI_DOUBLE, (int)i, 0, balanceComm, &request);
+            }
+        }
+
+        sy += nextBuckets[i];
+    }
+
+    mySY = nextSY;
+    subheight = nextBuckets[myCoord];
+    myBucketStart = mySY - topShift;
+    myBucketEnd = mySY + subheight + bottomShift;
+    subheight += topShift + bottomShift;
+    height = subheight;
+    //debug() << "< " << subheight << "  " << myBucketStart << " " << myBucketEnd << "\n"; debug(0).flush();
+
+    sy = 0;
+    size_t reqIdx = 0;
+    for (size_t i = 0; i < numProcs; ++i) {
+        size_t bucketStart = sy;
+        size_t bucketEnd = sy + nowBuckets[i];
+        size_t fromRow = 0, toRow = 0;
+
+        if (bucketStart <= myBucketStart && myBucketEnd <= bucketEnd) {
+            fromRow = 0;
+            toRow = subheight;
+            //debug() << "RF " << i << "   " << fromRow << " " << toRow << " " << toRow - fromRow << "\n"; debug(0).flush();
+        }
+        else if (myBucketStart <= bucketStart && bucketStart < myBucketEnd) {
+            fromRow = (bucketStart - myBucketStart);
+            toRow = std::min(bucketEnd - myBucketStart, subheight);
+            //debug() << "RU " << i << "   " << fromRow << " " << toRow << " " << toRow - fromRow << "\n"; debug(0).flush();
+        }
+        else if (myBucketStart < bucketEnd && bucketEnd <= myBucketEnd) {
+            fromRow = 0;
+            toRow = (bucketEnd - myBucketStart);
+            //debug() << "RB " << i << "   " << fromRow << " " << toRow << " " << toRow - fromRow << "\n"; debug(0).flush();
+        }
+
+        if (fromRow != toRow) {
+            if (i == myCoord) {
+                memcpy(buff + fromRow * width, prev + selfSendFrom * width, (toRow - fromRow) * width * sizeof(double));
+            } else {
+                MPI_Irecv(buff + fromRow * width, (int)((toRow - fromRow) * width),
+                          MPI_DOUBLE, (int)i, 0, balanceComm, balanceRequests + reqIdx++);
+            }
+        }
+
+        sy += nowBuckets[i];
+    }
+
+    MPI_Waitall((int)reqIdx, balanceRequests, MPI_STATUSES_IGNORE);
+    std::swap(buff, prev);
+    std::swap(nowBuckets, nextBuckets);
+
+    //debug() << "! " << height << " " << width << " " << mySY << "\n"; debug(0).flush();
 }
 
 #pragma mark - Print

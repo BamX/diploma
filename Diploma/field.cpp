@@ -77,6 +77,8 @@ void Field::init() {
     if (algo::ftr().EnableBuckets()) {
         enableBucketsOutput();
     }
+
+    debug(0).flush();
 }
 
 void Field::fillInitial() {
