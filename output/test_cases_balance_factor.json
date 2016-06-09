@@ -1,0 +1,154 @@
+{
+    "cases": {
+        "static:010": {
+            "casesTemplate": "1to99",
+            "default": {
+                "balance_factor": 0.1
+            }
+        },
+        "static:030": {
+            "casesTemplate": "1to99",
+            "default": {
+                "balance_factor": 0.3
+            }
+        },
+        "static:070": {
+            "casesTemplate": "1to99",
+            "default": {
+                "balance_factor": 0.7
+            }
+        },
+        "static:100": {
+            "casesTemplate": "1to99",
+            "default": {
+                "balance_factor": 1.0
+            }
+        },
+        "static:120": {
+            "casesTemplate": "1to99",
+            "default": {
+                "balance_factor": 1.0
+            }
+        }
+    },
+    "configuration": {
+        "cases_repeats": 3
+    },
+    "default": {
+        "algorithm": 1,
+        "balance_factor": 0.4,
+        "bundle_min": 10,
+        "enable_balancing": true,
+        "enable_buckets": true,
+        "enable_console": true,
+        "enable_matrix": false,
+        "enable_plot": false,
+        "epsilon": 1e-04,
+        "nodes": 3,
+        "ppn": 3,
+        "repeats": 1,
+        "time_max": 200,
+        "time_split_count": 10000,
+        "transpose_balance_factor": 0.92,
+        "transpose_balance_interval": 15,
+        "transpose_balance_time_factor": 1.0,
+        "static_balance_threshold_factor": 0.1,
+        "x_split_count": 800
+    },
+    "templates": {
+        "1to99": [
+            {
+                "nodes": 1,
+                "ppn": 1
+            },
+            {
+                "nodes": 1,
+                "ppn": 2
+            },
+            {
+                "nodes": 1,
+                "ppn": 3
+            },
+            {
+                "nodes": 1,
+                "ppn": 4
+            },
+            {
+                "nodes": 1,
+                "ppn": 5
+            },
+            {
+                "nodes": 2,
+                "ppn": 3
+            },
+            {
+                "nodes": 2,
+                "ppn": 4
+            },
+            {
+                "nodes": 3,
+                "ppn": 3
+            },
+            {
+                "nodes": 3,
+                "ppn": 4
+            },
+            {
+                "nodes": 3,
+                "ppn": 5
+            },
+            {
+                "nodes": 4,
+                "ppn": 5
+            },
+            {
+                "nodes": 5,
+                "ppn": 5
+            },
+            {
+                "nodes": 6,
+                "ppn": 5
+            },
+            {
+                "nodes": 7,
+                "ppn": 5
+            },
+            {
+                "nodes": 8,
+                "ppn": 5
+            },
+            {
+                "nodes": 9,
+                "ppn": 5
+            },
+            {
+                "nodes": 9,
+                "ppn": 6
+            },
+            {
+                "nodes": 9,
+                "ppn": 7
+            },
+            {
+                "nodes": 9,
+                "ppn": 8
+            },
+            {
+                "nodes": 10,
+                "ppn": 8
+            },
+            {
+                "nodes": 11,
+                "ppn": 9
+            },
+            {
+                "nodes": 12,
+                "ppn": 9
+            },
+            {
+                "nodes": 12,
+                "ppn": 10
+            }
+        ]
+    }
+}

@@ -86,6 +86,7 @@
         "transpose_balance_factor": 0.96,
         "transpose_balance_interval": 10,
         "transpose_balance_time_factor": 0.0,
+        "static_balance_threshold_factor": 0.1,
         "x_split_count": 100
     },
     "templates": {
