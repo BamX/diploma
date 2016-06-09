@@ -424,10 +424,21 @@ void FieldStatic::partitionAndCheck() {
     size_t deltaSum = 0;
     for (size_t i = 0; i < numProcs; ++i) {
         nextBuckets[i] = (size_t)buckets[i];
-        deltaSum += std::abs((long)nextBuckets[i] - (long)nowBuckets);
+        deltaSum += std::abs((long)nextBuckets[i] - (long)nowBuckets[i]);
     }
-    // TODO: Add config parameter
-    shouldBalanceNext = deltaSum > 3;
+
+    shouldBalanceNext = deltaSum > fullHeight / numProcs * algo::ftr().StaticBalanceThresholdFactor();
+
+    if (bfout != NULL) {
+        for (size_t i = 0; i < numProcs; ++i) {
+            *bfout << (shouldBalanceNext ? nextBuckets : nowBuckets)[i];
+            if (i < numProcs - 1) {
+                *bfout << ",";
+            }
+        }
+        *bfout << "\n";
+        bfout->flush();
+    }
 }
 
 void FieldStatic::sendSecondPass(size_t fromRow) {
@@ -435,7 +446,7 @@ void FieldStatic::sendSecondPass(size_t fromRow) {
     if (leftN != NOBODY) {
         double *sBuff = sendBuff + fromRow * SEND_PACK_SIZE;
         int sSize = 0;
-
+        
         sBuff[sSize++] = shouldBalanceNext ? 1 : 0;
         if (shouldBalanceNext) {
             for (size_t i = 0; i < numProcs; ++i) {
@@ -522,23 +533,7 @@ void FieldStatic::balance() {
     }
     (debug(0) << "\n").flush();*/
 
-    //  21 32
-    //1112223333
-    //1111112233
-    //     2132
-
     //debug() << "! " << height << " " << width << " " << mySY << "\n"; debug(0).flush();
-
-    if (bfout != NULL) {
-        for (size_t i = 0; i < numProcs; ++i) {
-            *bfout << nextBuckets[i];
-            if (i < numProcs - 1) {
-                *bfout << ",";
-            }
-        }
-        *bfout << "\n";
-        bfout->flush();
-    }
 
     size_t sy = 0, nextSY = 0;
     size_t topShift = (topN == NOBODY ? 0 : 1);
@@ -638,6 +633,10 @@ void FieldStatic::balance() {
     std::swap(nowBuckets, nextBuckets);
 
     //debug() << "! " << height << " " << width << " " << mySY << "\n"; debug(0).flush();
+}
+
+bool FieldStatic::isBucketsMaster() {
+    return myCoord == numProcs - 1;
 }
 
 #pragma mark - Print

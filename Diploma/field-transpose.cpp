@@ -298,13 +298,13 @@ void FieldTranspose::syncWeights() {
 
         //debug() << "weights: ";
         for (int i = 0; i < width; ++i) {
-            debug(0) << weights[i] << " ";
+            //debug(0) << weights[i] << " ";
         }
         //debug(0) << "\n";
 
         //debug() << "buckets: ";
         for (int i = 0; i < numProcs; ++i) {
-            debug(0) << nextBucketsT[i] << " ";
+            //debug(0) << nextBucketsT[i] << " ";
         }
         //debug(0) << "\n";
         //debug() << "SW OK\n";
@@ -375,4 +375,8 @@ void FieldTranspose::balance() {
                                       << "  " << mySYT << "\n";
          */
     }
+}
+
+bool FieldTranspose::isBucketsMaster() {
+    return myId == MASTER;
 }

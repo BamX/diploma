@@ -44,6 +44,8 @@ class FieldTranspose : public Field {
     bool balanceNeeded() override;
     void balance() override;
 
+    bool isBucketsMaster() override;
+
 public:
     ~FieldTranspose();
 

@@ -144,3 +144,7 @@ void Field::balance() {
 
 }
 
+bool Field::isBucketsMaster() {
+    return false;
+}
+

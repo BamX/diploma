@@ -53,7 +53,7 @@ void Field::enableMatrixOutput() {
 }
 
 void Field::enableBucketsOutput() {
-    if (myId != MASTER) {
+    if (isBucketsMaster() == false) {
         return;
     }
     

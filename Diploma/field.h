@@ -76,6 +76,8 @@ protected:
     virtual bool balanceNeeded();
     virtual void balance();
 
+    virtual bool isBucketsMaster();
+
 public:
     Field();
     ~Field();

@@ -56,6 +56,8 @@ class FieldStatic : public Field {
     void partitionAndCheck();
     bool balanceNeeded() override;
     void balance() override;
+
+    bool isBucketsMaster() override;
     
 public:
     ~FieldStatic();
