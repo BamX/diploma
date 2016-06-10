@@ -122,9 +122,13 @@ void Factors::initFactors(Config config) {
     _enablePlot = config.value("EnablePlot") > 0;
     _enableMatrix = config.value("EnableMatrix") > 0;
     _enableBuckets = config.value("EnableBuckets") > 0;
+    _enableWeights = config.value("EnableWeights") > 0;
+    _enableTimes = config.value("EnableTimes") > 0;
 
     _plotFilename = config.str_value("PlotFilename");
     _bucketsFilename = config.str_value("BucketsFilename");
+    _weightsFilename = config.str_value("WeightsFilename");
+    _timesFilenamePrefix = config.str_value("TimesFilenamePrefix");
 
     _viewCount = config.value("ViewCount");
     _debugView = config.value("DebugView");
@@ -299,12 +303,28 @@ bool Factors::EnableBuckets() const {
     return _enableBuckets;
 }
 
+bool Factors::EnableWeights() const {
+    return _enableWeights;
+}
+
+bool Factors::EnableTimes() const {
+    return _enableTimes;
+}
+
 std::string Factors::PlotFilename() const {
     return _plotFilename;
 }
 
 std::string Factors::BucketsFilename() const {
     return _bucketsFilename;
+}
+
+std::string Factors::WeightsFilename() const {
+    return _weightsFilename;
+}
+
+std::string Factors::TimesFilenamePrefix() const {
+    return _timesFilenamePrefix;
 }
 
 size_t Factors::ViewCount() const {

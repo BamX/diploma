@@ -18,10 +18,10 @@ class Factors {
         _x1SplitCount, _x2SplitCount, _timeSplitCount, _epsilon, _tMax,
         _TStart, _TEnv, _TEnv4, _balanceFactor, _transposeBalancingFactor,
         _transposeBalancingTimeFactor, _staticBalancingThresholdFactor;
-    bool _balancing, _enableConsole, _enablePlot, _enableMatrix, _enableBuckets;
+    bool _balancing, _enableConsole, _enablePlot, _enableMatrix, _enableBuckets, _enableWeights, _enableTimes;
     size_t _minimumBundle, _viewCount, _debugView, _framesCount, _repeats, _transposeIterations, _algorithm;
     std::vector<double> _x1View, _x2View;
-    std::string _plotFilename, _bucketsFilename;
+    std::string _plotFilename, _bucketsFilename, _weightsFilename, _timesFilenamePrefix;
 
     void initFactors(Config config);
 
@@ -67,10 +67,14 @@ public:
     bool EnablePlot() const;
     bool EnableMatrix() const;
     bool EnableBuckets() const;
+    bool EnableWeights() const;
+    bool EnableTimes() const;
 
     std::string PlotFilename() const;
     std::string MatrixFilename() const;
     std::string BucketsFilename() const;
+    std::string WeightsFilename() const;
+    std::string TimesFilenamePrefix() const;
 
     size_t ViewCount() const;
     size_t DebugView() const;

@@ -54,11 +54,15 @@ plot.png
 matrix.csv
 matrix.gif
 log.*.txt
+weights.csv
+times.*.csv
+debug
 output/debug
 output/release
 
 plots/
-2016*/
+2016*
+cases__*
 
 .ipynb*
 *.trace/

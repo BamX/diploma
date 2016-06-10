@@ -148,3 +148,6 @@ bool Field::isBucketsMaster() {
     return false;
 }
 
+size_t Field::weightsSize() {
+    return false;
+}

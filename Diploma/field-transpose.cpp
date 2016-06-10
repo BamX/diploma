@@ -309,6 +309,28 @@ void FieldTranspose::syncWeights() {
         //debug(0) << "\n";
         //debug() << "SW OK\n";
 
+        if (bfout != NULL) {
+            for (size_t i = 0; i < numProcs; ++i) {
+                *bfout << nextBucketsT[i];
+                if (i < numProcs - 1) {
+                    *bfout << ",";
+                }
+            }
+            *bfout << "\n";
+            bfout->flush();
+        }
+
+        if (wfout != NULL) {
+            for (size_t i = 0; i < width; ++i) {
+                *wfout << weights[i];
+                if (i < width - 1) {
+                    *wfout << ",";
+                }
+            }
+            *wfout << "\n";
+            wfout->flush();
+        }
+
         memset(weights, 0, width * sizeof(double));
     } else {
         for (size_t i = 0; i < numProcs; ++i) {
@@ -319,17 +341,6 @@ void FieldTranspose::syncWeights() {
 
 bool FieldTranspose::balanceNeeded() {
     if (algo::ftr().Balancing()) {
-        if (bfout != NULL) {
-            for (size_t i = 0; i < numProcs; ++i) {
-                *bfout << nextBuckets[i];
-                if (i < numProcs - 1) {
-                    *bfout << ",";
-                }
-            }
-            *bfout << "\n";
-            bfout->flush();
-        }
-
         balancingCounter -= 1;
         if (balancingCounter < 0) {
            balancingCounter = (int)(algo::ftr().TransposeBalanceIterationsInterval() * 2);
@@ -379,4 +390,8 @@ void FieldTranspose::balance() {
 
 bool FieldTranspose::isBucketsMaster() {
     return myId == MASTER;
+}
+
+size_t FieldTranspose::weightsSize() {
+    return width;
 }

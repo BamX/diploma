@@ -52,6 +52,9 @@ void Field::init() {
     transposed = false;
     fout = NULL;
     mfout = NULL;
+    bfout = NULL;
+    wfout = NULL;
+    tfout = NULL;
 
     calculateNBS();
 
@@ -75,6 +78,12 @@ void Field::init() {
     }
     if (algo::ftr().EnableBuckets()) {
         enableBucketsOutput();
+    }
+    if (algo::ftr().EnableWeights()) {
+        enableWeightsOutput();
+    }
+    if (algo::ftr().EnableTimes()) {
+        enableTimesOutput();
     }
 
     debug(0).flush();

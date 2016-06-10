@@ -71,6 +71,35 @@ void Field::enableBucketsOutput() {
     *bfout << "\n";
 }
 
+void Field::enableWeightsOutput() {
+    if (isBucketsMaster() == false) {
+        return;
+    }
+
+    if (wfout != NULL) {
+        wfout->close();
+        delete wfout;
+    }
+    wfout = new std::ofstream(algo::ftr().WeightsFilename());
+    for (size_t i = 0, len = weightsSize(); i < len; ++i) {
+        *wfout << "r" << i;
+        if (i < len - 1) {
+            *wfout << ",";
+        }
+    }
+    *wfout << "\n";
+}
+
+void Field::enableTimesOutput() {
+    if (tfout != NULL) {
+        tfout->close();
+        delete tfout;
+    }
+    char nameBuff[255] = {0};
+    sprintf(nameBuff, "%s.%lu.csv", algo::ftr().TimesFilenamePrefix().data(), (long)myCoord);
+    tfout = new std::ofstream(nameBuff);
+}
+
 void Field::printAll() {
     if (t > nextFrameTime) {
         nextFrameTime += algo::ftr().TMax() / algo::ftr().FramesCount();

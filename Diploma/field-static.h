@@ -58,6 +58,7 @@ class FieldStatic : public Field {
     void balance() override;
 
     bool isBucketsMaster() override;
+    size_t weightsSize() override;
     
 public:
     ~FieldStatic();

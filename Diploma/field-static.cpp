@@ -441,6 +441,16 @@ void FieldStatic::partitionAndCheck() {
         *bfout << "\n";
         bfout->flush();
     }
+    if (wfout != NULL) {
+        for (size_t i = 0; i < fullHeight; ++i) {
+            *wfout << weights[i];
+            if (i < fullHeight - 1) {
+                *wfout << ",";
+            }
+        }
+        *wfout << "\n";
+        wfout->flush();
+    }
 
     memset(weights, 0, fullHeight * sizeof(double));
 }
@@ -641,6 +651,10 @@ void FieldStatic::balance() {
 
 bool FieldStatic::isBucketsMaster() {
     return myCoord == numProcs - 1;
+}
+
+size_t FieldStatic::weightsSize() {
+    return fullHeight;
 }
 
 #pragma mark - Print

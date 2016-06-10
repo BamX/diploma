@@ -21,7 +21,7 @@ typedef bx_clock_t::time_point bx_time_t;
 
 class Field {
 protected:
-    std::ofstream *fout, *mfout, *bfout;
+    std::ofstream *fout, *mfout, *bfout, *wfout, *tfout;
     bx_time_t startSyncTime;
     double fullCalculationTime;
     double nextFrameTime;
@@ -58,6 +58,8 @@ protected:
     void enablePlotOutput();
     void enableMatrixOutput();
     void enableBucketsOutput();
+    void enableWeightsOutput();
+    void enableTimesOutput();
 
     void printAll();
     virtual void printConsole();
@@ -76,6 +78,7 @@ protected:
     virtual void balance();
 
     virtual bool isBucketsMaster();
+    virtual size_t weightsSize();
 
 public:
     Field();

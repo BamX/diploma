@@ -68,10 +68,14 @@ EnableConsole %d
 EnablePlot %d
 EnableMatrix %d
 EnableBuckets %d
+EnableWeights %d
+EnableTimes %d
 FramesCount %d
 
 PlotFilename %s
 BucketsFilename %s
+WeightsFilename %s
+TimesFilenamePrefix %s
 
 ViewCount 5
 DebugView 4
@@ -121,9 +125,13 @@ def formatConfig(params, taskName, workingDir):
             (0, 1)[params.get('enable_plot', False)],
             (0, 1)[params.get('enable_matrix', False)],
             (0, 1)[params.get('enable_buckets', True)],
+            (0, 1)[params.get('enable_weights', False)],
+            (0, 1)[params.get('enable_times', False)],
             params.get('frames_count', 200),
             '%s/view-%s.csv' % (workingDir, taskName),
-            '%s/buckets-%s.csv' % (workingDir, taskName)
+            '%s/buckets-%s.csv' % (workingDir, taskName),
+            '%s/weights-%s.csv' % (workingDir, taskName),
+            '%s/times-%s' % (workingDir, taskName)
         )
 
 def saveConfig(params, taskName, workingDir):
