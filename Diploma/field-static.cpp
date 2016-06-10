@@ -316,6 +316,7 @@ void FieldStatic::sendFirstPass(size_t fromRow) {
         if (shouldSendWeights) {
             for (size_t i = 0; i < mySX + width - (rightN == NOBODY ? 0 : 1) - (leftN == NOBODY ? 0 : 1); ++i) {
                 sBuff[sSize++] = weights[i];
+                weights[i] = 0;
             }
             shouldSendWeights = false;
         }
@@ -440,6 +441,8 @@ void FieldStatic::partitionAndCheck() {
         *bfout << "\n";
         bfout->flush();
     }
+
+    memset(weights, 0, fullHeight * sizeof(double));
 }
 
 void FieldStatic::sendSecondPass(size_t fromRow) {
