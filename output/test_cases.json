@@ -1,195 +1,61 @@
 {
     "cases": {
-        "static:t0.1:balanced:800": {
+        "static:balanced+sm+t15:1000": {
             "casesTemplate": "16to40",
             "default": {
                 "enable_balancing": 1,
-                "static_balance_threshold_factor": 0.1,
-                "x_split_count": 800
-            }
-        },
-        "static:t0.1:imbalanced:800": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 0,
-                "static_balance_threshold_factor": 0.1,
-                "x_split_count": 800
-            }
-        },
-        "static:t0.1:balanced:1000": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 1,
-                "static_balance_threshold_factor": 0.1,
+                "enable_balance_weights_smooth": true,
+                "transpose_balance_interval": 15,
                 "x_split_count": 1000
             }
         },
-        "static:t0.1:imbalanced:1000": {
+        "static:balanced+nz+t15:1000": {
             "casesTemplate": "16to40",
             "default": {
-                "enable_balancing": 0,
-                "static_balance_threshold_factor": 0.1,
+                "enable_balancing": 1,
+                "enable_balance_weights_smooth": false,
+                "transpose_balance_interval": 15,
                 "x_split_count": 1000
             }
         },
-        "static:t0.1:balanced:1200": {
+        "static:balanced+sm+t25:1200": {
             "casesTemplate": "16to40",
             "default": {
                 "enable_balancing": 1,
-                "static_balance_threshold_factor": 0.1,
+                "enable_balance_weights_smooth": true,
+                "transpose_balance_interval": 25,
                 "x_split_count": 1200
             }
         },
-        "static:t0.1:imbalanced:1200": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 0,
-                "static_balance_threshold_factor": 0.1,
-                "x_split_count": 1200
-            }
-        },
-        "static:t0.1:balanced:1600": {
+        "static:balanced+sm+t15:1200": {
             "casesTemplate": "16to40",
             "default": {
                 "enable_balancing": 1,
-                "static_balance_threshold_factor": 0.1,
+                "enable_balance_weights_smooth": true,
+                "transpose_balance_interval": 15,
                 "x_split_count": 1600
             }
         },
-        "static:t0.1:imbalanced:1600": {
+        "static:imbalanced:1000": {
             "casesTemplate": "16to40",
             "default": {
                 "enable_balancing": 0,
-                "static_balance_threshold_factor": 0.1,
-                "x_split_count": 1600
-            }
-        },
-        "static:t0.2:balanced:800": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 1,
-                "static_balance_threshold_factor": 0.2,
-                "x_split_count": 800
-            }
-        },
-        "static:t0.2:imbalanced:800": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 0,
-                "static_balance_threshold_factor": 0.2,
-                "x_split_count": 800
-            }
-        },
-        "static:t0.2:balanced:1000": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 1,
-                "static_balance_threshold_factor": 0.2,
                 "x_split_count": 1000
             }
         },
-        "static:t0.2:imbalanced:1000": {
+        "static:imbalanced:1200": {
             "casesTemplate": "16to40",
             "default": {
                 "enable_balancing": 0,
-                "static_balance_threshold_factor": 0.2,
-                "x_split_count": 1000
-            }
-        },
-        "static:t0.2:balanced:1200": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 1,
-                "static_balance_threshold_factor": 0.2,
                 "x_split_count": 1200
             }
         },
-        "static:t0.2:imbalanced:1200": {
+        "transpose:balanced:1200": {
             "casesTemplate": "16to40",
             "default": {
-                "enable_balancing": 0,
-                "static_balance_threshold_factor": 0.2,
+                "enable_balancing": 1,
+                "algorithm": 0,
                 "x_split_count": 1200
-            }
-        },
-        "static:t0.2:balanced:1600": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 1,
-                "static_balance_threshold_factor": 0.2,
-                "x_split_count": 1600
-            }
-        },
-        "static:t0.2:imbalanced:1600": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 0,
-                "static_balance_threshold_factor": 0.2,
-                "x_split_count": 1600
-            }
-        },
-        "static:t0.05:balanced:800": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 1,
-                "static_balance_threshold_factor": 0.05,
-                "x_split_count": 800
-            }
-        },
-        "static:t0.05:imbalanced:800": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 0,
-                "static_balance_threshold_factor": 0.05,
-                "x_split_count": 800
-            }
-        },
-        "static:t0.05:balanced:1000": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 1,
-                "static_balance_threshold_factor": 0.05,
-                "x_split_count": 1000
-            }
-        },
-        "static:t0.05:imbalanced:1000": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 0,
-                "static_balance_threshold_factor": 0.05,
-                "x_split_count": 1000
-            }
-        },
-        "static:t0.05:balanced:1200": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 1,
-                "static_balance_threshold_factor": 0.05,
-                "x_split_count": 1200
-            }
-        },
-        "static:t0.05:imbalanced:1200": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 0,
-                "static_balance_threshold_factor": 0.05,
-                "x_split_count": 1200
-            }
-        },
-        "static:t0.05:balanced:1600": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 1,
-                "static_balance_threshold_factor": 0.05,
-                "x_split_count": 1600
-            }
-        },
-        "static:t0.05:imbalanced:1600": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 0,
-                "static_balance_threshold_factor": 0.05,
-                "x_split_count": 1600
             }
         }
     },
