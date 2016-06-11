@@ -9,6 +9,7 @@
                 "ppn": 12,
                 "enable_balancing": true,
                 "enable_weights": true,
+                "transpose_balance_time_factor": 0.0,
                 "x_split_count": 500
             }
         },
@@ -21,6 +22,7 @@
                 "ppn": 12,
                 "enable_balancing": true,
                 "enable_weights": true,
+                "transpose_balance_time_factor": 0.0,
                 "x_split_count": 800
             }
         },
@@ -33,6 +35,7 @@
                 "ppn": 12,
                 "enable_balancing": true,
                 "enable_weights": true,
+                "transpose_balance_time_factor": 0.0,
                 "x_split_count": 1000
             }
         },
@@ -45,6 +48,7 @@
                 "ppn": 12,
                 "enable_balancing": true,
                 "enable_weights": true,
+                "transpose_balance_time_factor": 0.0,
                 "x_split_count": 1500
             }
         },
@@ -57,6 +61,7 @@
                 "time_max": 600,
                 "enable_balancing": true,
                 "enable_weights": true,
+                "transpose_balance_time_factor": 0.0,
                 "x_split_count": 500
             }
         },
@@ -67,6 +72,7 @@
                 "time_max": 600,
                 "enable_balancing": true,
                 "enable_weights": true,
+                "transpose_balance_time_factor": 0.0,
                 "x_split_count": 800
             }
         },
@@ -77,6 +83,7 @@
                 "time_max": 600,
                 "enable_balancing": true,
                 "enable_weights": true,
+                "transpose_balance_time_factor": 0.0,
                 "x_split_count": 1000
             }
         },
@@ -87,67 +94,26 @@
                 "time_max": 600,
                 "enable_balancing": true,
                 "enable_weights": true,
+                "transpose_balance_time_factor": 0.0,
                 "x_split_count": 1500
             }
         },
 
 
 
-        "time:static:balanced": {
-            "casesTemplate": "10,20,30,40",
-            "default": {
-                "algorithm": 1,
-                "time_max": 450,
-                "enable_balancing": true,
-                "enable_times": true,
-                "x_split_count": 1000
-            }
-        },
-        "time:static:impalanced": {
-            "casesTemplate": "10,20,30,40",
+        "opt-eps:static:imbalanced": {
+            "casesTemplate": "40to77",
             "default": {
                 "algorithm": 1,
                 "time_max": 450,
                 "enable_balancing": false,
                 "enable_times": true,
-                "x_split_count": 1000
-            }
-        },
-        "time:transpose:balanced": {
-            "casesTemplate": "10,20,30,40",
-            "default": {
-                "algorithm": 0,
-                "time_max": 450,
-                "enable_balancing": true,
-                "enable_times": true,
-                "x_split_count": 1000
-            }
-        },
-        "time:transpose:impalanced": {
-            "casesTemplate": "10,20,30,40",
-            "default": {
-                "algorithm": 0,
-                "time_max": 450,
-                "enable_balancing": false,
-                "enable_times": true,
-                "x_split_count": 1000
-            }
-        },
-
-
-
-        "opt-eps:static:impalanced": {
-            "casesTemplate": "16to40",
-            "default": {
-                "algorithm": 1,
-                "time_max": 450,
-                "enable_balancing": false,
-                "enable_times": true,
+                "epsilon": 1e-02,
                 "x_split_count": 1000
             }
         },
         "opt-eps:static:balanced-eps-2": {
-            "casesTemplate": "16to40",
+            "casesTemplate": "40to77",
             "default": {
                 "algorithm": 1,
                 "time_max": 450,
@@ -157,8 +123,19 @@
                 "x_split_count": 1000
             }
         },
+        "opt-eps:static:imbalanced": {
+            "casesTemplate": "40to77",
+            "default": {
+                "algorithm": 1,
+                "time_max": 450,
+                "enable_balancing": false,
+                "enable_times": true,
+                "epsilon": 1e-04,
+                "x_split_count": 1000
+            }
+        },
         "opt-eps:static:balanced-eps-4": {
-            "casesTemplate": "16to40",
+            "casesTemplate": "40to77",
             "default": {
                 "algorithm": 1,
                 "time_max": 450,
@@ -168,8 +145,19 @@
                 "x_split_count": 1000
             }
         },
+        "opt-eps:static:imbalanced": {
+            "casesTemplate": "40to77",
+            "default": {
+                "algorithm": 1,
+                "time_max": 450,
+                "enable_balancing": false,
+                "enable_times": true,
+                "epsilon": 1e-06,
+                "x_split_count": 1000
+            }
+        },
         "opt-eps:static:balanced-eps-6": {
-            "casesTemplate": "16to40",
+            "casesTemplate": "40to77",
             "default": {
                 "algorithm": 1,
                 "time_max": 450,
@@ -203,7 +191,7 @@
         "time_split_count": 20000,
         "transpose_balance_factor": 0.92,
         "transpose_balance_interval": 15,
-        "transpose_balance_time_factor": 1.0,
+        "transpose_balance_time_factor": 0.0,
         "static_balance_threshold_factor": 0.1,
         "x_split_count": 100
     },
@@ -215,70 +203,36 @@
                 "ppn": 12
             }
         ],
-        "32": [
-            {
-                "__count": 10,
-                "nodes": 4,
-                "ppn": 8
-            }
-        ],
-        "10,20,30,40": [
-            {
-                "__count": 10,
-                "nodes": 2,
-                "ppn": 5
-            },
-            {
-                "__count": 20,
-                "nodes": 4,
-                "ppn": 5
-            },
-            {
-                "__count": 30,
-                "nodes": 5,
-                "ppn": 6
-            },
+        "40to77": [
             {
                 "__count": 40,
                 "nodes": 5,
                 "ppn": 8
-            }
-        ],
-        "16to40": [
-            {
-                "__count": 16,
-                "nodes": 4,
-                "ppn": 4
             },
             {
-                "__count": 20,
-                "nodes": 4,
-                "ppn": 5
-            },
-            {
-                "__count": 24,
-                "nodes": 4,
-                "ppn": 6
-            },
-            {
-                "__count": 28,
-                "nodes": 4,
-                "ppn": 7
-            },
-            {
-                "__count": 32,
-                "nodes": 4,
-                "ppn": 8
-            },
-            {
-                "__count": 36,
-                "nodes": 4,
+                "__count": 45,
+                "nodes": 5,
                 "ppn": 9
             },
             {
-                "__count": 40,
-                "nodes": 4,
+                "__count": 54,
+                "nodes": 6,
+                "ppn": 9
+            },
+            {
+                "__count": 60,
+                "nodes": 6,
                 "ppn": 10
+            },
+            {
+                "__count": 66,
+                "nodes": 6,
+                "ppn": 11
+            },
+            {
+                "__count": 77,
+                "nodes": 7,
+                "ppn": 11
             }
         ]
     }
