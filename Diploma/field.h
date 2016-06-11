@@ -18,12 +18,16 @@ extern size_t const MAX_ITTERATIONS_COUNT;
 
 typedef std::chrono::high_resolution_clock bx_clock_t;
 typedef bx_clock_t::time_point bx_time_t;
+typedef long long bx_time_sp;
+
+#define START_TIME(tag) auto tag = bx_clock_t::now()
+#define END_TIME(var, tag) (var) += std::chrono::duration<unsigned long long, std::pico>(bx_clock_t::now() - (tag)).count()
 
 class Field {
 protected:
     std::ofstream *fout, *mfout, *bfout, *wfout, *tfout;
     bx_time_t startSyncTime;
-    double fullCalculationTime;
+    double fullProcessingTime;
     double nextFrameTime;
 
     double *prev, *curr, *buff, *views;
@@ -83,6 +87,13 @@ protected:
 
     virtual bool isBucketsMaster();
     virtual size_t weightsSize();
+
+#pragma mark - Times;
+
+    bx_time_sp fullIterationTime, calculationsTime, weightsSmoothTime, partitioningTime, balancingTime;
+
+    virtual void printTimeHeaders();
+    virtual void printTimes();
 
 public:
     Field();

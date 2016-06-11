@@ -146,6 +146,8 @@ void Field::balance() {
 
 void Field::smoothWeights() {
     if (algo::ftr().EnableBalanceWeightsSmooth()) {
+        START_TIME(smoothStart);
+
         const double multFactor = 1.1;
         const size_t len = weightsSize();
 
@@ -168,6 +170,8 @@ void Field::smoothWeights() {
             avg = (weights[len-2] * 0.6 + weights[len-3] * 0.4) * multFactor;
             weights[len-1] = std::min(avg, weights[len-1]);
         }
+
+        END_TIME(weightsSmoothTime, smoothStart);
     }
 }
 

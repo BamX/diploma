@@ -104,7 +104,9 @@ void FieldTranspose::transpose() {
 }
 
 size_t FieldTranspose::solveRows() {
-    debug(0).flush();
+    //debug(0).flush();
+
+    START_TIME(start);
     
     size_t maxIterationsCount = 0;
 
@@ -131,6 +133,8 @@ size_t FieldTranspose::solveRows() {
         }
         maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
     }
+
+    END_TIME(transposed ? x2Time : x1Time, start);
 
     return maxIterationsCount;
 }
@@ -214,7 +218,9 @@ void FieldTranspose::transpose(double *arr) {
         <<" | " << "from: " << i << " count: " << recvcounts[i] << " disp: " << recvdispls[i] << " size: " << recvsize / 8  << " name: " << recvbuff << "\n";
     }*/
 
+    START_TIME(start);
     MPI_Alltoallw(buff, sendcounts, senddispls, sendtypes, arr, recvcounts, recvdispls, recvtypes, comm);
+    END_TIME(syncNetworkTime, start);
 
     //debug() << "OK height: " << height << "\n";
 }
@@ -284,6 +290,8 @@ void FieldTranspose::createHType(size_t width, size_t height, size_t bWidth, MPI
 
 void FieldTranspose::syncWeights() {
     if (algo::ftr().Balancing()) {
+        START_TIME(startG);
+
         //debug() << "SW ..." << " " << myId << " " << mySY << " " << height << "\n";
         for (size_t i = 0; i < numProcs; ++i) {
             gathercounts[i] = (int)vBuckets[i];
@@ -293,12 +301,20 @@ void FieldTranspose::syncWeights() {
         
         MPI_Gatherv(weights + mySY, (int)height, MPI_DOUBLE, weights, gathercounts, gatherdispls, MPI_DOUBLE, MASTER, balanceComm);
 
+        END_TIME(syncWeightsTime, startG);
+
         if (myId == MASTER) {
             smoothWeights();
-            nextBucketsT = balancing::fastPartition(weights, width, hBuckets, numProcs);
+
+            START_TIME(startP);
+            //nextBucketsT = balancing::fastPartition(weights, width, hBuckets, numProcs);
+            nextBucketsT = balancing::partition(weights, width, numProcs);
+            END_TIME(partitioningTime, startP);
         }
 
+        START_TIME(startB);
         MPI_Bcast(&nextBucketsT[0], (int)numProcs, MPI_INT, MASTER, balanceComm);
+        END_TIME(syncWeightsTime, startB);
 
         if (bfout != NULL) {
             for (size_t i = 0; i < numProcs; ++i) {
@@ -323,6 +339,7 @@ void FieldTranspose::syncWeights() {
         }
 
         memset(weights, 0, width * sizeof(double));
+
     } else {
         for (size_t i = 0; i < numProcs; ++i) {
             nextBucketsT[i] = (int)(width / numProcs);
@@ -347,6 +364,8 @@ bool FieldTranspose::balanceNeeded() {
 }
 
 void FieldTranspose::balance() {
+    START_TIME(start);
+
     if (myCoord == 0) {
         //debug() << "=================\n";
     }
@@ -381,6 +400,8 @@ void FieldTranspose::balance() {
                                       << "  " << mySYT << "\n";
          */
     }
+
+    END_TIME(balancingTime, start);
 }
 
 bool FieldTranspose::isBucketsMaster() {
@@ -389,4 +410,42 @@ bool FieldTranspose::isBucketsMaster() {
 
 size_t FieldTranspose::weightsSize() {
     return width;
+}
+
+void FieldTranspose::printTimeHeaders() {
+    if (tfout != NULL) {
+        *tfout     << "full-iteration-time"
+            << "," << "calculations-time"
+            << "," << "x1-time"
+            << "," << "x2-time"
+            << "," << "sync-network-time"
+            << "," << "sync-weights-time"
+            << "," << "balancing-time"
+            << "," << "partitioning-time"
+            << "," << "weights-smooth-time"
+            << "\n";
+
+        fullIterationTime = calculationsTime = x1Time = x2Time = syncWeightsTime =
+            syncNetworkTime = balancingTime = partitioningTime = weightsSmoothTime = 0;
+    }
+}
+
+void FieldTranspose::printTimes() {
+    if (tfout != NULL) {
+        *tfout     << fullIterationTime
+            << "," << calculationsTime
+            << "," << x1Time
+            << "," << x2Time
+            << "," << syncNetworkTime
+            << "," << syncWeightsTime
+            << "," << balancingTime
+            << "," << partitioningTime
+            << "," << weightsSmoothTime
+            << "\n";
+
+        tfout->flush();
+
+        fullIterationTime = calculationsTime = x1Time = x2Time = syncWeightsTime =
+            syncNetworkTime = balancingTime = partitioningTime = weightsSmoothTime = 0;
+    }
 }

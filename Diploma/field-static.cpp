@@ -187,6 +187,8 @@ void FieldStatic::balanceBundleSize() {
 size_t FieldStatic::solveRows() {
     size_t maxIterationsCount = 0;
 
+    auto solveStart = picosecFromStart();
+
     if (transposed) {
         if (algo::ftr().Balancing()) {
             --balancingCounter;
@@ -299,6 +301,12 @@ size_t FieldStatic::solveRows() {
             }
         }
     }
+
+    if (transposed) {
+        syncPartTime += picosecFromStart() - solveStart;
+    } else {
+        parallelPartTime += picosecFromStart() - solveStart;
+    }
     
     return maxIterationsCount;
 }
@@ -308,6 +316,7 @@ size_t FieldStatic::solveRows() {
 void FieldStatic::sendFirstPass(size_t fromRow) {
     // (crf + b + c + f) x [calculatingRows]
     if (rightN != NOBODY) {
+        START_TIME(rStartWithPrep);
         double *sBuff = sendBuff + fromRow * sendBucketSize;
 
         int sSize = 0;
@@ -335,14 +344,20 @@ void FieldStatic::sendFirstPass(size_t fromRow) {
         }
 
         MPI_Request request;
+        START_TIME(rStart);
         MPI_Isend(sBuff, sSize, MPI_DOUBLE, rightN, (int)fromRow, firstPassComm, &request);
+        END_TIME(syncNetworkTime, rStart);
+        END_TIME(syncNetworkWithPrepTime, rStartWithPrep);
     }
 }
 
 void FieldStatic::sendDoneAsFirstPass() {
     if (rightN != NOBODY) {
         MPI_Request request;
+        START_TIME(rStart);
         MPI_Isend(NULL, 0, MPI_DOUBLE, rightN, 0, firstPassComm, &request);
+        END_TIME(syncNetworkTime, rStart);
+        END_TIME(syncNetworkWithPrepTime, rStart);
     }
 }
 
@@ -359,6 +374,8 @@ bool FieldStatic::checkIncomingFirstPass(size_t fromRow) {
 bool FieldStatic::recieveFirstPass(size_t fromRow, bool first) {
     // (crf + b + c + f) x [calculatingRows]
     if (leftN != NOBODY) {
+        START_TIME(rStart);
+
         MPI_Status status;
         MPI_Probe(leftN, (int)fromRow, firstPassComm, &status);
         int sSize;
@@ -374,6 +391,8 @@ bool FieldStatic::recieveFirstPass(size_t fromRow, bool first) {
             MPI_Wait(&request, MPI_STATUS_IGNORE);
         }
 
+        END_TIME(syncNetworkTime, rStart);
+
         size_t idxBuffer = 0;
         double bsFlag = receiveBuff[idxBuffer++];
         bool receiveWeights = bsFlag < 0;
@@ -384,10 +403,6 @@ bool FieldStatic::recieveFirstPass(size_t fromRow, bool first) {
                 weights[i] = receiveBuff[idxBuffer++];
             }
             shouldSendWeights = true;
-
-            if (rightN == NOBODY) {
-                partitionAndCheck();
-            }
         }
 
         size_t lastRow = fromRow;
@@ -410,6 +425,12 @@ bool FieldStatic::recieveFirstPass(size_t fromRow, bool first) {
                 calculatingRows[lastRow++] = false;
             }
         }
+
+        END_TIME(syncNetworkWithPrepTime, rStart);
+
+        if (receiveWeights && shouldSendWeights && rightN == NOBODY) {
+            partitionAndCheck();
+        }
     }
 
     return true;
@@ -424,7 +445,10 @@ void FieldStatic::partitionAndCheck() {
 
     smoothWeights();
 
-    auto buckets = balancing::fastPartition(weights, fullHeight, nowBuckets, numProcs);
+    START_TIME(partitioningStart);
+
+    //auto buckets = balancing::fastPartition(weights, fullHeight, nowBuckets, numProcs);
+    auto buckets = balancing::partition(weights, fullHeight, numProcs);
     size_t deltaSum = 0;
     for (size_t i = 0; i < numProcs; ++i) {
         nextBuckets[i] = (size_t)buckets[i];
@@ -455,11 +479,15 @@ void FieldStatic::partitionAndCheck() {
     }
 
     memset(weights, 0, fullHeight * sizeof(double));
+
+    END_TIME(partitioningTime, partitioningStart);
 }
 
 void FieldStatic::sendSecondPass(size_t fromRow) {
     // (nextCalculatingRows + y) x [prevCalculatingRows]
     if (leftN != NOBODY) {
+        START_TIME(rStartWithPrep);
+
         double *sBuff = sendBuff + fromRow * sendBucketSize;
         int sSize = 0;
         
@@ -480,7 +508,10 @@ void FieldStatic::sendSecondPass(size_t fromRow) {
         }
 
         MPI_Request request;
+        START_TIME(rStart);
         MPI_Isend(sBuff, sSize, MPI_DOUBLE, leftN, (int)fromRow, secondPassComm, &request);
+        END_TIME(syncNetworkTime, rStart);
+        END_TIME(syncNetworkWithPrepTime, rStartWithPrep);
     }
 }
 
@@ -497,12 +528,15 @@ bool FieldStatic::checkIncomingSecondPass(size_t fromRow) {
 void FieldStatic::recieveSecondPass(size_t fromRow) {
     // (nextCalculatingRows + y) x [prevCalculatingRows]
     if (rightN != NOBODY) {
+        START_TIME(rStart);
+
         MPI_Status status;
         MPI_Probe(rightN, (int)fromRow, secondPassComm, &status);
         int sSize;
         MPI_Get_count(&status, MPI_DOUBLE, &sSize);
 
         MPI_Recv(receiveBuff, sSize, MPI_DOUBLE, rightN, (int)fromRow, secondPassComm, MPI_STATUS_IGNORE);
+        END_TIME(syncNetworkTime, rStart);
 
         sSize = 0;
         bool shouldReceiveBuckets = receiveBuff[sSize++] > 0;
@@ -524,6 +558,8 @@ void FieldStatic::recieveSecondPass(size_t fromRow) {
 
             ++bundleSize;
         }
+
+        END_TIME(syncNetworkWithPrepTime, rStart);
     }
 }
 
@@ -550,6 +586,8 @@ void FieldStatic::balance() {
     (debug(0) << "\n").flush();*/
 
     //debug() << "! " << height << " " << width << " " << mySY << "\n"; debug(0).flush();
+
+    START_TIME(balanceStart);
 
     size_t sy = 0, nextSY = 0;
     size_t topShift = (topN == NOBODY ? 0 : 1);
@@ -648,6 +686,8 @@ void FieldStatic::balance() {
     std::swap(buff, prev);
     std::swap(nowBuckets, nextBuckets);
 
+    END_TIME(balancingTime, balanceStart);
+
     //debug() << "! " << height << " " << width << " " << mySY << "\n"; debug(0).flush();
 }
 
@@ -669,5 +709,43 @@ void FieldStatic::printConsole() {
             printf("Field[%d] (itrs: %zu, bsL %zu, time: %.5f)\tview: %.7f\n",
                    myId, lastIterrationsCount, bundleSizeLimit, t, viewValue);
         }
+    }
+}
+
+void FieldStatic::printTimeHeaders() {
+    if (tfout != NULL) {
+        *tfout     << "full-iteration-time"
+            << "," << "calculations-time"
+            << "," << "parallel-part-time"
+            << "," << "sync-part-time"
+            << "," << "sync-network-time"
+            << "," << "sync-network-with-prep-time"
+            << "," << "balancing-time"
+            << "," << "partitioning-time"
+            << "," << "weights-smooth-time"
+            << "\n";
+
+        fullIterationTime = calculationsTime = parallelPartTime = syncPartTime =
+            syncNetworkTime = syncNetworkWithPrepTime = balancingTime = partitioningTime = weightsSmoothTime = 0;
+    }
+}
+
+void FieldStatic::printTimes() {
+    if (tfout != NULL) {
+        *tfout     << fullIterationTime
+            << "," << calculationsTime
+            << "," << parallelPartTime
+            << "," << syncPartTime
+            << "," << syncNetworkTime
+            << "," << syncNetworkWithPrepTime
+            << "," << balancingTime
+            << "," << partitioningTime
+            << "," << weightsSmoothTime
+            << "\n";
+
+        tfout->flush();
+
+        fullIterationTime = calculationsTime = parallelPartTime = syncPartTime =
+            syncNetworkTime = syncNetworkWithPrepTime = balancingTime = partitioningTime = weightsSmoothTime = 0;
     }
 }

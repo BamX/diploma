@@ -93,7 +93,7 @@ void Field::fillInitial() {
     t = 0;
     nextFrameTime = 0;
     lastIterrationsCount = 0;
-    fullCalculationTime = 0;
+    fullProcessingTime = 0;
     if (transposed) {
         transpose();
     }
@@ -112,6 +112,8 @@ void Field::nextTimeLayer() {
 }
 
 void Field::fillFactors(size_t row, bool first) {
+    START_TIME(start);
+    
     double *aF = maF + row * width;
     double *bF = mbF + row * width;
     double *cF = mcF + row * width;
@@ -121,18 +123,26 @@ void Field::fillFactors(size_t row, bool first) {
     double *brw = first ? rw : (curr + row * width);
 
     algo::fillFactors(rw, brw, width, aF, bF, cF, fF, t, hX, dT, leftN == NOBODY, rightN == NOBODY);
+
+    END_TIME(calculationsTime, start);
 }
 
 void Field::firstPass(size_t row) {
+    START_TIME(start);
+
     double *aF = maF + row * width;
     double *bF = mbF + row * width;
     double *cF = mcF + row * width;
     double *fF = mfF + row * width;
 
     algo::firstPass(width, aF, bF, cF, fF);
+
+    END_TIME(calculationsTime, start);
 }
 
 double Field::secondPass(size_t row, bool first) {
+    START_TIME(start);
+
     double *bF = mbF + row * width;
     double *cF = mcF + row * width;
     double *fF = mfF + row * width;
@@ -142,6 +152,8 @@ double Field::secondPass(size_t row, bool first) {
 
     double maxDelta = 0;
     algo::secondPass(py, y, width, bF, cF, fF, rightN == NOBODY, &maxDelta);
+
+    END_TIME(calculationsTime, start);
 
     return maxDelta;
 }
@@ -155,21 +167,12 @@ size_t Field::solveRows() {
     return 0;
 }
 
-void Field::test() {
-    for (size_t index = 0; index < width * height; ++index) {
-        prev[index] = myCoord * width * height + index;
-    }
-
-    MPI_Barrier(comm);
-    transpose();
-}
-
 void Field::solve() {
     if (done()) {
         return;
     }
 
-    auto start = picosecFromStart();
+    START_TIME(solveStart);
 
     lastIterrationsCount = 0;
 
@@ -190,9 +193,11 @@ void Field::solve() {
 
     transpose();
 
+    END_TIME(fullIterationTime, solveStart);
+
     printAll();
 
-    fullCalculationTime += (picosecFromStart() - start) * 1e-12;
+    END_TIME(fullProcessingTime, solveStart) * 1e-12;
 }
 
 double Field::time() {
@@ -205,5 +210,5 @@ bool Field::done() {
 
 double Field::calculationTime()
 {
-    return fullCalculationTime;
+    return fullProcessingTime;
 }

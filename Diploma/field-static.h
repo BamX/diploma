@@ -58,6 +58,13 @@ class FieldStatic : public Field {
 
     bool isBucketsMaster() override;
     size_t weightsSize() override;
+
+#pragma mark - Times
+
+    bx_time_sp parallelPartTime, syncPartTime, syncNetworkTime, syncNetworkWithPrepTime;
+
+    void printTimeHeaders() override;
+    void printTimes() override;
     
 public:
     ~FieldStatic();

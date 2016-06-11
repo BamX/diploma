@@ -48,6 +48,13 @@ class FieldTranspose : public Field {
     bool isBucketsMaster() override;
     size_t weightsSize() override;
 
+#pragma mark - Times
+
+    bx_time_sp x1Time, x2Time, syncNetworkTime, syncWeightsTime;
+
+    void printTimeHeaders() override;
+    void printTimes() override;
+
 public:
     ~FieldTranspose();
 

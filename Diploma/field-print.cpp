@@ -98,6 +98,7 @@ void Field::enableTimesOutput() {
     char nameBuff[255] = {0};
     sprintf(nameBuff, "%s.%lu.csv", algo::ftr().TimesFilenamePrefix().data(), (long)myCoord);
     tfout = new std::ofstream(nameBuff);
+    printTimeHeaders();
 }
 
 void Field::printAll() {
@@ -107,6 +108,7 @@ void Field::printAll() {
         printConsole();
         printViews();
         printMatrix();
+        printTimes();
     }
 }
 
@@ -126,6 +128,14 @@ void Field::printViews() {
             fout->flush();
         }
     }
+}
+
+void Field::printTimeHeaders() {
+
+}
+
+void Field::printTimes() {
+    
 }
 
 void Field::testPrint() {
