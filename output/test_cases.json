@@ -1,62 +1,215 @@
 {
     "cases": {
-        "static:balanced+sm+t15:1000": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 1,
-                "enable_balance_weights_smooth": true,
-                "transpose_balance_interval": 15,
-                "x_split_count": 1000
-            }
+        "weights:static:100": {
+            "casesTemplate": "full_nodes",
+            "default": [
+                {
+                    "algorithm": 1,
+                    "time_max": 600,
+                    "nodes": 3,
+                    "ppn": 12,
+                    "enable_balancing": true,
+                    "enable_weights": true,
+                    "x_split_count": 100
+                }
+            ]
         },
-        "static:balanced+nz+t15:1000": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 1,
-                "enable_balance_weights_smooth": false,
-                "transpose_balance_interval": 15,
-                "x_split_count": 1000
-            }
+        "weights:static:500": {
+            "casesTemplate": "full_nodes",
+            "default": [
+                {
+                    "algorithm": 1,
+                    "time_max": 600,
+                    "nodes": 3,
+                    "ppn": 12,
+                    "enable_balancing": true,
+                    "enable_weights": true,
+                    "x_split_count": 500
+                }
+            ]
         },
-        "static:balanced+sm+t25:1200": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 1,
-                "enable_balance_weights_smooth": true,
-                "transpose_balance_interval": 25,
-                "x_split_count": 1200
-            }
+        "weights:static:1000": {
+            "casesTemplate": "full_nodes",
+            "default": [
+                {
+                    "algorithm": 1,
+                    "time_max": 600,
+                    "nodes": 3,
+                    "ppn": 12,
+                    "enable_balancing": true,
+                    "enable_weights": true,
+                    "x_split_count": 1000
+                }
+            ]
         },
-        "static:balanced+sm+t15:1200": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 1,
-                "enable_balance_weights_smooth": true,
-                "transpose_balance_interval": 15,
-                "x_split_count": 1600
-            }
+        "weights:static:1500": {
+            "casesTemplate": "full_nodes",
+            "default": [
+                {
+                    "algorithm": 1,
+                    "time_max": 600,
+                    "nodes": 3,
+                    "ppn": 12,
+                    "enable_balancing": true,
+                    "enable_weights": true,
+                    "x_split_count": 1500
+                }
+            ]
         },
-        "static:imbalanced:1000": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 0,
-                "x_split_count": 1000
-            }
+
+
+        "weights:transpose:100": {
+            "casesTemplate": "full_nodes",
+            "default": [
+                {
+                    "algorithm": 0,
+                    "time_max": 600,
+                    "enable_balancing": true,
+                    "enable_weights": true,
+                    "x_split_count": 100
+                }
+            ]
         },
-        "static:imbalanced:1200": {
-            "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 0,
-                "x_split_count": 1200
-            }
+        "weights:transpose:500": {
+            "casesTemplate": "full_nodes",
+            "default": [
+                {
+                    "algorithm": 0,
+                    "time_max": 600,
+                    "enable_balancing": true,
+                    "enable_weights": true,
+                    "x_split_count": 500
+                }
+            ]
         },
-        "transpose:balanced:1200": {
+        "weights:transpose:1000": {
+            "casesTemplate": "full_nodes",
+            "default": [
+                {
+                    "algorithm": 0,
+                    "time_max": 600,
+                    "enable_balancing": true,
+                    "enable_weights": true,
+                    "x_split_count": 1000
+                }
+            ]
+        },
+        "weights:transpose:1500": {
+            "casesTemplate": "full_nodes",
+            "default": [
+                {
+                    "algorithm": 0,
+                    "time_max": 600,
+                    "enable_balancing": true,
+                    "enable_weights": true,
+                    "x_split_count": 1500
+                }
+            ]
+        },
+
+
+
+        "time:static:balanced": {
+            "casesTemplate": "10,20,30,40",
+            "default": [
+                {
+                    "algorithm": 1,
+                    "time_max": 450,
+                    "enable_balancing": true,
+                    "enable_times": true,
+                    "x_split_count": 1000
+                }
+            ]
+        },
+        "time:static:impalanced": {
+            "casesTemplate": "10,20,30,40",
+            "default": [
+                {
+                    "algorithm": 1,
+                    "time_max": 450,
+                    "enable_balancing": false,
+                    "enable_times": true,
+                    "x_split_count": 1000
+                }
+            ]
+        },
+        "time:transpose:balanced": {
+            "casesTemplate": "10,20,30,40",
+            "default": [
+                {
+                    "algorithm": 0,
+                    "time_max": 450,
+                    "enable_balancing": true,
+                    "enable_times": true,
+                    "x_split_count": 1000
+                }
+            ]
+        },
+        "time:transpose:impalanced": {
+            "casesTemplate": "10,20,30,40",
+            "default": [
+                {
+                    "algorithm": 0,
+                    "time_max": 450,
+                    "enable_balancing": false,
+                    "enable_times": true,
+                    "x_split_count": 1000
+                }
+            ]
+        },
+
+
+
+        "opt-eps:static:impalanced": {
             "casesTemplate": "16to40",
-            "default": {
-                "enable_balancing": 1,
-                "algorithm": 0,
-                "x_split_count": 1200
-            }
+            "default": [
+                {
+                    "algorithm": 1,
+                    "time_max": 450,
+                    "enable_balancing": false,
+                    "enable_times": true,
+                    "x_split_count": 1000
+                }
+            ]
+        },
+        "opt-eps:static:balanced-eps-2": {
+            "casesTemplate": "16to40",
+            "default": [
+                {
+                    "algorithm": 1,
+                    "time_max": 450,
+                    "enable_balancing": true,
+                    "enable_times": true,
+                    "epsilon": 1e-02,
+                    "x_split_count": 1000
+                }
+            ]
+        },
+        "opt-eps:static:balanced-eps-4": {
+            "casesTemplate": "16to40",
+            "default": [
+                {
+                    "algorithm": 1,
+                    "time_max": 450,
+                    "enable_balancing": true,
+                    "enable_times": true,
+                    "epsilon": 1e-04,
+                    "x_split_count": 1000
+                }
+            ]
+        },
+        "opt-eps:static:balanced-eps-6": {
+            "casesTemplate": "16to40",
+            "default": [
+                {
+                    "algorithm": 1,
+                    "time_max": 450,
+                    "enable_balancing": true,
+                    "enable_times": true,
+                    "epsilon": 1e-06,
+                    "x_split_count": 1000
+                }
+            ]
         }
     },
     "configuration": {
@@ -87,6 +240,42 @@
         "x_split_count": 100
     },
     "templates": {
+        "full_nodes": [
+            {
+                "__count": 36,
+                "nodes": 3,
+                "ppn": 12
+            }
+        ],
+        "32": [
+            {
+                "__count": 10,
+                "nodes": 4,
+                "ppn": 8
+            }
+        ],
+        "10,20,30,40": [
+            {
+                "__count": 10,
+                "nodes": 2,
+                "ppn": 5
+            },
+            {
+                "__count": 20,
+                "nodes": 4,
+                "ppn": 5
+            },
+            {
+                "__count": 30,
+                "nodes": 5,
+                "ppn": 6
+            },
+            {
+                "__count": 40,
+                "nodes": 5,
+                "ppn": 8
+            }
+        ],
         "16to40": [
             {
                 "__count": 16,
