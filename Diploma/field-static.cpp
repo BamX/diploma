@@ -447,8 +447,8 @@ void FieldStatic::partitionAndCheck() {
 
     START_TIME(partitioningStart);
 
-    //auto buckets = balancing::fastPartition(weights, fullHeight, nowBuckets, numProcs);
-    auto buckets = balancing::partition(weights, fullHeight, numProcs);
+    auto buckets = balancing::fastPartition(weights, fullHeight, nowBuckets, numProcs);
+    //auto buckets = balancing::partition(weights, fullHeight, numProcs);
     size_t deltaSum = 0;
     for (size_t i = 0; i < numProcs; ++i) {
         nextBuckets[i] = (size_t)buckets[i];

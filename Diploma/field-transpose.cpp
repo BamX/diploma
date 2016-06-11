@@ -307,8 +307,8 @@ void FieldTranspose::syncWeights() {
             smoothWeights();
 
             START_TIME(startP);
-            //nextBucketsT = balancing::fastPartition(weights, width, hBuckets, numProcs);
-            nextBucketsT = balancing::partition(weights, width, numProcs);
+            nextBucketsT = balancing::fastPartition(weights, width, hBuckets, numProcs);
+            //nextBucketsT = balancing::partition(weights, width, numProcs);
             END_TIME(partitioningTime, startP);
         }
 
