@@ -340,6 +340,7 @@ def readTestCases(filename):
                     testCase['name'] = 'n%d-p%d-x%d-r%d' % \
                         (testCase['nodes'], testCase['ppn'], testCase['x_split_count'], testCase['repeats'])
                     testCases += [testCase]
+                    #print testCase
     return testCases
 
 def caseProcesses(case):
