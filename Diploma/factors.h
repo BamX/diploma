@@ -18,7 +18,8 @@ class Factors {
         _x1SplitCount, _x2SplitCount, _timeSplitCount, _epsilon, _tMax,
         _TStart, _TEnv, _TEnv4, _balanceFactor, _transposeBalancingFactor,
         _transposeBalancingTimeFactor, _staticBalancingThresholdFactor;
-    bool _balancing, _enableConsole, _enablePlot, _enableMatrix, _enableBuckets, _enableWeights, _enableTimes;
+    bool _balancing, _enableConsole, _enablePlot, _enableMatrix, _enableBuckets, _enableWeights, _enableTimes,
+        _enableBalanceWeightsSmooth;
     size_t _minimumBundle, _viewCount, _debugView, _framesCount, _repeats, _transposeIterations, _algorithm;
     std::vector<double> _x1View, _x2View;
     std::string _plotFilename, _bucketsFilename, _weightsFilename, _timesFilenamePrefix;
@@ -56,6 +57,7 @@ public:
     size_t TransposeBalanceIterationsInterval() const;
     double TransposeBalanceTimeFactor() const;
     double StaticBalanceThresholdFactor() const;
+    bool EnableBalanceWeightsSmooth() const;
 
     size_t Algorithm() const;
 

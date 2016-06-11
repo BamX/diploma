@@ -294,6 +294,7 @@ void FieldTranspose::syncWeights() {
         MPI_Gatherv(weights + mySY, (int)height, MPI_DOUBLE, weights, gathercounts, gatherdispls, MPI_DOUBLE, MASTER, balanceComm);
 
         if (myId == MASTER) {
+            smoothWeights();
             nextBucketsT = balancing::fastPartition(weights, width, hBuckets, numProcs);
         }
 

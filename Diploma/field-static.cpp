@@ -422,6 +422,8 @@ void FieldStatic::partitionAndCheck() {
     }
     (debug(0) << "\n").flush();*/
 
+    smoothWeights();
+
     auto buckets = balancing::fastPartition(weights, fullHeight, nowBuckets, numProcs);
     size_t deltaSum = 0;
     for (size_t i = 0; i < numProcs; ++i) {

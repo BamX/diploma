@@ -38,6 +38,7 @@
         "algorithm": 1,
         "balance_factor": 0.4,
         "bundle_min": 10,
+        "enable_balance_weights_smooth": true,
         "enable_balancing": true,
         "enable_buckets": true,
         "enable_console": true,

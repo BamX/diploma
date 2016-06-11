@@ -59,6 +59,7 @@ TransposeBalanceFactor %f
 TransposeBalanceIterationsInterval %d
 TransposeBalanceTimeFactor %f
 StaticBalanceThresholdFactor %f
+EnableBalanceWeightsSmooth %d
 
 # 0 for transpose
 # 1 for static
@@ -120,6 +121,7 @@ def formatConfig(params, taskName, workingDir):
             params.get('transpose_balance_interval', 15),
             params.get('transpose_balance_time_factor', 1),
             params.get('static_balance_threshold_factor', 0.1),
+            (0, 1)[params.get('enable_balance_weights_smooth', True)],
             params.get('algorithm', 0),
             (0, 1)[params.get('enable_console', False)],
             (0, 1)[params.get('enable_plot', False)],

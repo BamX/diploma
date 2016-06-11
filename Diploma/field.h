@@ -73,9 +73,13 @@ protected:
 
 #pragma mark - Balancing MPI
 
+    double *weights;
+
     virtual void syncWeights();
     virtual bool balanceNeeded();
     virtual void balance();
+
+    void smoothWeights();
 
     virtual bool isBucketsMaster();
     virtual size_t weightsSize();

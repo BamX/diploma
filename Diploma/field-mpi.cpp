@@ -144,6 +144,33 @@ void Field::balance() {
 
 }
 
+void Field::smoothWeights() {
+    if (algo::ftr().EnableBalanceWeightsSmooth()) {
+        const double multFactor = 1.1;
+        const size_t len = weightsSize();
+
+        for (size_t k = 0; k < 2; ++k) {
+            double avg = 0;
+            avg = (weights[1] * 0.6 + weights[2] * 0.4) * multFactor;
+            weights[0] = std::min(avg, weights[0]);
+
+            avg = (weights[0] * 0.37 + weights[2] * 0.37 + weights[3] * 0.26) * multFactor;
+            weights[1] = std::min(avg, weights[1]);
+
+            for (size_t i = 2; i < len - 2; ++i) {
+                avg = (weights[i - 2] * 0.2 + weights[i - 1] * 0.3 + weights[i + 1] * 0.3 + weights[i + 2] * 0.2) * multFactor;
+                weights[i] = std::min(avg, weights[i]);
+            }
+
+            avg = (weights[len-1] * 0.37 + weights[len-3] * 0.37 + weights[len-4] * 0.26) * multFactor;
+            weights[len-2] = std::min(avg, weights[len-2]);
+
+            avg = (weights[len-2] * 0.6 + weights[len-3] * 0.4) * multFactor;
+            weights[len-1] = std::min(avg, weights[len-1]);
+        }
+    }
+}
+
 bool Field::isBucketsMaster() {
     return false;
 }
