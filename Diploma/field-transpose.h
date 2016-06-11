@@ -33,6 +33,7 @@ class FieldTranspose : public Field {
 #pragma mark - Balancing MPI
 
     double *weights, *weightsT;
+    bool balanceTransposed;
 
     size_t heightCapacity;
     void resize(size_t newHeight);

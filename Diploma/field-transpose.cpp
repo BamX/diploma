@@ -13,7 +13,8 @@
 void FieldTranspose::init() {
     Field::init();
 
-    balancingCounter = (int)(algo::ftr().TransposeBalanceIterationsInterval() * 2);
+    balancingCounter = (int)(algo::ftr().TransposeBalanceIterationsInterval());
+    balanceTransposed = false;
 
     printf("I'm %d(%d)\twith w:%zu\th:%zu w:%zu\th:%zu.\tTop:%d\tbottom:%d\n",
            myId, ::getpid(), width, height, mySX, mySY, topN, bottomN);
@@ -123,9 +124,11 @@ size_t FieldTranspose::solveRows() {
             }
         }
         //debug() << "Write to " << mySY + row << " of " << width << "\n";
-        weights[mySY + row] = weights[mySY + row] * algo::ftr().TransposeBalanceFactor()
-                + iterationsCount * (1.0 - algo::ftr().TransposeBalanceTimeFactor())
-                + (picosecFromStart() - startTime) * 1e-12 * algo::ftr().TransposeBalanceTimeFactor();
+        if (transposed ^ balanceTransposed) {
+            weights[mySY + row] = weights[mySY + row] * algo::ftr().TransposeBalanceFactor()
+                    + iterationsCount * (1.0 - algo::ftr().TransposeBalanceTimeFactor())
+                    + (picosecFromStart() - startTime) * 1e-12 * algo::ftr().TransposeBalanceTimeFactor();
+        }
         maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
     }
 
@@ -296,19 +299,6 @@ void FieldTranspose::syncWeights() {
 
         MPI_Bcast(&nextBucketsT[0], (int)numProcs, MPI_INT, MASTER, balanceComm);
 
-        //debug() << "weights: ";
-        for (int i = 0; i < width; ++i) {
-            //debug(0) << weights[i] << " ";
-        }
-        //debug(0) << "\n";
-
-        //debug() << "buckets: ";
-        for (int i = 0; i < numProcs; ++i) {
-            //debug(0) << nextBucketsT[i] << " ";
-        }
-        //debug(0) << "\n";
-        //debug() << "SW OK\n";
-
         if (bfout != NULL) {
             for (size_t i = 0; i < numProcs; ++i) {
                 *bfout << nextBucketsT[i];
@@ -341,11 +331,15 @@ void FieldTranspose::syncWeights() {
 
 bool FieldTranspose::balanceNeeded() {
     if (algo::ftr().Balancing()) {
-        balancingCounter -= 1;
-        if (balancingCounter < 0) {
-           balancingCounter = (int)(algo::ftr().TransposeBalanceIterationsInterval() * 2);
+        if (transposed ^ balanceTransposed) {
+            balancingCounter -= 1;
+            if (balancingCounter < 0) {
+                balancingCounter = (int)(algo::ftr().TransposeBalanceIterationsInterval());
+                balanceTransposed = balanceTransposed == false;
+            }
+            return balancingCounter == 0;
         }
-        return balancingCounter <= 1;
+        return false;
     } else {
         return false;
     }
