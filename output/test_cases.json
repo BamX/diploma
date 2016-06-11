@@ -101,7 +101,7 @@
 
 
 
-        "opt-eps:static:imbalanced": {
+        "opt-eps:imbalanced:eps-2": {
             "casesTemplate": "40to77",
             "default": {
                 "algorithm": 1,
@@ -112,7 +112,7 @@
                 "x_split_count": 1000
             }
         },
-        "opt-eps:static:balanced-eps-2": {
+        "opt-eps:balanced:eps-2": {
             "casesTemplate": "40to77",
             "default": {
                 "algorithm": 1,
@@ -123,7 +123,7 @@
                 "x_split_count": 1000
             }
         },
-        "opt-eps:static:imbalanced": {
+        "opt-eps:imbalanced:eps-4": {
             "casesTemplate": "40to77",
             "default": {
                 "algorithm": 1,
@@ -134,7 +134,7 @@
                 "x_split_count": 1000
             }
         },
-        "opt-eps:static:balanced-eps-4": {
+        "opt-eps:balanced:eps-4": {
             "casesTemplate": "40to77",
             "default": {
                 "algorithm": 1,
@@ -145,7 +145,7 @@
                 "x_split_count": 1000
             }
         },
-        "opt-eps:static:imbalanced": {
+        "opt-eps:imbalanced:eps-6": {
             "casesTemplate": "40to77",
             "default": {
                 "algorithm": 1,
@@ -156,7 +156,7 @@
                 "x_split_count": 1000
             }
         },
-        "opt-eps:static:balanced-eps-6": {
+        "opt-eps:balanced:eps-6": {
             "casesTemplate": "40to77",
             "default": {
                 "algorithm": 1,
