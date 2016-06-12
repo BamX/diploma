@@ -45,8 +45,6 @@ void FieldTranspose::calculateNBS() {
 
     height = ceil((double)width / numProcs);
     width = height * numProcs;
-    hX = algo::ftr().X1() / (width - 1);
-    hY = algo::ftr().X2() / (height * numProcs - 1);
 
     mySY = mySYT = height * myCoord;
     mySX = 0;

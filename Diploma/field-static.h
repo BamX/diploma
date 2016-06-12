@@ -13,6 +13,7 @@ class FieldStatic : public Field {
 
     size_t fullHeight, sendBucketSize;
     int balancingCounter;
+    size_t *iterationCounts;
 
     bool *calculatingRows, *nextCalculatingRows;
     double *sendBuff, *receiveBuff;
