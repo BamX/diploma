@@ -55,9 +55,9 @@ namespace algo {
         }
     }
 
-    void firstPass(size_t size, double *aF, double *bF, double *cF, double *fF) {
+    void firstPass(size_t size, double *aF, double *bF, double *cF, double *fF, bool rightBorder) {
         double m;
-        for (size_t i = 1; i < size; ++i) {
+        for (size_t i = 1, len = size - (rightBorder ? 0 : 1); i < len; ++i) {
             m = aF[i] / cF[i - 1];
             cF[i] -= m * bF[i - 1];
             fF[i] -= m * fF[i - 1];

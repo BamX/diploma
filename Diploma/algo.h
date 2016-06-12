@@ -16,7 +16,7 @@ namespace algo {
                      double t, double hX, double dT,
                      bool leftBorder, bool rightBorder);
 
-    void firstPass(size_t size, double *aF, double *bF, double *cF, double *fF);
+    void firstPass(size_t size, double *aF, double *bF, double *cF, double *fF, bool rightBorder);
     
     void secondPass(double *rw, double *brw, size_t size,
                     double *bF, double *cF, double *fF,

@@ -75,7 +75,7 @@ void FieldStatic::calculateNBS() {
     MPI_Comm_dup(comm, &calculatingRowsComm);
     MPI_Comm_dup(comm, &balanceComm);
 
-    balanceRequests = new MPI_Request[numProcs];
+    balanceRequests = new MPI_Request[numProcs * 2];
 
     bundleSizeLimit = std::max(ceil((double)width / numProcs / 2), 15.0);
     printf("I'm %d(%d)\twith w:%zu\th:%zu\tbs:%zu.\tTop:%d\tbottom:%d\n",
@@ -633,6 +633,7 @@ void FieldStatic::balance() {
     size_t myBucketEnd = mySY + subheight;
     size_t selfSendFrom = 0;
     //debug() << "> " << subheight << "  " << myBucketStart << " " << myBucketEnd << "\n"; debug(0).flush();
+    size_t reqIdx = 0;
 
     // SEND
     for (size_t i = 0; i < numProcs; ++i) {
@@ -666,9 +667,8 @@ void FieldStatic::balance() {
             if (i == myCoord) {
                 selfSendFrom = fromRow;
             } else {
-                MPI_Request request;
                 MPI_Isend(prev + fromRow * width, (int)((toRow - fromRow) * width),
-                          MPI_DOUBLE, (int)i, 0, balanceComm, &request);
+                          MPI_DOUBLE, (int)i, 0, balanceComm, balanceRequests + reqIdx++);
             }
         }
 
@@ -684,7 +684,6 @@ void FieldStatic::balance() {
     //debug() << "< " << subheight << "  " << myBucketStart << " " << myBucketEnd << "\n"; debug(0).flush();
 
     sy = 0;
-    size_t reqIdx = 0;
     for (size_t i = 0; i < numProcs; ++i) {
         size_t bucketStart = sy;
         size_t bucketEnd = sy + nowBuckets[i];

@@ -135,7 +135,7 @@ void Field::firstPass(size_t row) {
     double *cF = mcF + row * width;
     double *fF = mfF + row * width;
 
-    algo::firstPass(width, aF, bF, cF, fF);
+    algo::firstPass(width, aF, bF, cF, fF, rightN == NOBODY);
 
     END_TIME(calculationsTime, start);
 }
