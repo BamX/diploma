@@ -62,7 +62,6 @@ void FieldStatic::calculateNBS() {
 
     calculatingRows = new bool[width];
     nextCalculatingRows = new bool[width];
-    iterationCounts = new size_t[width];
 
     sendBucketSize = width + numProcs;
     sendBuff = new double[width * sendBucketSize];
@@ -96,8 +95,7 @@ void FieldStatic::transpose(double **arr) {
 }
 
 void FieldStatic::transpose() {
-    transpose(&curr);
-    transpose(&prev);
+    transpose(transposed ? &curr : &prev);
 
     std::swap(hX, hY);
     std::swap(mySX, mySY);
@@ -110,7 +108,6 @@ void FieldStatic::transpose() {
 void FieldStatic::resetCalculatingRows() {
     for (size_t index = 0; index < height; ++index) {
         calculatingRows[index] = nextCalculatingRows[index] = true;
-        iterationCounts[index] = 0;
     }
 }
 
@@ -167,10 +164,6 @@ size_t FieldStatic::secondPasses(size_t fromRow, bool first, bool async) {
         double delta = secondPass(row, first);
 
         nextCalculatingRows[row] = (rightN == NOBODY ? false : nextCalculatingRows[row]) || delta > epsilon;
-        iterationCounts[row] += 1;
-        if (iterationCounts[row] > MAX_ITTERATIONS_COUNT) {
-            nextCalculatingRows[row] = false;
-        }
 
         ++bundleSize;
     }
@@ -217,20 +210,6 @@ size_t FieldStatic::solveRows() {
             size_t fromFirstPassRow = 0;
             size_t fromSecondPassRow = 0;
 
-            /*
-            while (fromFirstPassRow < height) {
-                fromFirstPassRow = firstPasses(fromFirstPassRow, first, false);
-            }
-
-            if (fromFirstPassRow == height * 2) {
-                solving = false;
-            } else {
-                while (fromSecondPassRow < height) {
-                    fromSecondPassRow = secondPasses(fromSecondPassRow, first, false);
-                }
-            }
-             */
-
             while (fromSecondPassRow < height) {
                 size_t nextSecondPassRow = 0;
                 if (fromSecondPassRow < height && fromFirstPassRow > fromSecondPassRow) {
@@ -269,6 +248,10 @@ size_t FieldStatic::solveRows() {
 
             first = false;
             std::swap(nextCalculatingRows, calculatingRows);
+            ++maxIterationsCount;
+            if (maxIterationsCount >= MAX_ITTERATIONS_COUNT) {
+                break;
+            }
 
             if (leftN == NOBODY) {
                 solving = false;
@@ -310,7 +293,7 @@ size_t FieldStatic::solveRows() {
             }
             maxIterationsCount = std::max(maxIterationsCount, iterationsCount);
 
-            if (firstRealRow <= row && row < lastRealRow) {
+            if (firstRealRow <= row && row <= lastRealRow) {
                 weights[mySY + row - firstRealRow] =
                         weights[mySY + row - firstRealRow] * algo::ftr().TransposeBalanceFactor()
                         + iterationsCount * (1.0 - algo::ftr().TransposeBalanceTimeFactor())
@@ -354,9 +337,6 @@ void FieldStatic::sendFirstPass(size_t fromRow) {
 
             size_t index = row * width + width - 2;
             sBuff[sSize++] = row;
-            sBuff[sSize++] = curr[index];
-            sBuff[sSize++] = prev[index];
-            sBuff[sSize++] = maF[index];
             sBuff[sSize++] = mbF[index];
             sBuff[sSize++] = mcF[index];
             sBuff[sSize++] = mfF[index];
@@ -435,15 +415,12 @@ bool FieldStatic::recieveFirstPass(size_t fromRow, bool first) {
             calculatingRows[lastRow++] = true;
 
             size_t index = row * width;
-            curr[index] = receiveBuff[idxBuffer++];
-            prev[index] = receiveBuff[idxBuffer++];
-            maF[index] = receiveBuff[idxBuffer++];
             mbF[index] = receiveBuff[idxBuffer++];
             mcF[index] = receiveBuff[idxBuffer++];
             mfF[index] = receiveBuff[idxBuffer++];
         }
 
-        if ((sSize - 1) / 7 < bundleSizeLimit) {
+        if ((sSize - 1) / 4 < bundleSizeLimit) {
             while (lastRow < height) {
                 calculatingRows[lastRow++] = false;
             }
@@ -525,13 +502,7 @@ void FieldStatic::sendSecondPass(size_t fromRow) {
             if (calculatingRows[row] == false) {
                 continue;
             }
-            size_t index = row * width + 1;
-            sBuff[sSize++] = (nextCalculatingRows[row] ? 1 : -1) * curr[index];
-            sBuff[sSize++] = prev[index];
-            sBuff[sSize++] = maF[index];
-            sBuff[sSize++] = mbF[index];
-            sBuff[sSize++] = mcF[index];
-            sBuff[sSize++] = mfF[index];
+            sBuff[sSize++] = (nextCalculatingRows[row] ? 1 : -1) * curr[row * width + 1];
 
             ++bundleSize;
         }
@@ -583,14 +554,7 @@ void FieldStatic::recieveSecondPass(size_t fromRow) {
 
             double value = receiveBuff[sSize++];
             nextCalculatingRows[row] = value > 0;
-
-            size_t index = row * width + width - 1;
-            curr[index] = nextCalculatingRows[row] ? value : -value;
-            prev[index] = receiveBuff[sSize++];
-            maF[index] = receiveBuff[sSize++];
-            mbF[index] = receiveBuff[sSize++];
-            mcF[index] = receiveBuff[sSize++];
-            mfF[index] = receiveBuff[sSize++];
+            curr[(row + 1) * width - 1] = nextCalculatingRows[row] ? value : -value;
 
             ++bundleSize;
         }
