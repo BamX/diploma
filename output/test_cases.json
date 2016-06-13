@@ -1,83 +1,90 @@
 {
     "cases": {
-        "weights:static:1500": {
+
+        "times:transpose:balanced": {
+            "casesTemplate": "full_nodes",
+            "default": {
+                "algorithm": 0,
+                "time_max": 600,
+                "enable_balancing": true,
+                "enable_weights": true,
+                "enable_time": true,
+                "x_split_count": 1500
+            }
+        },
+        "times:transpose:imbalanced": {
+            "casesTemplate": "full_nodes",
+            "default": {
+                "algorithm": 0,
+                "time_max": 600,
+                "enable_balancing": false,
+                "enable_weights": true,
+                "enable_time": true,
+                "x_split_count": 1500
+            }
+        },
+        "times:static:balanced": {
             "casesTemplate": "full_nodes",
             "default": {
                 "algorithm": 1,
                 "time_max": 600,
-                "nodes": 3,
-                "ppn": 12,
                 "enable_balancing": true,
                 "enable_weights": true,
+                "enable_time": true,
+                "transpose_balance_interval": 5,
+                "x_split_count": 1500
+            }
+        },
+        "times:static:imbalanced": {
+            "casesTemplate": "full_nodes",
+            "default": {
+                "algorithm": 1,
+                "time_max": 600,
+                "enable_balancing": false,
+                "enable_weights": true,
+                "enable_time": true,
                 "x_split_count": 1500
             }
         },
 
 
 
-        "opt-interval:static:imbalanced": {
-            "casesTemplate": "40to77",
-            "default": {
-                "algorithm": 1,
-                "enable_balancing": false
-            }
-        },
-        "opt-interval:static:5": {
-            "casesTemplate": "40to77",
-            "default": {
-                "algorithm": 1,
-                "enable_balancing": true,
-                "transpose_balance_interval": 5
-            }
-        },
-        "opt-interval:static:15": {
-            "casesTemplate": "40to77",
-            "default": {
-                "algorithm": 1,
-                "enable_balancing": true,
-                "transpose_balance_interval": 15
-            }
-        },
-        "opt-interval:static:25": {
-            "casesTemplate": "40to77",
-            "default": {
-                "algorithm": 1,
-                "enable_balancing": true,
-                "transpose_balance_interval": 25
-            }
-        },
 
-
-
-        "opt-threshold:static:imbalanced": {
-            "casesTemplate": "40to77",
+        "full:static:imbalanced": {
+            "casesTemplate": "1to99",
             "default": {
                 "algorithm": 1,
-                "enable_balancing": false
+                "time_max": 400,
+                "enable_balancing": false,
+                "x_split_count": 800
             }
         },
-        "opt-threshold:static:0.05": {
-            "casesTemplate": "40to77",
+        "full:static:balanced": {
+            "casesTemplate": "1to99",
             "default": {
                 "algorithm": 1,
+                "time_max": 400,
                 "enable_balancing": true,
-                "static_balance_threshold_factor": 0.05
+                "transpose_balance_interval": 5,
+                "x_split_count": 800
             }
         },
-        "opt-threshold:static:0.1": {
-            "casesTemplate": "40to77",
+        "full:transpose:imbalanced": {
+            "casesTemplate": "1to99",
             "default": {
-                "algorithm": 1,
-                "enable_balancing": true,
-                "static_balance_threshold_factor": 0.1
+                "algorithm": 0,
+                "time_max": 400,
+                "enable_balancing": false,
+                "x_split_count": 800
             }
         },
-        "opt-threshold:static:0.2": {
-            "casesTemplate": "40to77",
+        "full:transpose:balanced": {
+            "casesTemplate": "1to99",
             "default": {
-                "algorithm": 1,
+                "algorithm": 0,
+                "time_max": 400,
                 "enable_balancing": true,
-                "static_balance_threshold_factor": 0.2
+                "x_split_count": 800
             }
         }
     },
