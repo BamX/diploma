@@ -73,6 +73,7 @@ void Field::calculateNBS() {
 }
 
 void Field::finalize() {
+    printStates();
 }
 
 void Field::sendRecieveCalculatingRows() {

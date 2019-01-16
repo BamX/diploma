@@ -216,7 +216,15 @@ double Field::secondPass(size_t row, bool first) {
 }
 
 double Field::solve(size_t row, bool first) {
+    char buff[100];
+    snprintf(buff, 100, "direction 1:row %zu-%zu:pass 1", row, row);
+    logState(buff);
+
     firstPass(row);
+
+    snprintf(buff, 100, "direction 1:row %zu-%zu:pass 2", row, row);
+    logState(buff);
+
     return secondPass(row, first);
 }
 
@@ -243,6 +251,10 @@ size_t Field::firstPasses(size_t fromRow, bool first, bool async) {
 
         firstPass(row);
     }
+    char buff[100];
+    snprintf(buff, 100, "direction 2:row %zu-%zu:pass 1", fromRow, row - 1);
+    logState(buff);
+
     sendFistPass(fromRow); // calculatingRows x [prevCalculatingRows] + (b + c + f) x [calculatingRows]
 
     return row;
@@ -275,6 +287,10 @@ size_t Field::secondPasses(size_t fromRow, bool first, bool async) {
 
         nextCalculatingRows[row] = (rightN == NOBODY ? false : nextCalculatingRows[row]) || delta > epsilon;
     }
+    char buff[100];
+    snprintf(buff, 100, "direction 2:row %zu-%zu:pass 2", fromRow, row - 1);
+    logState(buff);
+
     sendSecondPass(fromRow); // (nextCalculatingRows + y) x [prevCalculatingRows]
 
     return row;

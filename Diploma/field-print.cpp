@@ -103,8 +103,42 @@ void Field::testPrint() {
     }
 }
 
-void Field::printState(const char *name) {
-    auto elapsed = std::chrono::high_resolution_clock::now() - startTime;
-    unsigned long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-    printf("[%d](%llu):%s\n", myId, microseconds, name);
+void Field::logState(const char *name) {
+    if (ftr.EnableStates()) {
+        auto elapsed = std::chrono::high_resolution_clock::now() - startTime;
+        unsigned long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+        char buff[100];
+        snprintf(buff, 100, "[%d](%llu):%s\n", myId, microseconds, name);
+        stateMessages.push_back(buff);
+    }
+}
+
+void Field::printStates() {
+    if (ftr.EnableStates()) {
+        for (int p = 0; p < numProcs; ++p) {
+            if (p == myCoord) {
+                std::ofstream *fout = NULL;
+                if (p == 0) {
+                    fout = new std::ofstream("states.txt");
+                } else {
+                    fout = new std::ofstream("states.txt", std::ios::app);
+                }
+
+                *fout <<
+                    "[" << myId <<
+                    "]:w " << width <<
+                    ":h " << height <<
+                    ":t " << topN <<
+                    ":b " << bottomN << "\n";
+
+                for (size_t index = 0; index < stateMessages.size(); ++index) {
+                    *fout << stateMessages[index];
+                }
+                fout->close();
+                delete fout;
+                stateMessages.resize(0);
+            }
+            MPI_Barrier(comm);
+        }
+    }
 }

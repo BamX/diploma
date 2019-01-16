@@ -8,6 +8,8 @@
 #include "factors.h"
 #include <fstream>
 #include <mpi.h>
+#include <vector>
+#include <string>
 
 extern int const MASTER;
 extern int const WAITER;
@@ -20,6 +22,7 @@ class Field {
     std::ofstream *fout, *mfout;
     double nextFrameTime;
     std::chrono::high_resolution_clock::time_point startTime;
+    std::vector<std::string> stateMessages;
 
     double *prev, *curr, *buff, *views;
     double *maF, *mbF, *mcF, *mfF;
@@ -67,7 +70,8 @@ class Field {
     void printMatrix();
     void printViews();
     void debug(const char *name);
-    void printState(const char *name);
+    void logState(const char *name);
+    void printStates();
 
     void sendRecieveCalculatingRows();
     void balanceBundleSize();
